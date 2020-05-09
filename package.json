@@ -1,0 +1,14 @@
+{
+  "name": "lclplauncher",
+  "version": "1.0.0",
+  "description": "A manager for LCLP's environments.",
+  "main": "index.js",
+  "scripts": {
+    "start": "electron ."
+  },
+  "author": "LCLP",
+  "license": "ISC",
+  "devDependencies": {
+    "electron": "^8.2.5"
+  }
+}
