@@ -10,5 +10,9 @@
   "license": "ISC",
   "devDependencies": {
     "electron": "^8.2.5"
+  },
+  "dependencies": {
+    "bootstrap": "^4.4.1",
+    "material-design-icons": "^3.0.1"
   }
 }

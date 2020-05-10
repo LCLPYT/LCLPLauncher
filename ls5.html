@@ -1,0 +1,270 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, shrink-to-fit=no">
+    <title>LCLPLauncher</title>
+    
+    <link rel="stylesheet" href="node_modules/bootstrap/dist/css/bootstrap.css">
+    <link rel="stylesheet" href="node_modules/material-design-icons/iconfont/material-icons.css">
+    
+    <style>
+        .parallax {
+            position: relative;
+            min-height: 1080px;
+            background-attachment: fixed;
+            background-position: center;
+            background-repeat: no-repeat;
+            background-size: cover;
+        }
+        
+        .fadein {
+            animation: fadein 3s;
+            -moz-animation: fadein 3s; /* Firefox */
+            -webkit-animation: fadein 3s; /* Safari and Chrome */
+            -o-animation: fadein 3s; /* Opera */
+        }
+        @keyframes fadein {
+            from {
+                opacity:0;
+            }
+            to {
+                opacity:1;
+            }
+        }
+        
+        /* width */
+        ::-webkit-scrollbar {
+            width: 10px;
+        }
+        
+        /* Track */
+        ::-webkit-scrollbar-track {
+            background: #6c757d;
+        }
+        
+        /* Handle */
+        ::-webkit-scrollbar-thumb {
+            background: #343a40; 
+        }
+        
+        /* Handle on hover */
+        ::-webkit-scrollbar-thumb:hover {
+            background: #555; 
+        }
+        
+        .dshadow {
+            box-shadow: 10px 10px 15px rgba(0, 0, 0, 0.6);
+        }
+    </style>
+
+    <script>
+        const homedir = require('os').homedir(), defaultInstallationDir = homedir + "/lclpserver";
+
+        function isValid(dir) {
+            return !fs.existsSync(dir) || fs.readdirSync(dir).length == 0;
+        }
+
+        function openInstallDialog() {
+            let input = document.getElementById("installDirInput");
+            input.value = defaultInstallationDir;
+            input.classList.add(isValid(defaultInstallationDir) ? "is-valid" : "is-invalid");
+            $('#installModal').modal("show");
+        }
+
+        function openInstallDirChooser() {
+            const {dialog} = require('electron').remote;
+            dialog.showOpenDialog({
+                properties: ['openDirectory', 'showHiddenFiles']
+            }).then(result => {
+                if(result.canceled || result.filePaths === undefined || result.filePaths.length != 1) return;
+
+                let input = document.getElementById("installDirInput");
+                let dir = result.filePaths[0];
+                if(input != null) {
+                    input.classList.remove("is-valid");
+                    input.classList.remove("is-invalid");
+                    
+                    if(!fs.existsSync(dir) || fs.readdirSync(dir).length == 0) {
+                        input.value = dir;
+                        input.classList.add("is-valid");
+                    } else {
+                        dir += "/lclpserver5";
+                        input.value = dir;
+                        input.classList.add(isValid(dir) ? "is-valid" : "is-invalid");
+                    }
+                }
+            });
+        }
+
+        function install() {
+            $('#locateExistingInstallationModal').modal("hide");
+            alert("installing...");
+        }
+
+        function openInstallFinderDialog() {
+            let input = document.getElementById("installFindDirInput");
+            input.value = defaultInstallationDir;
+            $('#locateExistingInstallationModal').modal("show");
+        }
+
+        function openInstallFinderDirChooser() {
+            const {dialog} = require('electron').remote;
+            dialog.showOpenDialog({
+                properties: ['openDirectory', 'showHiddenFiles']
+            }).then(result => {
+                if(result.canceled || result.filePaths === undefined || result.filePaths.length != 1) return;
+
+                let input = document.getElementById("installFindDirInput");
+                if(input != null) input.value = result.filePaths[0];
+            });
+        }
+
+        function applyInstallationPath() {
+            $('#locateExistingInstallationModal').modal("hide");
+
+            let input = document.getElementById("installFindDirInput");
+            alert("Installationspfad wurde zu '" + input.value + "' geändert.");
+            //TODO handle
+        }
+    </script>
+</head>
+
+<body>
+    <script src="./js/navbar.js"></script>
+    <script>
+        document.write(getNavbarHTMLSync("./ls5.html"));
+    </script>
+    
+    <div class="parallax" style="background-image: url('resources/img/ls5/snap1.png')">
+        <div class="container">
+            <img src="./resources/img/ls5/lclpserver5.png" alt="LCLPServer 5.0" width="100.0%" class="fadein" style="margin-top: 25%;">
+        </div>
+    </div>
+    
+    <div class="bg-secondary text-light text-center px-5 py-5">
+        <div class="container">
+            <h3>LCLPServer kehrt zurück</h3>
+            <p>Nach mehr als 2 Jahren bekommt LCLPServer 4.0 seinen Nachfolger. Dieses Mal mit etwas ganz besonderem: ein Server mit <b>Mods</b>!</p>
+            <p>Um auf dem Server zu spielen muss ein eigener Spielclient mithilfe des LCLPLaunchers &copy; installiert werden.</p>
+        </div>
+    </div>
+    
+    <div class="parallax" style="background-image: url('resources/img/ls5/snap4.png'); padding-top: 10%;">
+        <div class="container">
+            <h1 class="text-light">Riesiger neuer Spawn</h1>
+            <p class="text-light">Um ein richtiges MMO feeling zu erschaffen wurde ein riesiger Spawn gebaut, in welchem es viele Quests o.Ä. zu erledigen gibt.</p>
+            <hr class="bg-light">
+            <div id="diashow" class="carousel slide mx-auto dshadow" data-ride="carousel">
+                <ol class="carousel-indicators">
+                    <li data-target="#diashow" data-slide-to="0" class="active"></li>
+                    <li data-target="#diashow" data-slide-to="1"></li>
+                    <li data-target="#diashow" data-slide-to="2"></li>
+                </ol>
+                <div class="carousel-inner">
+                    <div class="carousel-item active">
+                        <img src="./resources/img/ls5/snap2.png" class="d-block w-100" alt="Screenshot 2">
+                    </div>
+                    <div class="carousel-item">
+                        <img src="./resources/img/ls5/snap3.png" class="d-block w-100" alt="Screenshot 3">
+                    </div>
+                    <div class="carousel-item">
+                        <img src="./resources/img/ls5/snap5.png" class="d-block w-100" alt="Screenshot 5">
+                    </div>
+                </div>
+                <a class="carousel-control-prev" href="#diashow" role="button" data-slide="prev">
+                    <span class="carousel-control-prev-icon" aria-hidden="true"></span>
+                    <span class="sr-only">Letztes</span>
+                </a>
+                <a class="carousel-control-next" href="#diashow" role="button" data-slide="next">
+                    <span class="carousel-control-next-icon" aria-hidden="true"></span>
+                    <span class="sr-only">Nächstes</span>
+                </a>
+            </div>
+        </div>
+    </div>
+    
+    <div class="bg-secondary text-light text-center px-5 py-5">
+        <div class="container">
+            <h3>Voraussichtlicher release</h3>
+            <p>Da dieser Server sehr umfangreich werden soll und die Entwickler viel zu tun haben, wird der Server vermutlich erst gegen Ende 2020, wenn nicht sogar Anfang 2021 veröffentlicht werden.</p>
+        </div>
+    </div>
+
+    <div class="parallax" style="background-image: url('resources/img/ls5/snap7.png'); padding-top: 25%;">
+        <div class="container rounded dshadow p-5" style="background: rgba(94, 94, 94, 0.5);">
+            <h1 class="text-light">Noch nicht installiert</h1>
+            <hr class="bg-light">
+            <p class="text-light">Der LCLPServer 5.0 Client ist noch nicht auf diesem Computer installiert.<br>
+            Wurde der Client woanders installiert? Dann klicke <a href="#" class="btn-success rounded p-1" onclick="event.preventDefault(); openInstallFinderDialog()"><code>hier</code></a>.</p>
+            <button class="btn btn-primary" style="font-size: 20px;" onclick="openInstallDialog()"><b>Installieren</b></button>
+        </div>
+    </div>
+
+    <!-- locate existing installation modal -->
+    <div class="modal fade" id="locateExistingInstallationModal" tabindex="-1" role="dialog" aria-labelledby="locateExistingInstallationModalTitle" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered" role="document">
+          <div class="modal-content">
+            <div class="modal-header">
+              <h5 class="modal-title" id="locateExistingInstallationModalTitle">Installation finden</h5>
+              <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                <span aria-hidden="true">&times;</span>
+              </button>
+            </div>
+            <div class="modal-body">
+                <p>
+                    Bitte gebe hier den Pfad zum existierenden Installationsverzeichnis <code>(/lclpserver5)</code> an.
+                    Wenn noch kein Ordner existiert, musst du ihn erst installieren.
+                </p>
+                <div class="input-group mb-2">
+                    <input type="text" class="form-control" id="installFindDirInput" placeholder="Dateipfad..." onclick="openInstallFinderDirChooser()">
+                    <div class="input-group-append">
+                        <button class="btn btn-primary" onclick="openInstallFinderDirChooser()">Suchen</button>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+              <button type="button" class="btn btn-secondary" data-dismiss="modal">Abbrechen</button>
+              <button type="button" class="btn btn-primary" onclick="applyInstallationPath()">Speichern</button>
+            </div>
+          </div>
+        </div>
+    </div>
+    
+    <!-- install modal -->
+    <div class="modal fade" id="installModal" tabindex="-1" role="dialog" aria-labelledby="installModalTitle" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="installModalTitle">LCLPServer Client installieren</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <p>Der Client wird hierhin installiert:</p>
+                    <div class="input-group mb-2">
+                        <input type="text" class="form-control" id="installDirInput" placeholder="Dateipfad..." aria-describedby="pathHelpBlock" onclick="openInstallDirChooser()">
+                        <div class="input-group-append">
+                            <button class="btn btn-primary" onclick="openInstallDirChooser()">Ändern</button>
+                        </div>
+                        <div class="invalid-feedback">
+                            Dieser Ordner ist nicht leer! Bitte wähle einen leeren Ordner.
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Abbrechen</button>
+                    <button type="button" class="btn btn-primary" onclick="install()">Installieren</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <script src="resources/jquery/jquery.min.js"></script>
+    <script src="resources/popper.js/popper_fixed.min.js"></script>
+    <script src="node_modules/bootstrap/dist/js/bootstrap.js"></script>
+</body>
+
+</html>

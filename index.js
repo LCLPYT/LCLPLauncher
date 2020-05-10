@@ -7,17 +7,28 @@ function createWindow () {
       height: 600,
       webPreferences: {
         nodeIntegration: true
-      }
+      },
+      icon: "resources/img/logo.png",
+      show: false,
+      frame: true
     })
-  
+    win.maximize();
+
     // and load the index.html of the app.
-    win.loadFile('index.html')
+    win.loadFile('index.html');
+
+    win.on("ready-to-show", () => {
+      win.show();
+      win.focus()
+    })
   }
   
   // This method will be called when Electron has finished
   // initialization and is ready to create browser windows.
   // Einige APIs können nur nach dem Auftreten dieses Events genutzt werden.
   app.whenReady().then(createWindow)
+
+  app.allowRendererProcessReuse = true;
   
   // Quit when all windows are closed.
   app.on('window-all-closed', () => {
