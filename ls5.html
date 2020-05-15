@@ -59,8 +59,10 @@
         }
     </style>
 
+    <script src="./js/install.js"></script>
     <script>
-        const homedir = require('os').homedir(), defaultInstallationDir = homedir + "/lclpserver";
+        const homedir = require('os').homedir(), defaultInstallationDir = homedir + "/lclpserver5";
+        const path = require("path");
 
         function isValid(dir) {
             return !fs.existsSync(dir) || fs.readdirSync(dir).length == 0;
@@ -97,10 +99,18 @@
                 }
             });
         }
-
+        
         function install() {
             $('#locateExistingInstallationModal').modal("hide");
-            alert("installing...");
+            let input = document.getElementById("installDirInput");
+            installDir = input.value;
+            installDir = path.normalize(installDir);
+            if(!path.isAbsolute(installDir)) {
+                console.error("The target installation directory '" + installDir + "' is not an absolute path.");
+                return;
+            }
+            
+            startInstaller(installDir);
         }
 
         function openInstallFinderDialog() {
