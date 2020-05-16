@@ -37,6 +37,7 @@ function onConnection(socket) {
     socket.on("close", () => {
         clients.splice(clients.indexOf(socket), 1);
         console.log("[Close]: Closing connection with the client.");
+        onCloseConnection(socket);
     });
     socket.on("error", err => {
         console.log(`Socket Error: ${err}`);
@@ -65,6 +66,12 @@ function setCallback(callback) {
     process = callback;
 }
 
+function onCloseConnection(socket) {}
+
+function setOnCloseConnection(callback) {
+    onCloseConnection = callback;
+}
+
 exports.startServer = startServer;
 exports.stopServer = stopServer;
 exports.getServer = () => {
@@ -74,3 +81,4 @@ exports.getPort = () => {
     return port;
 }
 exports.setCallback = setCallback;
+exports.setOnCloseConnection = setOnCloseConnection;

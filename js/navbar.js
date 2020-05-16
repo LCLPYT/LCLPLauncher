@@ -1,7 +1,8 @@
 const fs = require("fs");
+const files = require("./files");
 
 function getNavbarHTMLSync(filename) {
-    let data = fs.readFileSync("./resources/navbar.html", "utf-8");
+    let data = fs.readFileSync(files.getBaseFile() + "/html/navbar.html", "utf-8");
     return transform(data, filename);
 }
 

@@ -1,16 +1,17 @@
 const app = require("electron").remote.app;
 const server = app.tcpServerModule;
 
-function startInstaller(installDir, onComplete, callback) {
+function startInstaller(installDir, onClose, callback) {
     console.log("Using '" + installDir + "' as installation directory.");
     console.log(`TCP server is available on localhost:${server.getPort()}`);
     server.setCallback(json => {
         callback(json);
     });
-    launchSubprocess(installDir, server.getPort(), onComplete);
+    server.setOnCloseConnection(onClose);
+    launchSubprocess(installDir, server.getPort());
 }
 
-function launchSubprocess(installDir, port, onComplete) {
+function launchSubprocess(installDir, port) {
     const child_process = require("child_process");
 
     console.log("Starting subprocess...");
@@ -21,9 +22,9 @@ function launchSubprocess(installDir, port, onComplete) {
         `--progress-callback=localhost:${port}`, 
         "--debug"];
     console.log(`Arguments: ${command}`);
-    let child = child_process.execFile("./bin/launcherlogic/runtime/bin/java.exe", command, { stdio: [0, 'pipe', 'pipe'] });
+    let child = child_process.spawn("./bin/launcherlogic/runtime/bin/java.exe", command, {});
     
-    child.stdout.setEncoding('utf8');
+    /*child.stdout.setEncoding('utf8');
     child.stdout.on('data', function(data) {
         console.log(data);
     });
@@ -31,11 +32,10 @@ function launchSubprocess(installDir, port, onComplete) {
     child.stderr.setEncoding('utf8');
     child.stderr.on('data', function(data) {
         console.error(data);
-    });
+    });*/
     
     child.on('exit', code => {
         console.log("Subprocess finished with code " + code + ".");
-        onComplete(code);
     });
 }
 
