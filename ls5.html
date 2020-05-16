@@ -9,60 +9,19 @@
     <link rel="stylesheet" href="node_modules/bootstrap/dist/css/bootstrap.css">
     <link rel="stylesheet" href="node_modules/material-design-icons/iconfont/material-icons.css">
     
+    <link rel="stylesheet" href="./css/parallax.css">
+
     <style>
-        .parallax {
-            position: relative;
-            min-height: 1080px;
-            background-attachment: fixed;
-            background-position: center;
-            background-repeat: no-repeat;
-            background-size: cover;
-        }
-        
-        .fadein {
-            animation: fadein 3s;
-            -moz-animation: fadein 3s; /* Firefox */
-            -webkit-animation: fadein 3s; /* Safari and Chrome */
-            -o-animation: fadein 3s; /* Opera */
-        }
-        @keyframes fadein {
-            from {
-                opacity:0;
-            }
-            to {
-                opacity:1;
-            }
-        }
-        
-        /* width */
-        ::-webkit-scrollbar {
-            width: 10px;
-        }
-        
-        /* Track */
-        ::-webkit-scrollbar-track {
-            background: #6c757d;
-        }
-        
-        /* Handle */
-        ::-webkit-scrollbar-thumb {
-            background: #343a40; 
-        }
-        
-        /* Handle on hover */
-        ::-webkit-scrollbar-thumb:hover {
-            background: #555; 
-        }
-        
-        .dshadow {
-            box-shadow: 10px 10px 15px rgba(0, 0, 0, 0.6);
+        #stepProgress {
+            transition: none;
         }
     </style>
 
-    <script src="./js/install.js"></script>
     <script>
         const homedir = require('os').homedir(), defaultInstallationDir = homedir + "/lclpserver5";
         const path = require("path");
+        const fs = require("fs");
+        const installer = require("./js/install");
 
         function isValid(dir) {
             return !fs.existsSync(dir) || fs.readdirSync(dir).length == 0;
@@ -109,8 +68,51 @@
                 console.error("The target installation directory '" + installDir + "' is not an absolute path.");
                 return;
             }
-            
-            startInstaller(installDir);
+
+            $("#installModal").modal("hide");
+
+            let modal = $("#progressModal");
+            modal.modal({
+                keyboard: false,
+                backdrop: "static"
+            });
+            modal.modal("show");
+
+            let stepsTitle = $("#stepDisplay"), 
+                stepsProgress = $("#stepsProgress"), 
+                statusTitle = $("#stepTitle"), 
+                stepProgress = $("#stepProgress");
+
+            installer.startInstaller(installDir, 
+            code => {
+                onInstalled();
+            },
+            json => {
+                let stepsPerc = (100 * json.step / json.steps).toFixed(0);
+                stepsProgress.css("width", stepsPerc + "%").attr("aria-valuenow", stepsPerc);
+
+                let stepsLabel = `Schritt ${json.step} von ${json.steps}`;
+                if(stepsTitle.text() !== stepsLabel) stepsTitle.html(stepsLabel.bold());
+
+                if(statusTitle.text() !== json.status) statusTitle.text(json.status);
+
+                let perc = (json.stepProgress * 100).toFixed(0);
+                stepProgress.css('width', perc + '%').attr('aria-valuenow', perc);
+
+                if(json.step >= json.steps) {
+                    //if(json.stepProgress >= 1.0) onInstalled();
+                }
+            });
+        }
+
+        function onInstalled() {
+            let modal = $("#progressModal");
+            modal.modal({
+                keyboard: true,
+                backdrop: true
+            });
+            modal.modal("hide");
+            console.log("INSTALLED");
         }
 
         function openInstallFinderDialog() {
@@ -142,9 +144,9 @@
 </head>
 
 <body>
-    <script src="./js/navbar.js"></script>
     <script>
-        document.write(getNavbarHTMLSync("./ls5.html"));
+        let navbar = require("./js/navbar");
+        document.write(navbar.getNavbarHTMLSync("./ls5.html"));
     </script>
     
     <div class="parallax" style="background-image: url('resources/img/ls5/snap1.png')">
@@ -214,7 +216,7 @@
 
     <!-- locate existing installation modal -->
     <div class="modal fade" id="locateExistingInstallationModal" tabindex="-1" role="dialog" aria-labelledby="locateExistingInstallationModalTitle" aria-hidden="true">
-        <div class="modal-dialog modal-dialog-centered" role="document">
+        <div class="modal-dialog modal-dialog-centered modal-lg" role="document">
           <div class="modal-content">
             <div class="modal-header">
               <h5 class="modal-title" id="locateExistingInstallationModalTitle">Installation finden</h5>
@@ -241,10 +243,11 @@
           </div>
         </div>
     </div>
+    <!-- / -->
     
     <!-- install modal -->
     <div class="modal fade" id="installModal" tabindex="-1" role="dialog" aria-labelledby="installModalTitle" aria-hidden="true">
-        <div class="modal-dialog modal-dialog-centered" role="document">
+        <div class="modal-dialog modal-dialog-centered modal-lg" role="document">
             <div class="modal-content">
                 <div class="modal-header">
                     <h5 class="modal-title" id="installModalTitle">LCLPServer Client installieren</h5>
@@ -271,7 +274,34 @@
             </div>
         </div>
     </div>
-    
+    <!-- / -->
+
+    <!-- progress modal -->
+    <div class="modal fade" id="progressModal" tabindex="-1" role="dialog" aria-labelledby="progressModalTitle" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="progressModalTitle">Installieren</h5>
+                </div>
+                <div class="modal-body">
+                    <p>Der LCLPServer 5.0 Client wird installiert...</p>
+                    <small id="stepDisplay"></small>
+                    <div class="progress">
+                        <div id="stepsProgress" class="progress-bar progress-bar-striped progress-bar-animated" role="progressbar" style="width: 20%" aria-valuenow="20" aria-valuemin="0" aria-valuemax="100"></div>
+                    </div>
+                    <small id="stepTitle"></small>
+                    <div class="progress">
+                        <div id="stepProgress" class="progress-bar" role="progressbar" style="width: 0%" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100"></div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-danger" data-dismiss="modal" disabled>Abbrechen</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    <!-- / -->
+
     <script src="resources/jquery/jquery.min.js"></script>
     <script src="resources/popper.js/popper_fixed.min.js"></script>
     <script src="node_modules/bootstrap/dist/js/bootstrap.js"></script>

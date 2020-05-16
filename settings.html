@@ -11,9 +11,9 @@
 </head>
 
 <body>
-    <script src="./js/navbar.js"></script>
     <script>
-        document.write(getNavbarHTMLSync("./settings.html"));
+        let navbar = require("./js/navbar");
+        document.write(navbar.getNavbarHTMLSync("./settings.html"));
     </script>
 
     <div class="container bg-dark rounded p-3 text-white shadow mt-3">

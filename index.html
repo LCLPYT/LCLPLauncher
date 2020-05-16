@@ -11,9 +11,9 @@
 </head>
 
 <body>
-    <script src="./js/navbar.js"></script>
     <script>
-        document.write(getNavbarHTMLSync("./index.html"));
+        let navbar = require("./js/navbar");
+        document.write(navbar.getNavbarHTMLSync("./index.html"));
     </script>
 
     <div class="container jumbotron mt-3">
