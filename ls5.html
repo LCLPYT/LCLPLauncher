@@ -77,6 +77,8 @@
                 return;
             }
 
+            config.setInstallationDir(installDir);
+
             $("#installModal").modal("hide");
 
             let modal = $("#progressModal");
@@ -354,7 +356,7 @@
                     <p>Der LCLPServer 5.0 Client wird installiert...</p>
                     <small id="stepDisplay">Starte Installation...</small>
                     <div class="progress">
-                        <div id="stepsProgress" class="progress-bar progress-bar-striped progress-bar-animated" role="progressbar" style="width: 20%" aria-valuenow="20" aria-valuemin="0" aria-valuemax="100"></div>
+                        <div id="stepsProgress" class="progress-bar progress-bar-striped progress-bar-animated" role="progressbar" style="width: 0%" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100"></div>
                     </div>
                     <small id="stepTitle">...</small>
                     <div class="progress">
