@@ -4,12 +4,14 @@ function startInstaller(installDir) {
 }
 
 function listen(installDir) {
+    const port = 8080;
+
     console.log("Trying to start server...");
 
     const Net = require('net');
-    const port = 8080;
     
     const server = new Net.Server();
+    let clients = [];
     server.listen(port, function() {
         console.log(`Server listening for connection requests on socket localhost:${port}`);
         launchSubprocess(installDir, port);
@@ -20,25 +22,16 @@ function listen(installDir) {
     });
 
     server.on("connection", socket => {
+        clients.push(socket);
         console.log("A new socket has connected.");
 
-        socket.on("end", () => {
-            console.log("[END]: Closing connection with the client.");
-            server.close(() => {
-                console.log("Server closed.");
-            });
-        });
         socket.on("close", () => {
+            clients.splice(clients.indexOf(socket), 1);
             console.log("[Close]: Closing connection with the client.");
-            server.close(() => {
-                console.log("Server closed.");
-            });
+            stopServer(server, clients);
         });
         socket.on("error", err => {
             console.log(`Socket Error: ${err}`);
-            server.close(() => {
-                console.log("Server closed.");
-            });
         });
 
         socket.write("Hello, client.\n");
@@ -56,6 +49,16 @@ function listen(installDir) {
                 d_index = chunk.indexOf('\n');
             } 
         });
+    });
+}
+
+function stopServer(server, clients) {
+    for (var i in clients) {
+        clients[i].destroy();
+    }
+    server.close(function () {
+        console.log('Server closed.');
+        server.unref();
     });
 }
 
