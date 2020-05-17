@@ -26,6 +26,8 @@
         const installer = require("./js/install");
         const config = require("./js/config");
         const cp = require("child_process");
+        const app = require("electron").remote.app;
+        const server = app.tcpServerModule;
 
         config.init(config.KEY_INSTALLATION_DIR, defaultInstallationDir);
 
@@ -95,10 +97,24 @@
 
             installer.startInstaller(installDir,
             socket => {
-                console.log("Client disconnected.");
-                onInstalled();
+                let clientName = undefined;
+                if("undefined" !== typeof(socket["clientName"])) clientName = socket.clientName;
+                
+                if(clientName === undefined) console.log("Client disconnected.");
+                else {
+                    console.log(`Client '${clientName}' disconnected.`);
+                    if(clientName === "launcherLogicInstaller") {
+                        server.setCallback(json => {});
+                        onInstalled();
+                    }
+                }
             },
             json => {
+                if("undefined" !== typeof(json["forgeInstaller"])) {
+                    console.log(json.forgeInstaller);
+                    return;
+                }
+                
                 let stepsPerc = (100 * json.step / json.steps).toFixed(0);
                 stepsProgress.css("width", stepsPerc + "%").attr("aria-valuenow", stepsPerc);
 

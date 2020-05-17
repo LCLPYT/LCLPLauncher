@@ -21,19 +21,18 @@ function launchSubprocess(installDir, port) {
         installDir, 
         `--progress-callback=localhost:${port}`, 
         "--debug"];
+    console.log(`Executing: ${__dirname}/bin/launcherlogic/runtime/bin/java.exe`);
     console.log(`Arguments: ${command}`);
-    let child = child_process.spawn("./bin/launcherlogic/runtime/bin/java.exe", command, {});
-    
-    /*child.stdout.setEncoding('utf8');
-    child.stdout.on('data', function(data) {
-        console.log(data);
+    let child = child_process.spawn(".\\bin\\launcherlogic\\runtime\\bin\\java.exe", command, {
+        stdio: "ignore", detached: true
+    }, (err, stdout, stderr) => {
+        if(err) {
+            console.error(err);
+            return;
+        }
+        console.log(stdout);
     });
-    
-    child.stderr.setEncoding('utf8');
-    child.stderr.on('data', function(data) {
-        console.error(data);
-    });*/
-    
+
     child.on('exit', code => {
         console.log("Subprocess finished with code " + code + ".");
     });

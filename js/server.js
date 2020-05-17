@@ -53,11 +53,19 @@ function onConnection(socket) {
         while (d_index > -1) {         
             string = chunk.substring(0,d_index);
             json = JSON.parse(string);
-            process(json);
+            if(!checkPacket(socket, json)) process(json);
             chunk = chunk.substring(d_index + 1);
             d_index = chunk.indexOf('\n');
         } 
     });
+}
+
+function checkPacket(socket, json) {
+    if("undefined" !== typeof(json["setname"])) {
+        socket.clientName = json.setname;
+        return true;
+    }
+    return false;
 }
 
 function process(json) {}
