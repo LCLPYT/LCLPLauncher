@@ -23,4 +23,4 @@ bin
 ```
 ### Java jlink runtime
 The runtime needed for this project is a custom image, created using jlink.
-To assemble it, you will need to clone the [LauncherLogic](https://github.com/LCLPYT/LauncherLogic) repository and build it manually according to the [description specified there](https://github.com/LCLPYT/LauncherLogic/blob/master/LauncherLogic/README.md).
+To assemble it, you will need to clone the [LauncherLogic](https://github.com/LCLPYT/LauncherLogic) repository and build it manually according to the [description specified there](https://github.com/LCLPYT/LauncherLogic/blob/master/LauncherLogic/README.md#java-jlink-runtime).
