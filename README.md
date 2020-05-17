@@ -27,7 +27,7 @@ To assemble it, you will need to clone the [LauncherLogic](https://github.com/LC
 
 ## Building
 The application can be built via [electron-builder](https://www.electron.build).<br>
-To build it, simply type:<br>
+To build it, simply type:
 <br>
 ```npm run dist```
 <br>
