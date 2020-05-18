@@ -19,3 +19,29 @@ AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
 LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
+
+===================================
+
+Library Copyrights
+
+===================================
+
+Electron:
+    Website: https://www.electronjs.org/
+    License: MIT
+    License URL: https://github.com/electron/electron/blob/master/LICENSE
+    
+Bootstrap:
+    Website: https://getbootstrap.com/
+    License: MIT
+    License URL: https://github.com/twbs/bootstrap/blob/master/LICENSE
+
+electron-store:
+    Website: https://github.com/sindresorhus/electron-store
+    License: MIT
+    License URL: https://github.com/sindresorhus/electron-store/blob/master/license
+    
+material-design-icons:
+    Website: https://material.io/
+    License: Apache License 2.0
+    License URL: https://github.com/google/material-design-icons/blob/master/LICENSE
