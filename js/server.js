@@ -63,12 +63,15 @@ function onConnection(socket) {
 function checkPacket(socket, json) {
     if("undefined" !== typeof(json["setname"])) {
         socket.clientName = json.setname;
+        console.log(`Socket ${socket.address().address}:${socket.address().port} changed name to '${socket.clientName}'.`)
         return true;
     }
     return false;
 }
 
-function process(json) {}
+function process(json) {
+    console.log(json);
+}
 
 function setCallback(callback) {
     process = callback;

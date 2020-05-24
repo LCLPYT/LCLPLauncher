@@ -1,46 +1,30 @@
 const { app, BrowserWindow } = require('electron')
+const log = require("electron-log");
+const { autoUpdater } = require("electron-updater")
 const server = require("./js/server")
 
-console.log("Starting LCLPLauncher...");
+let window = null;
 
-function createWindow () {
-  // Erstelle das Browser-Fenster.
-  const win = new BrowserWindow({
-    width: 800,
-    height: 600,
-    webPreferences: {
-      nodeIntegration: true
-    },
-    icon: "resources/img/logo.png",
-    show: false,
-    frame: true
-  })
-  win.maximize();
-  
-  // and load the index.html of the app.
-  win.loadFile('index.html');
-  
-  win.on("ready-to-show", () => {
-    win.show();
-    win.focus();
-  })
-}
+log.info('Starting LCLPLauncher...');
 
-function onReady() {
-  server.startServer(port => {
-    if(port == null) {
-      console.error("Unable to start the server.");
-      throw new Error("Could not start tcp server");
+const gotTheLock = app.requestSingleInstanceLock()
+
+if (!gotTheLock) {
+  log.error("Another instance is already running. Exiting...")
+  app.quit();
+} else {
+  app.on('second-instance', (event, commandLine, workingDirectory) => {
+    if (window) {
+      if (window.isMinimized()) window.restore()
+      window.focus()
     }
-    app.tcpServerModule = server;
-    createWindow();
   });
+
+  app.whenReady().then(onReady);
 }
 
-// This method will be called when Electron has finished
-// initialization and is ready to create browser windows.
-// Einige APIs können nur nach dem Auftreten dieses Events genutzt werden.
-app.whenReady().then(onReady)
+autoUpdater.logger = log;
+autoUpdater.logger.transports.file.level = "info"
 
 app.allowRendererProcessReuse = true;
 
@@ -61,6 +45,85 @@ app.on('activate', () => {
   }
 })
 
-// In this file you can include the rest of your app's specific main process
-// code. Sie können den Code auch 
-// auf mehrere Dateien aufteilen und diese hier einbinden.
+autoUpdater.on("update-available", info => {
+  createUpdateWindow();
+  updateWindow.webContents.send("status", `Version ${info.version} ist verfügbar`);
+});
+
+autoUpdater.on("error", error => {
+  updateWindow.webContents.send("status", "Ein fehler ist aufgetreten");
+});
+
+autoUpdater.on("update-downloaded", info => {
+  updateWindow.webContents.send("status", "Update heruntergeladen");
+  setTimeout(() => {
+    autoUpdater.quitAndInstall();
+  }, 3*1000);
+});
+
+autoUpdater.on("download-progress", progress => {
+  log.info(`${progress.percent}% @ ${(progress.bytesPerSecond / 2**20).toFixed(2)} MB/s`);
+  updateWindow.webContents.send("progress", `${progress.percent}% @ ${(progress.bytesPerSecond / 2**20).toFixed(2)} MB/s`);
+});
+
+function isDev() {
+  return process.mainModule.filename.indexOf('app.asar') === -1;
+}
+
+function onReady() {
+  startUI();
+  if(!isDev()) autoUpdater.checkForUpdates();
+}
+
+function startUI() {
+  server.startServer(port => {
+    if(port == null) {
+      console.error("Unable to start the server.");
+      throw new Error("Could not start tcp server");
+    }
+    app.tcpServerModule = server;
+    createWindow();
+  });
+}
+
+function createWindow() {
+  window = new BrowserWindow({
+    width: 800,
+    height: 600,
+    webPreferences: {
+      nodeIntegration: true
+    },
+    icon: "resources/img/logo.png",
+    show: false,
+    frame: true
+  })
+  window.maximize();
+  
+  window.loadFile('index.html');
+  
+  window.on("ready-to-show", () => {
+    window.show();
+    window.focus();
+  })
+}
+
+let updateWindow;
+function createUpdateWindow() {
+  updateWindow = new BrowserWindow({
+    width: 400,
+    height: 400,
+    webPreferences: {
+      nodeIntegration: true
+    },
+    icon: "resources/img/logo.png",
+    show: false,
+    frame: false
+  })
+  
+  updateWindow.loadFile('update.html');
+  
+  updateWindow.on("ready-to-show", () => {
+    updateWindow.show();
+    updateWindow.focus();
+  })
+}

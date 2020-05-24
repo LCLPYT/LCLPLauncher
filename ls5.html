@@ -31,7 +31,10 @@
 
         config.init(config.KEY_INSTALLATION_DIR, defaultInstallationDir);
 
-        $("document").ready(checkInstallation);
+        $("document").ready(() => {
+            checkInstallation();
+            checkForUpdates();
+        });
 
         function isValid(dir) {
             return !fs.existsSync(dir) || fs.readdirSync(dir).length <= 0;
@@ -68,7 +71,11 @@
                 }
             });
         }
-        
+
+        function update() {
+            callInstaller(config.getInstallationDir());
+        }
+
         function install() {
             $('#locateExistingInstallationModal').modal("hide");
             let input = document.getElementById("installDirInput");
@@ -83,6 +90,10 @@
 
             $("#installModal").modal("hide");
 
+            callInstaller(installDir);
+        }
+
+        function callInstaller(installDir) {
             let modal = $("#progressModal");
             modal.modal({
                 keyboard: false,
@@ -145,7 +156,7 @@
             return !isValid(dir) && installationExists;
         }
 
-        function checkInstallation() {
+        function checkInstallation(doUpdate) {
             let dir = config.getInstallationDir();
             let exists = fs.existsSync(dir + "/.installation");
             if(!exists) {
@@ -155,9 +166,46 @@
                 return;
             }
 
-            $("#installationTitle").text("Bereit zum Spielen");
-            $("#installationDescription").html("Der LCLPServer 5.0 Client wurde installiert.<br>Er steht nun zum Spielen bereit!");
-            $("#installButton").html("<b>Spielen</b>").addClass("btn-success").removeClass("btn-primary").unbind("click").on("click", play);
+            if(doUpdate) {
+                $("#installationTitle").text("Update verfügbar");
+                $("#installationDescription").html("Der LCLPServer 5.0 Client muss aktualisiert werden.<br>Bitte aktualisiere den Client so schnell wie möglich!");
+                $("#installButton").html("<b>Update</b>").addClass("btn-primary").removeClass("btn-success").unbind("click").on("click", update);
+            } else {
+                $("#installationTitle").text("Bereit zum Spielen");
+                $("#installationDescription").html("Der LCLPServer 5.0 Client wurde installiert.<br>Er steht nun zum Spielen bereit!");
+                $("#installButton").html("<b>Spielen</b>").addClass("btn-success").removeClass("btn-primary").unbind("click").on("click", play);
+            }
+        }
+        
+        function checkForUpdates() {
+            let dir = config.getInstallationDir();
+
+            let result;
+
+            installer.startUpdateChecker(dir,
+            socket => {
+                let clientName = undefined;
+                if("undefined" !== typeof(socket["clientName"])) clientName = socket.clientName;
+                
+                if(clientName === undefined) console.log("Client disconnected.");
+                else {
+                    console.log(`Client '${clientName}' disconnected.`);
+                    if(clientName === "launcherLogicUpdater") {
+                        server.setCallback(json => {});
+                        evalResult(result);
+                    }
+                }
+            },
+            json => {
+                result = json.status;
+            });
+        }
+
+        function evalResult(result) {
+            if(result !== "Installation is outdated.") return;
+            
+            console.log("Ein Update ist verfügbar.");
+            checkInstallation(true);
         }
 
         function openInstallFinderDialog() {
