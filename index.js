@@ -63,7 +63,7 @@ autoUpdater.on("update-downloaded", info => {
 
 autoUpdater.on("download-progress", progress => {
   log.info(`${progress.percent}% @ ${(progress.bytesPerSecond / 2**20).toFixed(2)} MB/s`);
-  updateWindow.webContents.send("progress", `${progress.percent}% @ ${(progress.bytesPerSecond / 2**20).toFixed(2)} MB/s`);
+  updateWindow.webContents.send("progress", `${progress.percent.toFixed(2)}% @ ${(progress.bytesPerSecond / 2**20).toFixed(2)} MB/s`);
 });
 
 function isDev() {
