@@ -50,6 +50,10 @@ autoUpdater.on("update-available", info => {
   updateWindow.webContents.send("status", `Version ${info.version} ist verfügbar`);
 });
 
+autoUpdater.on("update-not-available", info => {
+  window.webContents.send("update", `No update available.`);
+});
+
 autoUpdater.on("error", error => {
   updateWindow.webContents.send("status", "Ein fehler ist aufgetreten");
 });
@@ -98,9 +102,13 @@ function createWindow() {
     frame: true
   })
   window.maximize();
-  
-  window.loadFile('index.html');
-  
+
+  let parsed = require('yargs').argv;
+  window.parsedArgs = parsed;
+
+  //window.loadFile('index.html');
+  window.loadFile('ls5.html'); //directly go to LCLPServer 5.0 tab.
+
   window.on("ready-to-show", () => {
     window.show();
     window.focus();

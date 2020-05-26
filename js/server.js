@@ -69,9 +69,7 @@ function checkPacket(socket, json) {
     return false;
 }
 
-function process(json) {
-    console.log(json);
-}
+function process(json) {}
 
 function setCallback(callback) {
     process = callback;

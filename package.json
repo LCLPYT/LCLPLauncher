@@ -1,6 +1,6 @@
 {
   "name": "lclplauncher",
-  "version": "1.2.1",
+  "version": "1.2.4",
   "description": "A manager for LCLP's environments.",
   "main": "index.js",
   "scripts": {
@@ -50,6 +50,9 @@
     "win": {
       "target": "nsis",
       "icon": "build/icon.ico"
+    },
+    "nsis": {
+      "guid": "lclplauncher"
     }
   },
   "devDependencies": {
@@ -61,6 +64,7 @@
     "electron-log": "^4.1.2",
     "electron-store": "^5.1.1",
     "electron-updater": "^4.3.1",
-    "material-design-icons": "^3.0.1"
+    "material-design-icons": "^3.0.1",
+    "yargs": "^15.3.1"
   }
 }

@@ -435,6 +435,27 @@
     </div>
     <!-- / -->
 
+    <script>
+        function checkUpdateArg() {
+            console.log("Checking passed arguments for 'update' option...");
+            let remote = require("electron").remote;
+            let parsedArgs = remote.getCurrentWindow().parsedArgs;
+
+            if(parsedArgs.update !== undefined && parsedArgs.update === "ls5") {
+                console.log(`Found 'update' option for '${parsedArgs.update}'.`);
+                $("document").ready(() => {
+                    update();
+                });
+            }
+        }
+
+        const {ipcRenderer} = require("electron");
+        ipcRenderer.on("update", (event, text) => {
+            console.log("No update available.");
+            checkUpdateArg();
+        });
+    </script>
+
     <script src="resources/popper.js/popper_fixed.min.js"></script>
     <script src="node_modules/bootstrap/dist/js/bootstrap.js"></script>
 </body>

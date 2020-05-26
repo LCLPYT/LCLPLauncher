@@ -14,5 +14,10 @@ function getParent(file) {
     return path.resolve(file, '..');
 }
 
+function isDevMode() {
+    return !getParent(__dirname.toString()).endsWith("app.asar");
+}
+
 exports.getBaseDir = getBaseDir;
 exports.getBaseFile = getBaseFile;
+exports.isDevMode = isDevMode;

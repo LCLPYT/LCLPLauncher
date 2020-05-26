@@ -43,6 +43,12 @@
         const app = require("electron").remote.app;
         let version = app.getVersion();
         $("#version").append(version);
+
+        let remote = require("electron").remote;
+        let parsedArgs = remote.getCurrentWindow().parsedArgs;
+        if(parsedArgs.update !== undefined && parsedArgs.update === "ls5") {
+            document.location.href = "./ls5.html";
+        }
     </script>
 
     <script src="resources/popper.js/popper_fixed.min.js"></script>
