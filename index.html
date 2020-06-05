@@ -47,7 +47,10 @@
         let remote = require("electron").remote;
         let parsedArgs = remote.getCurrentWindow().parsedArgs;
         if(parsedArgs.update !== undefined && parsedArgs.update === "ls5") {
-            document.location.href = "./ls5.html";
+            if (remote.getCurrentWindow().redir === undefined) {
+                remote.getCurrentWindow().redir = "ls5";
+                document.location.href = "./ls5.html";
+            }
         }
     </script>
 

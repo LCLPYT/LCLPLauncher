@@ -1,6 +1,6 @@
 {
   "name": "lclplauncher",
-  "version": "1.2.4",
+  "version": "1.2.6",
   "description": "A manager for LCLP's environments.",
   "main": "index.js",
   "scripts": {
