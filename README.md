@@ -27,6 +27,7 @@ bin
 ### Java jlink runtime
 The runtime needed for this project is a custom image, created using jlink.
 To assemble it, you will need to clone the [LauncherLogic](https://github.com/LCLPYT/LauncherLogic) repository and build it manually according to the [description specified there](https://github.com/LCLPYT/LauncherLogic/blob/master/README.md#java-jlink-runtime).
+The launcherlogic-forge_installer.jar can be downloaded from [here](https://github.com/LCLPYT/LauncherLogicForgeInstaller/releases/latest/download/launcherlogic-forge_installer.jar).
 
 ## Building
 The application can be built via [electron-builder](https://www.electron.build).<br>
