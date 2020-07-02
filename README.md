@@ -2,7 +2,7 @@
 An electron app for managing LCLP's environments.
 
 ## Download
-The LCLPLauncher installer can be download from [here](https://lclpnet.work/lclplauncher/dl).
+The LCLPLauncher installer can be downloaded from [here](https://lclpnet.work/lclplauncher/dl).
 
 ## Installing dependencies
 `npm install`
