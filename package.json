@@ -61,6 +61,8 @@
   },
   "dependencies": {
     "bootstrap": "^4.4.1",
+    "decompress": "^4.2.1",
+    "electron-dl": "^3.0.2",
     "electron-log": "^4.1.2",
     "electron-store": "^5.1.1",
     "electron-updater": "^4.3.1",

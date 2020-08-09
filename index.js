@@ -1,9 +1,13 @@
-const { app, BrowserWindow } = require('electron')
+const { app, BrowserWindow, ipcMain, Menu } = require('electron')
 const log = require("electron-log");
 const { autoUpdater } = require("electron-updater")
-const server = require("./js/server")
+const server = require("./js/server");
+const {download} = require("electron-dl");
+const decompress = require("decompress");
+const { isPostInstallNeeded } = require('./js/postinstaller');
 
 let window = null;
+let keepAlive = false;
 
 log.info('Starting LCLPLauncher...');
 
@@ -27,9 +31,14 @@ autoUpdater.logger = log;
 autoUpdater.logger.transports.file.level = "info"
 
 app.allowRendererProcessReuse = true;
+app.logX = x => console.log(x);
 
 // Quit when all windows are closed.
 app.on('window-all-closed', () => {
+  if(keepAlive) {
+    keepAlive = false;
+    return;
+  }
   // Unter macOS ist es üblich, für Apps und ihre Menu Bar
   // aktiv zu bleiben, bis der Nutzer explizit mit Cmd + Q die App beendet.
   if (process.platform !== 'darwin') {
@@ -75,6 +84,14 @@ function isDev() {
 }
 
 function onReady() {
+  if(isPostInstallNeeded()) {
+    createPostInstallWindow();
+    return;
+  }
+  onNoPostInstallNeeded();
+}
+
+function onNoPostInstallNeeded() {
   startUI();
   if(!isDev()) autoUpdater.checkForUpdates();
 }
@@ -102,6 +119,8 @@ function createWindow() {
     frame: true
   })
   window.maximize();
+
+  window.setMenu(null); // PRODUCTION ONLY
 
   let parsed = require('yargs').argv;
   window.parsedArgs = parsed;
@@ -135,3 +154,38 @@ function createUpdateWindow() {
     updateWindow.focus();
   })
 }
+
+let postInstallWindow;
+function createPostInstallWindow() {
+  postInstallWindow = new BrowserWindow({
+    width: 400,
+    height: 400,
+    webPreferences: {
+      nodeIntegration: true
+    },
+    icon: "resources/img/logo.png",
+    show: false,
+    frame: false
+  });
+  
+  postInstallWindow.loadFile('postInstall.html');
+  
+  postInstallWindow.on("ready-to-show", () => {
+    postInstallWindow.show();
+    postInstallWindow.focus();
+  });
+}
+
+ipcMain.on("download", (event, info) => {
+  info.properties.onProgress = status => postInstallWindow.webContents.send("download-progress", status);
+  download(postInstallWindow, info.url, info.properties)
+    .then(dl => postInstallWindow.webContents.send("download-complete", dl.getSavePath()));
+});
+ipcMain.on("extract", (event, info) => {
+  decompress(info.file, info.dest).then(files => postInstallWindow.webContents.send("extract-complete", info.file));
+});
+ipcMain.on("postInstallComplete", (event, info) => {
+  keepAlive = true;
+  postInstallWindow.close();
+  onNoPostInstallNeeded();
+});

@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, shrink-to-fit=no">
+    <title>LCLPLauncher - PostInstall</title>
+
+    <link rel="stylesheet" href="node_modules/bootstrap/dist/css/bootstrap.css">
+
+    <script src="resources/jquery/jquery.min.js"></script>
+</head>
+
+<body class="bg-dark">
+    <div style="min-height: 100%;" class="text-center">
+        <h1 class="text-light mt-5">Vorbereitung</h1>
+        <h3 id="status" class="text-light mt-3">Zusätzliches herunterladen...</h3>
+        <img src="resources/img/loading.svg" alt="Loading..."><br>
+        <small id="progress" class="text-secondary"></small>
+    </div>
+
+    <script>
+        const { downloadJava, extractJava, postExtractJava } = require('./js/postinstaller');
+        const {ipcRenderer} = require("electron");
+        let container = document.getElementById("status");
+        let progressDisplay = $("#progress");
+
+        ipcRenderer.on("download-complete", (event, file) => {
+            container.innerHTML = "Zusätzliches extrahieren...";
+            extractJava();
+        });
+
+        ipcRenderer.on("download-progress", (event, progress) => {
+            progressDisplay.text(`${Math.floor(progress.percent * 100)}%`);
+        });
+
+        ipcRenderer.on("extract-complete", (event, file) => {
+            container.innerHTML = "Aufräumen...";
+            postExtractJava();
+            container.innerHTML = "Fertig."
+            setTimeout(() => ipcRenderer.send("postInstallComplete", true), 3000);
+        });
+
+        downloadJava();
+    </script>
+
+    <script src="resources/popper.js/popper_fixed.min.js"></script>
+    <script src="node_modules/bootstrap/dist/js/bootstrap.js"></script>
+</body>
+
+</html>

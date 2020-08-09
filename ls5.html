@@ -28,6 +28,7 @@
         const cp = require("child_process");
         const app = require("electron").remote.app;
         const server = app.tcpServerModule;
+        const osHooks = require("./js/oshooks");
 
         config.init(config.KEY_INSTALLATION_DIR, defaultInstallationDir);
 
@@ -259,13 +260,13 @@
                 return;
             }
 
-            let path = "C:\\Program Files (x86)\\Minecraft Launcher\\MinecraftLauncher.exe"; //TODO change for other os
+            let path = osHooks.getMinecraftLauncherPath();
             if(!fs.existsSync(path)) alert("Konnte den Minecraft Launcher nicht automatisch öffnen. Bitte öffne den Minecraft Launcher manuell um zu spielen.");
             else {
                 let args = ["-jar", "./bin/launcherlogic/LauncherLogic.jar",
                 "preparePlay",
                 "ls5"]
-                let preparePlay = cp.spawnSync("./bin/launcherlogic/runtime/bin/java.exe", args, {});
+                let preparePlay = cp.spawnSync(osHooks.getJavaExecuteable(), args, {});
                 console.log(preparePlay.stdout.toString());
 
                 cp.spawn(path, [], {
@@ -454,6 +455,8 @@
             console.log("No update available.");
             checkUpdateArg();
         });
+
+        require("./js/keybinds").addDebugKeybinds();
     </script>
 
     <script src="resources/popper.js/popper_fixed.min.js"></script>
