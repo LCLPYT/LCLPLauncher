@@ -4,7 +4,7 @@ const { autoUpdater } = require("electron-updater")
 const server = require("./js/server");
 const {download} = require("electron-dl");
 const decompress = require("decompress");
-const { isPostInstallNeeded } = require('./js/postinstaller');
+const { isPostInstallNeeded, getStatus } = require('./js/postinstaller');
 
 let window = null;
 let keepAlive = false;
@@ -54,6 +54,8 @@ app.on('activate', () => {
   }
 })
 
+app.getPostInstallerStatus = getStatus;
+
 autoUpdater.on("update-available", info => {
   createUpdateWindow();
   updateWindow.webContents.send("status", `Version ${info.version} ist verfügbar`);
@@ -84,11 +86,10 @@ function isDev() {
 }
 
 function onReady() {
-  if(isPostInstallNeeded()) {
-    createPostInstallWindow();
-    return;
-  }
-  onNoPostInstallNeeded();
+  isPostInstallNeeded(needed => {
+    if(needed) createPostInstallWindow();
+    else onNoPostInstallNeeded();
+  });
 }
 
 function onNoPostInstallNeeded() {
@@ -179,7 +180,7 @@ function createPostInstallWindow() {
 ipcMain.on("download", (event, info) => {
   info.properties.onProgress = status => postInstallWindow.webContents.send("download-progress", status);
   download(postInstallWindow, info.url, info.properties)
-    .then(dl => postInstallWindow.webContents.send("download-complete", dl.getSavePath()));
+    .then(dl => postInstallWindow.webContents.send("download-complete", {path: dl.getSavePath(), name: info.name}));
 });
 ipcMain.on("extract", (event, info) => {
   decompress(info.file, info.dest).then(files => postInstallWindow.webContents.send("extract-complete", info.file));

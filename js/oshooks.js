@@ -1,7 +1,6 @@
 const os = require("os");
 const files = require("./files");
 const fs = require('fs');
-const { functions } = require("electron-log");
 
 class Handler {
 

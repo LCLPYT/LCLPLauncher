@@ -60,7 +60,11 @@ function launchSubprocess(installDir, port) {
         "ls5", 
         installDir, 
         `--progress-callback=localhost:${port}`, 
-        "--debug"];
+        "--debug",
+        "--java-exe",
+        `${osHooks.getJavaExecuteable()}`,
+        "--launcher-forge-installer-jar",
+        `${files.getBaseDir()}/bin/launcherlogic/launcherlogic-forge_installer.jar`];
     console.log(`Executing: ${osHooks.getJavaExecuteable()}`);
     console.log(`Arguments: ${command}`);
     let child = child_process.spawn(osHooks.getJavaExecuteable(), command, {

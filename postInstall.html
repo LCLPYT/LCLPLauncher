@@ -20,14 +20,18 @@
     </div>
 
     <script>
-        const { downloadJava, extractJava, postExtractJava } = require('./js/postinstaller');
+        const { postInstall, extractJava, postExtractJava, notifyFinish } = require('./js/postinstaller');
         const {ipcRenderer} = require("electron");
         let container = document.getElementById("status");
         let progressDisplay = $("#progress");
 
         ipcRenderer.on("download-complete", (event, file) => {
-            container.innerHTML = "Zusätzliches extrahieren...";
-            extractJava();
+            if(file.name === "java") {
+                extractJava(container);
+            }
+            else if(file.name === "fi" || file.name === "ll") {
+                notifyFinish(container);
+            }
         });
 
         ipcRenderer.on("download-progress", (event, progress) => {
@@ -35,13 +39,11 @@
         });
 
         ipcRenderer.on("extract-complete", (event, file) => {
-            container.innerHTML = "Aufräumen...";
-            postExtractJava();
-            container.innerHTML = "Fertig."
-            setTimeout(() => ipcRenderer.send("postInstallComplete", true), 3000);
+            postExtractJava(container);
+            notifyFinish(container);
         });
 
-        downloadJava();
+        postInstall();
     </script>
 
     <script src="resources/popper.js/popper_fixed.min.js"></script>
