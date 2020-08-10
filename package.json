@@ -1,6 +1,6 @@
 {
   "name": "lclplauncher",
-  "version": "1.2.8",
+  "version": "1.2.9",
   "description": "A manager for LCLP's environments.",
   "main": "index.js",
   "scripts": {
@@ -21,9 +21,6 @@
     "appId": "lclplauncher",
     "productName": "LCLPLauncher",
     "copyright": "Copyright © 2020 ${author}",
-    "extraFiles": [
-      "bin"
-    ],
     "mac": {
       "category": "public.app-category.games"
     },
@@ -49,13 +46,23 @@
     },
     "win": {
       "target": "nsis",
-      "icon": "build/icon.ico"
+      "icon": "build/icon.ico",
+      "files": [
+        "!bin/*", "!dist/*",
+        "!**/node_modules/*/{CHANGELOG.md,README.md,README,readme.md,readme}",
+        "!**/node_modules/*/{test,__tests__,tests,powered-test,example,examples}",
+        "!**/{.DS_Store,.git,.hg,.svn,CVS,RCS,SCCS,.gitignore,.gitattributes}",
+        "!**/{__pycache__,thumbs.db,.flowconfig,.idea,.vs,.nyc_output}",
+        "!**/{appveyor.yml,.travis.yml,circle.yml}",
+        "!**/{npm-debug.log,yarn.lock,.yarn-integrity,.yarn-metadata.json}"
+      ]
     },
     "nsis": {
       "guid": "lclplauncher"
     }
   },
   "devDependencies": {
+    "asar": "^3.0.3",
     "electron": "^8.2.5",
     "electron-builder": "^22.6.0"
   },
