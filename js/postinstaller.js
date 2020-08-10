@@ -74,9 +74,9 @@ function getContent(url) {
 
 function postInstall() {
     let status = remote.app.getPostInstallerStatus();
-    if(!status.java) queue.push(downloadJava);
     if(!status.fi) queue.push(downloadFI);
     if(!status.ll) queue.push(downloadLL);
+    if(!status.java) queue.push(downloadJava);
 
     nextQueueItem(null);
 }
@@ -146,6 +146,35 @@ function downloadLL(container) {
     });
 }
 
+function verifyJavaCompatible(container) {
+    let llPath = files.getBaseDir() + "/bin/launcherlogic/LauncherLogic.jar";
+    if(!fs.existsSync(llPath)) return;
+
+    const child_process = require("child_process");
+
+    console.log("Starting subprocess...");
+    let command = ["-jar", llPath, 
+        "echo"];
+    console.log(`Executing: ${osHooks.getJavaExecuteable()}`);
+    console.log(`Arguments: ${command}`);
+    let child = child_process.spawn(osHooks.getJavaExecuteable(), command, {
+        stdio: "ignore", detached: true
+    }, (err, stdout, stderr) => {
+        if(err) {
+            console.error(err);
+            return;
+        }
+        console.log(stderr);
+        console.log(stdout);
+    });
+
+    child.on('exit', code => {
+        console.log("Subprocess finished with code " + code + ".");
+        if(code !== 0) queue.push(downloadJava);
+        notifyFinish(container);
+    });
+}
+
 function extractJava(container) {
     if(container != null) container.innerHTML = "Zusätzliches extrahieren...";
 
@@ -200,3 +229,4 @@ exports.extractJava = extractJava;
 exports.postExtractJava = postExtractJava;
 exports.notifyFinish = notifyFinish;
 exports.getStatus = getStatus;
+exports.verifyJavaCompatible = verifyJavaCompatible;

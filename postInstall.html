@@ -20,7 +20,7 @@
     </div>
 
     <script>
-        const { postInstall, extractJava, postExtractJava, notifyFinish } = require('./js/postinstaller');
+        const { postInstall, extractJava, postExtractJava, notifyFinish, verifyJavaCompatible } = require('./js/postinstaller');
         const {ipcRenderer} = require("electron");
         let container = document.getElementById("status");
         let progressDisplay = $("#progress");
@@ -29,8 +29,11 @@
             if(file.name === "java") {
                 extractJava(container);
             }
-            else if(file.name === "fi" || file.name === "ll") {
+            else if(file.name === "fi") {
                 notifyFinish(container);
+            }
+            else if(file.name === "ll") {
+                verifyJavaCompatible(container);
             }
         });
 

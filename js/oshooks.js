@@ -42,11 +42,30 @@ class LinuxHandler extends Handler {
 
 }
 
+class WinHandler extends Handler {
+
+    getJavaDownloadLink() {
+        return "https://github.com/AdoptOpenJDK/openjdk14-binaries/releases/download/jdk14u-2020-07-28-07-34/OpenJDK14U-jdk_x64_windows_hotspot_2020-07-28-07-34.zip";
+    }
+
+    getMinecraftLauncherPath() {
+        return "C:\\Program Files (x86)\\Minecraft Launcher\\MinecraftLauncher.exe";
+    }
+
+    getJavaExecuteable() {
+        return `${files.getBaseDir()}/bin/launcherlogic/runtime/bin/java.exe`;
+    }
+
+}
+
 let handler;
 
 switch (os.platform()) {
     case "linux":
         handler = new LinuxHandler(); 
+        break;
+    case "win32":
+        handler = new WinHandler();
         break;
 
     default:
