@@ -1,6 +1,7 @@
 const os = require("os");
 const files = require("./files");
 const fs = require('fs');
+const homedir = require('os').homedir();
 
 class Handler {
 
@@ -9,15 +10,19 @@ class Handler {
     }
 
     isJavaRuntimePresent() {
-        return fs.existsSync(`${files.getBaseDir()}/bin/launcherlogic/runtime`);
+        return fs.existsSync(`${this.getBinDirectory()}/launcherlogic/runtime`);
     }
 
     getJavaExecuteable() {
-        return `${files.getBaseDir()}/bin/launcherlogic/runtime/bin/java`;
+        return `${this.getBinDirectory()}//launcherlogic/runtime/bin/java`;
     }
 
     getJavaDownloadDirectory() {
-        return `${files.getBaseDir()}/bin/launcherlogic/`;
+        return `${this.getBinDirectory()}/launcherlogic/`;
+    }
+
+    getBinDirectory() {
+        return `${homedir}/.lclplauncher/bin`;
     }
 
     getJavaDownloadLink() {
@@ -48,14 +53,18 @@ class WinHandler extends Handler {
         return "https://github.com/AdoptOpenJDK/openjdk14-binaries/releases/download/jdk14u-2020-07-28-07-34/OpenJDK14U-jdk_x64_windows_hotspot_2020-07-28-07-34.zip";
     }
 
+    getJavaExecuteable() {
+        return `${files.getBaseDir()}\\bin\\launcherlogic\\runtime\\bin\\java.exe`;
+    }
+
     getMinecraftLauncherPath() {
         return "C:\\Program Files (x86)\\Minecraft Launcher\\MinecraftLauncher.exe";
     }
 
-    getJavaExecuteable() {
-        return `${files.getBaseDir()}/bin/launcherlogic/runtime/bin/java.exe`;
+    getBinDirectory() {
+        return `${files.getBaseDir()}\\bin`;
     }
-
+    
 }
 
 let handler;
@@ -93,8 +102,13 @@ function getJavaExecuteable() {
     return handler.getJavaExecuteable();
 }
 
+function getBinDirectory() {
+    return handler.getBinDirectory();
+}
+
 exports.isJavaRuntimePresent = isJavaRuntimePresent;
 exports.getJavaDownloadLink = getJavaDownloadLink;
 exports.getJavaDownloadDirectory = getJavaDownloadDirectory;
 exports.getMinecraftLauncherPath = getMinecraftLauncherPath;
 exports.getJavaExecuteable = getJavaExecuteable;
+exports.getBinDirectory = getBinDirectory;

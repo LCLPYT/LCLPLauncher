@@ -9,7 +9,11 @@
     "pack": "electron-builder --dir",
     "dist": "electron-builder"
   },
-  "author": "LCLP",
+  "author": {
+    "name": "LCLP",
+    "email": "lukas@lclpnet.work",
+    "url": "https://lclpnet.work"
+  },
   "license": "MIT",
   "build": {
     "publish": [
@@ -39,9 +43,16 @@
       ]
     },
     "linux": {
-      "target": [
-        "AppImage",
-        "deb"
+      "target": ["deb", "AppImage"],
+      "icon": "build/icon.icns",
+      "files": [
+        "!bin/*", "!dist/*",
+        "!**/node_modules/*/{CHANGELOG.md,README.md,README,readme.md,readme}",
+        "!**/node_modules/*/{test,__tests__,tests,powered-test,example,examples}",
+        "!**/{.DS_Store,.git,.hg,.svn,CVS,RCS,SCCS,.gitignore,.gitattributes}",
+        "!**/{__pycache__,thumbs.db,.flowconfig,.idea,.vs,.nyc_output}",
+        "!**/{appveyor.yml,.travis.yml,circle.yml}",
+        "!**/{npm-debug.log,yarn.lock,.yarn-integrity,.yarn-metadata.json}"
       ]
     },
     "win": {

@@ -263,7 +263,7 @@
             let path = osHooks.getMinecraftLauncherPath();
             if(!fs.existsSync(path)) alert("Konnte den Minecraft Launcher nicht automatisch öffnen. Bitte öffne den Minecraft Launcher manuell um zu spielen.");
             else {
-                let args = ["-jar", "./bin/launcherlogic/LauncherLogic.jar",
+                let args = ["-jar", `${osHooks.getBinDirectory()}/launcherlogic/LauncherLogic.jar`,
                 "preparePlay",
                 "ls5"]
                 let preparePlay = cp.spawnSync(osHooks.getJavaExecuteable(), args, {});

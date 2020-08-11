@@ -38,6 +38,7 @@
         });
 
         ipcRenderer.on("download-progress", (event, progress) => {
+            console.log(progress);
             progressDisplay.text(`${Math.floor(progress.percent * 100)}%`);
         });
 
