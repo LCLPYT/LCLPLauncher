@@ -11,6 +11,8 @@ let keepAlive = false;
 
 log.info('Starting LCLPLauncher...');
 
+console.log("Running LCLPLauncher from " + app.getAppPath());
+
 const gotTheLock = app.requestSingleInstanceLock()
 
 if (!gotTheLock) {
