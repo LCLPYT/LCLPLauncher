@@ -43,10 +43,13 @@
       ]
     },
     "linux": {
-      "target": ["AppImage"],
+      "target": [
+        "AppImage"
+      ],
       "icon": "build/icon.icns",
       "files": [
-        "!bin/*", "!dist/*",
+        "!bin/*",
+        "!dist/*",
         "!**/node_modules/*/{CHANGELOG.md,README.md,README,readme.md,readme}",
         "!**/node_modules/*/{test,__tests__,tests,powered-test,example,examples}",
         "!**/{.DS_Store,.git,.hg,.svn,CVS,RCS,SCCS,.gitignore,.gitattributes}",
@@ -59,7 +62,8 @@
       "target": "nsis",
       "icon": "build/icon.ico",
       "files": [
-        "!bin/*", "!dist/*",
+        "!bin/*",
+        "!dist/*",
         "!**/node_modules/*/{CHANGELOG.md,README.md,README,readme.md,readme}",
         "!**/node_modules/*/{test,__tests__,tests,powered-test,example,examples}",
         "!**/{.DS_Store,.git,.hg,.svn,CVS,RCS,SCCS,.gitignore,.gitattributes}",
@@ -78,14 +82,12 @@
     "electron-builder": "^22.6.0"
   },
   "dependencies": {
-    "bootstrap": "^4.4.1",
     "decompress": "^4.2.1",
     "electron-dl": "^3.0.2",
     "electron-log": "^4.1.2",
     "electron-store": "^5.1.1",
     "electron-updater": "^4.3.1",
     "https": "^1.0.0",
-    "material-design-icons": "^3.0.1",
     "md5-file": "^5.0.0",
     "yargs": "^15.3.1"
   }
