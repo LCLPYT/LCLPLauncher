@@ -35,7 +35,7 @@ async function latestForgeInstaller(callback) {
 }
 
 async function latestLauncherLogic(callback) {
-    let resp = await getContent("https://raw.githubusercontent.com/LCLPYT/LauncherLogic/master/LauncherLogic/latest.json");
+    let resp = await getContent("https://raw.githubusercontent.com/LCLPYT/LauncherLogic/master/latest.json");
     let json = JSON.parse(resp);
     let path = `${osHooks.getBinDirectory()}/launcherlogic/LauncherLogic.jar`;
 
