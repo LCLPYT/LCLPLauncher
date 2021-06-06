@@ -1,4 +1,4 @@
-const { app, BrowserWindow, ipcMain } = require('electron')
+const { app, BrowserWindow, ipcMain, nativeImage } = require('electron')
 const log = require("electron-log");
 const { autoUpdater } = require("electron-updater")
 const server = require("./js/server");
@@ -117,7 +117,7 @@ function createWindow() {
     webPreferences: {
       nodeIntegration: true
     },
-    icon: "resources/img/logo.png",
+    icon: nativeImage.createFromPath("resources/img/logo.png"),
     show: false,
     frame: true
   })
@@ -145,7 +145,7 @@ function createUpdateWindow() {
     webPreferences: {
       nodeIntegration: true
     },
-    icon: "resources/img/logo.png",
+    icon: nativeImage.createFromPath("resources/img/logo.png"),
     show: false,
     frame: false
   })
@@ -166,7 +166,7 @@ function createPostInstallWindow() {
     webPreferences: {
       nodeIntegration: true
     },
-    icon: "resources/img/logo.png",
+    icon: nativeImage.createFromPath("resources/img/logo.png"),
     show: false,
     frame: false
   });
