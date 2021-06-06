@@ -38,11 +38,11 @@ class Handler {
 class LinuxHandler extends Handler {
 
     getJavaDownloadLink() {
-        return "https://github.com/AdoptOpenJDK/openjdk14-binaries/releases/download/jdk14u-2020-07-28-07-34/OpenJDK14U-jdk_x64_linux_hotspot_2020-07-28-07-34.tar.gz";
+        return "https://github.com/AdoptOpenJDK/openjdk16-binaries/releases/download/jdk16u-2021-05-08-12-45/OpenJDK16U-jre_x64_linux_hotspot_2021-05-08-12-45.tar.gz";
     }
 
     getMinecraftLauncherPath() {
-        return "/usr/bin/minecraft-launcher";
+        return ["/usr/bin/minecraft-launcher"];
     }
 
 }
@@ -50,7 +50,7 @@ class LinuxHandler extends Handler {
 class WinHandler extends Handler {
 
     getJavaDownloadLink() {
-        return "https://github.com/AdoptOpenJDK/openjdk14-binaries/releases/download/jdk14u-2020-07-28-07-34/OpenJDK14U-jdk_x64_windows_hotspot_2020-07-28-07-34.zip";
+        return "https://github.com/AdoptOpenJDK/openjdk16-binaries/releases/download/jdk16u-2021-05-08-12-45/OpenJDK16U-jre_x64_windows_hotspot_2021-05-08-12-45.zip";
     }
 
     getJavaExecuteable() {
@@ -58,7 +58,7 @@ class WinHandler extends Handler {
     }
 
     getMinecraftLauncherPath() {
-        return "C:\\Program Files (x86)\\Minecraft Launcher\\MinecraftLauncher.exe";
+        return ["C:\\Program Files (x86)\\Minecraft Launcher\\MinecraftLauncher.exe", "C:\\Program Files (x86)\\Minecraft\\MinecraftLauncher.exe"];
     }
 
     getBinDirectory() {

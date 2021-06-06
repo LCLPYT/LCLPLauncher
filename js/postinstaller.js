@@ -18,9 +18,9 @@ function isPostInstallNeeded(callback) {
 }
 
 async function latestForgeInstaller(callback) {
-    let resp = await getContent("https://raw.githubusercontent.com/LCLPYT/LauncherLogicForgeInstaller/master/latest.json");
+    let resp = await getContent("https://lclpnet.work/lclplauncher/extra/forge_installer/info");
     let json = JSON.parse(resp);
-    let path = `${osHooks.getBinDirectory()}/launcherlogic/launcherlogic-forge_installer.jar`;
+    let path = `${osHooks.getBinDirectory()}/launcherlogic/launcher-logic-forge-installer.jar`;
 
     if(!fs.existsSync(path)) {
         hasFI = false;
@@ -35,9 +35,9 @@ async function latestForgeInstaller(callback) {
 }
 
 async function latestLauncherLogic(callback) {
-    let resp = await getContent("https://raw.githubusercontent.com/LCLPYT/LauncherLogic/master/latest.json");
+    let resp = await getContent("https://lclpnet.work/lclplauncher/extra/launcher_logic/info");
     let json = JSON.parse(resp);
-    let path = `${osHooks.getBinDirectory()}/launcherlogic/LauncherLogic.jar`;
+    let path = `${osHooks.getBinDirectory()}/launcherlogic/launcher-logic.jar`;
 
     if(!fs.existsSync(path)) {
         hasLL = false;
@@ -78,8 +78,7 @@ function postInstall() {
     if(!status.ll) queue.push(downloadLL);
     if(!status.java) queue.push(downloadJava);
 
-
-    console.log("postInstall: ", queue);
+    console.log(queue);
 
     nextQueueItem(null);
 }
@@ -122,15 +121,15 @@ function downloadJava(container) {
 function downloadFI(container) {
     if(container != null) container.innerHTML = "Zusätzliches herunterladen...";
 
-    let pathToTmp = path.resolve(osHooks.getJavaDownloadDirectory(), "launcherlogic-forge_installer.jar");
+    let pathToTmp = path.resolve(osHooks.getJavaDownloadDirectory(), `launcher-logic-forge-installer.jar`);
     if(fs.existsSync(pathToTmp)) fs.unlinkSync(pathToTmp);
 
     ipcRenderer.send("download", {
-        url: "https://github.com/LCLPYT/LauncherLogicForgeInstaller/releases/latest/download/LauncherLogicForgeInstaller.jar",
+        url: `https://lclpnet.work/lclplauncher/extra/forge_installer/latest`,
         name: "fi",
         properties: {
             directory: osHooks.getJavaDownloadDirectory(),
-            filename: "launcherlogic-forge_installer.jar"
+            filename: `launcher-logic-forge-installer.jar`
         }
     });
 }
@@ -138,30 +137,28 @@ function downloadFI(container) {
 function downloadLL(container) {
     if(container != null) container.innerHTML = "Zusätzliches herunterladen...";
 
-    let pathToTmp = path.resolve(osHooks.getJavaDownloadDirectory(), "LauncherLogic.jar");
+    let pathToTmp = path.resolve(osHooks.getJavaDownloadDirectory(), `launcher-logic.jar`);
     if(fs.existsSync(pathToTmp)) fs.unlinkSync(pathToTmp);
 
     ipcRenderer.send("download", {
-        url: "https://github.com/LCLPYT/LauncherLogic/releases/latest/download/LauncherLogic.jar",
+        url: `https://lclpnet.work/lclplauncher/extra/launcher_logic/latest`,
         name: "ll",
         properties: {
             directory: osHooks.getJavaDownloadDirectory(),
-            filename: "LauncherLogic.jar"
+            filename: `launcher-logic.jar`
         }
     });
 }
 
 function verifyJavaCompatible(container) {
-    let llPath = `${osHooks.getBinDirectory()}/launcherlogic/LauncherLogic.jar`;
+    let llPath = `${osHooks.getBinDirectory()}/launcherlogic/launcher-logic.jar`;
     if(!fs.existsSync(llPath)) return;
 
     const child_process = require("child_process");
 
     console.log("Starting subprocess...");
-    let command = ["-jar", llPath, 
-        "echo"];
-    console.log(`Executing: ${osHooks.getJavaExecuteable()}`);
-    console.log(`Arguments: ${command}`);
+    let command = ["-jar", llPath, "echo"];
+    console.log(`Exec: ${osHooks.getJavaExecuteable()} ${command.join(' ')}`);
     let child = child_process.spawn(osHooks.getJavaExecuteable(), command, {
         stdio: "ignore", detached: true
     }, (err, stdout, stderr) => {

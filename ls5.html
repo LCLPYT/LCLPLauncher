@@ -260,8 +260,17 @@
                 return;
             }
 
-            let path = osHooks.getMinecraftLauncherPath();
-            if(!fs.existsSync(path)) alert("Konnte den Minecraft Launcher nicht automatisch öffnen. Bitte öffne den Minecraft Launcher manuell um zu spielen.");
+            let paths = osHooks.getMinecraftLauncherPath();
+            let path = undefined;
+            paths.some(p => {
+                if(fs.existsSync(p)) {
+                    path = p;
+                    return true;
+                }
+                return false;
+            });
+
+            if(path === undefined) alert("Konnte den Minecraft Launcher nicht automatisch öffnen. Bitte öffne den Minecraft Launcher manuell um zu spielen.");
             else {
                 let args = ["-jar", `${osHooks.getBinDirectory()}/launcherlogic/LauncherLogic.jar`,
                 "preparePlay",
@@ -288,16 +297,27 @@
         <img src="resources/img/ls5/lclpserver5.png" alt="LCLPServer 5.0 Logo" class="fadein mx-auto mt-5" style="vertical-align: middle; height: 100%">
     </div>
     
-    <div class="container-fluid p-5">
+    <div class="container-fluid px-5" style="margin-top: 25px;">
         <h1 class="d-inline align-middle">LCLPServer 5.0 - </h1>
-        <h3 class="text-light d-inline align-middle" id="installationTitle">Noch nicht installiert</h3>
-        <button id="installButton" class="btn btn-lg btn-primary d-inline float-right" style="font-size: 20px;"><b>Installieren</b></button>
+        <h3 class="text-light d-inline align-middle" style="position: relative; top: 1px" id="installationTitle">Noch nicht installiert</h3>
+        <button id="installButton" class="btn btn-lg btn-primary d-inline float-right" style="font-size: 20px; position: relative; top: 8px; right: 20px;"><b>Installieren</b></button>
         <hr class="bg-light">
-        <p class="text-light" style="font-size: 20px;" id="installationDescription">
-            Der LCLPServer 5.0 Client ist noch nicht auf diesem Computer installiert.<br>
-            Wurde der Client woanders installiert? Dann klicke 
-            <a href="#" class="btn-success rounded p-1" onclick="event.preventDefault(); openInstallFinderDialog()"><code>hier</code></a>.
-        </p>
+        <div class="row">
+            <div class="col">
+                <p class="text-light" style="font-size: 20px;" id="installationDescription">
+                    Der LCLPServer 5.0 Client ist noch nicht auf diesem Computer installiert.<br>
+                    Wurde der Client woanders installiert? Dann klicke 
+                    <a href="#" class="btn-success rounded p-1" onclick="event.preventDefault(); openInstallFinderDialog()"><code>hier</code></a>.
+                </p>
+            </div>
+            <div class="col col-lg-5">
+                <h3>News</h3>
+                <iframe class="shadow" width="560" height="315" src="https://www.youtube.com/embed/VpJMviHH2gs" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+                <p>
+                    Es gibt nun Pixies! Sie werden einen heilen können und man wird sie sogar als Begleiter haben können!
+                </p>
+            </div>
+        </div>
     </div>
 
     <!-- locate existing installation modal -->

@@ -17,14 +17,13 @@ function launchUpdateCheckerSubprocess(installDir, port) {
     const child_process = require("child_process");
 
     console.log("Starting subprocess...");
-    let command = ["-jar", `${osHooks.getBinDirectory()}/launcherlogic/LauncherLogic.jar`, 
+    let command = ["-jar", `${osHooks.getBinDirectory()}/launcherlogic/launcher-logic.jar`, 
         "checkUpdate", 
         "ls5", 
         installDir, 
         `--progress-callback=localhost:${port}`, 
         "--debug"];
-    console.log(`Executing: ${osHooks.getJavaExecuteable()}`);
-    console.log(`Arguments: ${command}`);
+    console.log(`Exec: ${osHooks.getJavaExecuteable()} ${command.join(' ')}`);
     let child = child_process.spawn(osHooks.getJavaExecuteable(), command, {
         stdio: "ignore", detached: true
     }, (err, stdout, stderr) => {
@@ -55,7 +54,7 @@ function launchSubprocess(installDir, port) {
     const child_process = require("child_process");
 
     console.log("Starting subprocess...");
-    let command = ["-jar", `${osHooks.getBinDirectory()}/launcherlogic/LauncherLogic.jar`, 
+    let command = ["-jar", `${osHooks.getBinDirectory()}/launcherlogic/launcher-logic.jar`, 
         "install", 
         "ls5", 
         installDir, 
@@ -64,9 +63,8 @@ function launchSubprocess(installDir, port) {
         "--java-exe",
         `${osHooks.getJavaExecuteable()}`,
         "--launcher-forge-installer-jar",
-        `${osHooks.getBinDirectory()}/launcherlogic/launcherlogic-forge_installer.jar`];
-    console.log(`Executing: ${osHooks.getJavaExecuteable()}`);
-    console.log(`Arguments: ${command}`);
+        `${osHooks.getBinDirectory()}/launcherlogic/launcher-logic-forge-installer.jar`];
+    console.log(`Exec: ${osHooks.getJavaExecuteable()} ${command.join(' ')}`);
     let child = child_process.spawn(osHooks.getJavaExecuteable(), command, {
         stdio: "ignore", detached: true
     }, (err, stdout, stderr) => {
