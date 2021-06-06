@@ -19,7 +19,14 @@ function isPostInstallNeeded(callback) {
 
 async function latestForgeInstaller(callback) {
     let resp = await getContent("https://lclpnet.work/lclplauncher/extra/forge_installer/info");
-    let json = JSON.parse(resp);
+    let json;
+    try {
+        json = JSON.parse(resp);
+    } catch($err) {
+        hasFI = false;
+        callback(hasFI);
+        return;
+    }
     let path = `${osHooks.getBinDirectory()}/launcherlogic/launcher-logic-forge-installer.jar`;
 
     if(!fs.existsSync(path)) {
@@ -36,7 +43,14 @@ async function latestForgeInstaller(callback) {
 
 async function latestLauncherLogic(callback) {
     let resp = await getContent("https://lclpnet.work/lclplauncher/extra/launcher_logic/info");
-    let json = JSON.parse(resp);
+    let json;
+    try {
+        json = JSON.parse(resp);
+    } catch($err) {
+        hasLL = false;
+        callback(hasLL);
+        return;
+    }
     let path = `${osHooks.getBinDirectory()}/launcherlogic/launcher-logic.jar`;
 
     if(!fs.existsSync(path)) {
