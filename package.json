@@ -8,13 +8,15 @@
   "license": "MIT",
   "private": true,
   "devDependencies": {
-    "copyfiles": "^2.4.1",
     "electron": "^13.1.1",
-    "typescript": "^4.3.2"
+    "electron-webpack": "^2.8.2",
+    "typescript": "^4.3.2",
+    "webpack": "^4.42.1"
   },
-  "dependencies": {},
+  "dependencies": {
+    "source-map-support": "^0.5.19"
+  },
   "scripts": {
-    "compile": "tsc && copyfiles -f src/index.html build",
-    "start": "npm run compile && electron ."
+    "dev": "electron-webpack dev"
   }
 }
