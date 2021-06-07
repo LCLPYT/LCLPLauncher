@@ -13,7 +13,8 @@ function createMainWindow(): BrowserWindow {
         webPreferences: {
             nodeIntegration: true,
             contextIsolation: false
-        }
+        },
+        show: false
     });
     
     if (isDevelopment) {
@@ -30,6 +31,8 @@ function createMainWindow(): BrowserWindow {
         window.focus();
         setImmediate(() => window.focus());
     });
+
+    window.once('ready-to-show', () => window.show());
     
     return window;
 }
