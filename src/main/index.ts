@@ -6,9 +6,9 @@ import * as path from 'path'
 const isDevelopment = process.env.NODE_ENV !== 'production';
 
 // global reference to mainWindow (necessary to prevent window from being garbage collected)
-let mainWindow;
+let mainWindow: BrowserWindow | null;
 
-function createMainWindow() {
+function createMainWindow(): BrowserWindow {
     const window = new BrowserWindow({
         webPreferences: {
             nodeIntegration: true,
@@ -21,7 +21,7 @@ function createMainWindow() {
         window.loadURL(`http://localhost:${process.env.ELECTRON_WEBPACK_WDS_PORT}`).catch(e => console.error(e));
     } else {
         const indexHTML = path.join(__dirname + '/index.html');
-        win.loadFile(indexHTML).catch(e => console.error(e));
+        window.loadFile(indexHTML).catch(e => console.error(e));
     }
     
     window.on('closed', () => mainWindow = null);
