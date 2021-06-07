@@ -1,0 +1,20 @@
+{
+  "name": "lclplauncher",
+  "version": "2.0.0",
+  "description": "LCLP's game launcher.",
+  "main": "build/index.js",
+  "repository": "git@github.com:LCLPYT/LCLPLauncher.git",
+  "author": "LCLP <lukas@lclpnet.work>",
+  "license": "MIT",
+  "private": true,
+  "devDependencies": {
+    "copyfiles": "^2.4.1",
+    "electron": "^13.1.1",
+    "typescript": "^4.3.2"
+  },
+  "dependencies": {},
+  "scripts": {
+    "compile": "tsc && copyfiles -f src/index.html build",
+    "start": "npm run compile && electron ."
+  }
+}
