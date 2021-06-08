@@ -12,13 +12,17 @@ function createMainWindow(): BrowserWindow {
     const window = new BrowserWindow({
         webPreferences: {
             nodeIntegration: true,
-            contextIsolation: false
+            contextIsolation: false,
+            enableRemoteModule: true
         },
-        show: false
+        show: false,
+        frame: false
     });
-    
+
+    window.removeMenu();
+
     if (isDevelopment) {
-        // window.webContents.openDevTools();
+        window.webContents.openDevTools();
         window.loadURL(`http://localhost:${process.env.ELECTRON_WEBPACK_WDS_PORT}`).catch(e => console.error(e));
     } else {
         const indexHTML = path.join(__dirname + '/index.html');
