@@ -1,5 +1,4 @@
 import React, { Component } from 'react';
-import '../style/system_font.css';
 
 class Titlebar extends Component {
     render() {
