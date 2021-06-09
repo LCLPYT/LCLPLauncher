@@ -4,6 +4,8 @@ import App from './components/App';
 import Titlebar from './components/Titlebar';
 import { remote } from 'electron';
 
+import 'bootstrap';
+
 export const isDevelopment = process.env.NODE_ENV !== 'production';
 
 // Add content security policy tag when in production
