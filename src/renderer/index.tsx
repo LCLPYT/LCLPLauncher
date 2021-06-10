@@ -3,6 +3,7 @@ import ReactDOM from 'react-dom';
 import App from './components/App';
 import Titlebar from './components/Titlebar';
 import { remote } from 'electron';
+import { registerKeybinds } from './utils/keybinds';
 
 import 'bootstrap';
 
@@ -15,6 +16,9 @@ if (!isDevelopment) {
     contentPolicyMeta.setAttribute('content', "script-src 'self';");
     document.head.appendChild(contentPolicyMeta);
 }
+
+/* Add keybinds */
+registerKeybinds();
 
 /* Create custom toolbar */
 

@@ -22,7 +22,6 @@ function createMainWindow(): BrowserWindow {
     window.removeMenu();
 
     if (isDevelopment) {
-        window.webContents.openDevTools();
         window.loadURL(`http://localhost:${process.env.ELECTRON_WEBPACK_WDS_PORT}`).catch(e => console.error(e));
     } else {
         const indexHTML = path.join(__dirname + '/index.html');
