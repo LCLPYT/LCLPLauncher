@@ -13,6 +13,10 @@ export function registerKeybinds() {
         } else if (key === 'F5' || (key === 'R' && isKeyDown('Control'))) {
             location.reload();
             pressedKeys.length = 0; // focus is lost, so clear pressedKeys manually
+        } else if (key === 'F11') {
+            const win = remote.getCurrentWindow();
+            if(win.isFullScreen()) win.setFullScreen(false);
+            else win.setFullScreen(true);
         }
     });
 }
