@@ -1,11 +1,13 @@
 import React from 'react';
 import ReactDOM from 'react-dom';
-import App from './components/App';
-import Titlebar from './components/Titlebar';
 import { remote } from 'electron';
 import { registerKeybinds } from './utils/keybinds';
+import PageOne from './components/PageOne';
+import Titlebar from './components/Titlebar';
 
-import 'bootstrap';
+import 'bootstrap'; // bootstrap js
+import './style/bootstrap.scss'; // bootstrap css
+import './style/app.css'; // app css for e.g. the title bar
 
 export const isDevelopment = process.env.NODE_ENV !== 'production';
 
@@ -67,4 +69,4 @@ function handleWindowControls() {
 /* Render react components */
 
 ReactDOM.render(<Titlebar />, toolbarDiv);
-ReactDOM.render(<App />, document.getElementById('app'));
+ReactDOM.render(<PageOne />, document.getElementById('app'));
