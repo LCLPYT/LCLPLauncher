@@ -53,8 +53,7 @@ function handleWindowControls() {
 
     // Toggle maximise/restore buttons when maximisation/unmaximisation occurs
     toggleMaxRestoreButtons();
-    win.on('maximize', toggleMaxRestoreButtons);
-    win.on('unmaximize', toggleMaxRestoreButtons);
+    win.on('resize', toggleMaxRestoreButtons);
 
     function toggleMaxRestoreButtons() {
         if (win.isMaximized()) {
