@@ -9,6 +9,7 @@ body {
     overflow-y: hidden;
     margin: 0px;
     height: 100%;
+    /* background-color: #24292E; */
 }
 
 #titlebar {
@@ -50,8 +51,8 @@ body {
 }
 
 #window-title img {
-    width: 20px;
-    height: 20px;
+    width: 18px;
+    height: 18px;
 }
 
 #window-controls {

@@ -2,7 +2,7 @@ import React from 'react';
 import ReactDOM from 'react-dom';
 import { remote } from 'electron';
 import { registerKeybinds } from './utils/keybinds';
-import PageOne from './components/PageOne';
+import App from './components/App';
 import Titlebar from './components/Titlebar';
 
 import 'bootstrap'; // bootstrap js
@@ -69,4 +69,4 @@ function handleWindowControls() {
 /* Render react components */
 
 ReactDOM.render(<Titlebar />, toolbarDiv);
-ReactDOM.render(<PageOne />, document.getElementById('app'));
+ReactDOM.render(<App />, document.getElementById('app'));

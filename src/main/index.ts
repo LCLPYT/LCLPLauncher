@@ -18,7 +18,10 @@ function createMainWindow(): BrowserWindow {
             enableRemoteModule: true
         },
         show: false,
-        frame: false
+        frame: false,
+        backgroundColor: '#24292E',
+        width: 1000,
+        height: 750
     });
 
     window.removeMenu();

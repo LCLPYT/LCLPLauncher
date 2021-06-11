@@ -1,6 +1,13 @@
-// Include any default variable overrides here
+// Your variable overrides go here, e.g.:
+// $h1-font-size: 3rem;
 
-@import "../../../node_modules/bootstrap/scss/bootstrap";
+$body-bg: #24292E;
+
+$dark: #1F2428;
+
+@import "~bootswatch/dist/darkly/variables";
+@import "~bootstrap/scss/bootstrap";
+@import "~bootswatch/dist/darkly/bootswatch";
 
 // Add additional custom code here
 // ...
