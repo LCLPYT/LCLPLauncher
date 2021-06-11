@@ -24,7 +24,7 @@ class Menubar extends Component {
                         </ul>
 
                         <ul className="navbar-nav ms-auto mb-2 mb-lg-0 nodragarea">
-                            <li className="nav-item" style={{ display: 'inline-flex' }}>
+                            <li className="nav-item me-2" style={{ display: 'inline-flex' }}>
                                 <Link to="/one" className="nav-link p-0">
                                     <span className="material-icons" style={{ verticalAlign: 'middle' }}>settings</span>
                                 </Link>
