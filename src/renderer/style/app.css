@@ -134,3 +134,11 @@ body {
 .maximized #max-button {
     display: none;
 }
+
+.dragarea {
+    -webkit-app-region: drag;
+}
+
+.nodragarea {
+    -webkit-app-region: no-drag;
+}

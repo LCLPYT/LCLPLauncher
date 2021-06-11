@@ -7,6 +7,7 @@ import Titlebar from './components/Titlebar';
 
 import 'bootstrap'; // bootstrap js
 import './style/bootstrap.scss'; // bootstrap css
+import './style/material-icons/material-icons.css'; // material-icons
 import './style/app.css'; // app css for e.g. the title bar
 
 export const isDevelopment = process.env.NODE_ENV !== 'production';
