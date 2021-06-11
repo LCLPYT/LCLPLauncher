@@ -8,9 +8,7 @@ class App extends Component {
     render() {
         return (
             <HashRouter>
-                <div className="menu">
-                    <Menubar/>
-                </div>
+                <Menubar/>
                 <Switch>
                     <Route exact path="/" component={ Home }></Route>
                     <Route exact path="/one" component={ Library }></Route>
