@@ -6,7 +6,7 @@ class Menubar extends Component {
         return (
             <header id="header" className="sticky-top">
                 <nav className="navbar navbar-expand-lg navbar-dark bg-dark shadow-sm px-2 py-1 dragarea" style={{ borderTop: '1px solid #1C2125' }}>
-                    <button className="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarSupportedContent"
+                    <button className="navbar-toggler nodragarea" type="button" data-bs-toggle="collapse" data-bs-target="#navbarSupportedContent"
                         aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
                         <span className="navbar-toggler-icon"></span>
                     </button>
