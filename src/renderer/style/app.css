@@ -142,3 +142,15 @@ body {
 .nodragarea {
     -webkit-app-region: no-drag;
 }
+
+.btn-burgermenu {
+    padding: 6px 12px 6px 12px;
+    background-color: rgba(0,0,0,0);
+    border: none;
+    color: rgba(255, 255, 255, 0.6);
+}
+
+.btn-burgermenu:hover {
+    color: #ffffff;
+    transition: color 0.15s ease-in-out, background-color 0.15s ease-in-out, border-color 0.15s ease-in-out;
+}

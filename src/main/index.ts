@@ -21,7 +21,9 @@ function createMainWindow(): BrowserWindow {
         frame: false,
         backgroundColor: '#24292E',
         width: 1000,
-        height: 750
+        height: 750,
+        minWidth: 800,
+        minHeight: 600
     });
 
     window.removeMenu();
