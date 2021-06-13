@@ -2,12 +2,29 @@
 // $h1-font-size: 3rem;
 
 $body-bg: #24292E;
-
 $dark: #1F2428;
+$offcanvas-bg-color: $dark;
+$offcanvas-border-color: lighten($offcanvas-bg-color, 5%);
+$list-group-border-color: lighten($dark, 10%);
 
 @import "~bootswatch/dist/darkly/variables";
 @import "~bootstrap/scss/bootstrap";
 @import "~bootswatch/dist/darkly/bootswatch";
 
 // Add additional custom code here
-// ...
+.separator-border-dark-bottom {
+    border-bottom: 1px solid lighten($dark, 10%);
+}
+
+.separator-border-dark-slim-top {
+    border-top: 1px solid darken($dark, 0.75%);
+}
+
+.danger-link-color:hover {
+    color: $danger;
+    transition: color 0.15s ease-in-out, background-color 0.15s ease-in-out, border-color 0.15s ease-in-out;
+}
+
+.danger-link-color {
+    color: rgba($danger, 0.6)
+}

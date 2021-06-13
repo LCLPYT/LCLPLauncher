@@ -4,7 +4,7 @@ import logo from '../img/logo.svg';
 class Titlebar extends Component {
     render() {
         return (
-            <div id='drag-region'>
+            <div className='dragarea' id='drag-region'>
                 <div id="window-title">
                     <img src={ logo } alt="Logo" />
                     <span>LCLPLauncher</span>
