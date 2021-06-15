@@ -149,7 +149,7 @@ body {
 }
 
 .navigation-link-color:hover {
-    color: #ffffff;
+    color: #fff;
     transition: color 0.15s ease-in-out, background-color 0.15s ease-in-out, border-color 0.15s ease-in-out;
 }
 
@@ -157,6 +157,14 @@ body {
     color: rgba(255, 255, 255, 0.6)
 }
 
+.navigation-link-color-active {
+    color: #fff;
+}
+
 .sidemenu-item {
     font-size: 20px;
+}
+
+a.no-underline {
+    text-decoration: none;
 }
