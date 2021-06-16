@@ -4,13 +4,12 @@ import { remote } from 'electron';
 import { registerKeybinds } from './utils/keybinds';
 import App from './components/App';
 import Titlebar from './components/Titlebar';
+import { isDevelopment } from '../common/env';
 
 import 'bootstrap'; // bootstrap js
 import './style/bootstrap.scss'; // bootstrap css
 import './style/material-icons/material-icons.css'; // material-icons
 import './style/app.css'; // app css for e.g. the title bar
-
-export const isDevelopment = process.env.NODE_ENV !== 'production';
 
 // Add content security policy tag when in production
 if (!isDevelopment) {
