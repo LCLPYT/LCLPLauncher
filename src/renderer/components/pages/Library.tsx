@@ -5,6 +5,7 @@ class Library extends Component {
         return (
             <>
                 <h2>Library</h2>
+                <p>Work in progress</p>
             </>
         );
     }

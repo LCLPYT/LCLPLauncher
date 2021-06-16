@@ -5,6 +5,7 @@ class Settings extends Component {
         return (
             <>
                 <h2>Settings</h2>
+                <p>Settings will be added soon.</p>
             </>
         );
     }
