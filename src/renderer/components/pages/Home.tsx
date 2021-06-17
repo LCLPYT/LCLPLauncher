@@ -29,7 +29,7 @@ class Home extends Component {
                                         <img src={featuredBanner} className="d-block w-100" alt="Featured banner" />
                                         <div className="carousel-item-desc d-none">
                                             <h4 className="card-title">LCLPServer 5.0</h4>
-                                            <p className="card-text">The 5th gen MMO-RPG Minecraft server by LCLPNetwork.</p>
+                                            <p className="card-text">The 5th gen MMO-RPG Minecraft server by LCLPNetwork.<br />Release date unknown.</p>
                                         </div>
                                     </div>
                                 </div>
@@ -44,8 +44,7 @@ class Home extends Component {
                             </div>
                         </div>
                         <div id="featured-description" className="card-footer p-3">
-                            <h4 className="card-title">LCLPServer 5.0</h4>
-                            <p className="card-text">The 5th gen MMO-RPG Minecraft server by LCLPNetwork.</p>
+                            {/* populated by script */}    
                         </div>
                     </div>
                 </div>
@@ -57,10 +56,7 @@ class Home extends Component {
         const featuredSlider = document.getElementById('featuredSlider');
         const featuredDescription = document.getElementById('featured-description');
 
-        featuredSlider?.addEventListener('slide.bs.carousel', event => {
-            const carouselEvent = (event as unknown) as Carousel.Event;
-            const node = carouselEvent.relatedTarget as HTMLElement;
-
+        function updateDescription(node: HTMLElement, transition: boolean) {
             const children = Array.from(node.children);
             let descSource: HTMLElement | null = null;
 
@@ -74,14 +70,26 @@ class Home extends Component {
             if(featuredDescription) {
                 const desc = descSource === null ? '' : descSource.innerHTML;
 
-                featuredDescription.style.opacity = '0';
+                if(transition) {
+                    featuredDescription.style.opacity = '0';
 
-                setTimeout(() => {
+                    setTimeout(() => {
+                        featuredDescription.innerHTML = desc;
+                        featuredDescription.style.opacity = '1';
+                    }, 300);
+                } else {
                     featuredDescription.innerHTML = desc;
-                    featuredDescription.style.opacity = '1';
-                }, 300);
+                }
             }
+        }
+
+        featuredSlider?.addEventListener('slide.bs.carousel', event => {
+            const carouselEvent = (event as unknown) as Carousel.Event;
+            updateDescription(carouselEvent.relatedTarget as HTMLElement, true);
         });
+
+        const activeSlide = document.querySelector('.carousel-item.active');
+        if(activeSlide) updateDescription(activeSlide as HTMLElement, false);
     }
 }
 

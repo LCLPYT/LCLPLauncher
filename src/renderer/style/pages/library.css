@@ -1,0 +1,30 @@
+#libraryContainer {
+    height: 100%;
+}
+
+#librarySidebar {
+    float: left;
+    width: 70px;
+    position: fixed;
+    height: 100%;
+    padding-top: 15px;
+}
+
+#libraryContent {
+    float: right;
+    width: calc(100% - 71px); /* 1px border */
+}
+
+span.tab-icon {
+    font-size: 40px;
+}
+
+.tab-desc {
+    font-size: 12px;
+    position: relative;
+    bottom: 9px;
+}
+
+.tab-btn {
+    text-align: center;
+}

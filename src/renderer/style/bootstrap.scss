@@ -30,7 +30,11 @@ $list-group-border-color: lighten($dark, 10%);
 
 // Add additional custom code here
 .separator-border-dark-bottom {
-    border-bottom: 1px solid lighten($dark, 10%);
+    border-bottom: 1px solid lighten($dark, 7%);
+}
+
+.separator-border-dark-right {
+    border-right: 1px solid lighten($dark, 7%);
 }
 
 .separator-border-dark-slim-top {

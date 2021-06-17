@@ -114,7 +114,9 @@ body {
 #app {
     height: calc(100% - 32px);
     margin-top: 32px;
-    overflow-y: auto;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
 }
 
 .maximized #titlebar {
@@ -185,4 +187,9 @@ a[href^="http://"],
 a[href^="https://"],
 a[href^="ftp://"] {
     -webkit-user-drag: auto;
+}
+
+#pageContent {
+    flex-grow: 1;
+    overflow-y: auto;
 }

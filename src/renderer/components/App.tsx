@@ -11,14 +11,14 @@ class App extends Component {
         return (
             <HashRouter>
                 <Menubar/>
-                <Switch>
-                    <Route exact path="/" render={() => {
-                        return (<Redirect to="/home" />);
-                    }} />
-                    <Route exact path="/home" component={ Home } />
-                    <Route exact path="/library" component={ Library } />
-                    <Route exact path="/settings" component={ Settings } />
-                </Switch>
+                <div id="pageContent">
+                    <Switch>
+                        <Route exact path="/" render={() => (<Redirect to="/home" />)} />
+                        <Route exact path="/home" component={ Home } />
+                        <Route exact path="/library" component={ Library } />
+                        <Route exact path="/settings" component={ Settings } />
+                    </Switch>
+                </div>
             </HashRouter>
         );
     }
