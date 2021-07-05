@@ -1,0 +1,129 @@
+{
+    "version": "0.1.0",
+    "minLauncherVersion": "2.0.0",
+    "dependencies": [
+        {
+            "id": "java",
+            "version": "16",
+            "allowExternal": true
+        },
+        {
+            "id": "forge-installer",
+            "version": "1.1.0"
+        }
+    ],
+    "variables": {
+        "TEMP": "${DIR}/.temp",
+        "MODS": "${DIR}/mods",
+        "forgeVersionId": "1.16.5-forge-36.1.4",
+        "forgeInstallerUrl": "https://files.minecraftforge.net/maven/net/minecraftforge/forge/1.16.5-36.1.4/forge-1.16.5-36.1.4-installer.jar"
+    },
+    "installation": [
+        {
+            "action": "delete",
+            "path": "${MODS}"
+        },
+        {
+            "action": "downloadArtifacts",
+            "artifacts": [
+                {
+                    "url": "${forgeInstallerUrl}",
+                    "size": 7241792, // size will only be used to calculate progress.
+                    "directory": "${TEMP}",
+                    "name": "forge-installer.jar",
+                    "toVariable": "forgeInstallerPath",
+                    "postActions": [ /* executed after download completes, other downloads will continue; actions will be executed in the given order, synchronously */
+                        {
+                            "action": "installMCForge", /* remember to back up launcher_profiles.json */
+                            "installer": "${forgeInstallerPath}"
+                        },
+                        {
+                            "action": "delete",
+                            "path": "${forgeInstallerPath}"
+                        }
+                    ]
+                },
+                {
+                    "url": "https://lclpnet.work/lclplauncher/installations/ls5/gamedir-resources",
+                    "size": 15110915,
+                    "directory": "${TEMP}",
+                    "name": "game_dir_resources.zip",
+                    "toVariable": "resourcesPath",
+                    "postActions": [
+                        {
+                            "action": "extractZip",
+                            "file": "${resourcesPath}",
+                            "outputDirectory": "${DIR}"
+                        },
+                        {
+                            "action": "delete",
+                            "path": "${resourcesPath}"
+                        }
+                    ]
+                },
+                {
+                    "type": "mcOptifine", /* if set, defines special download property, e.g. dynamic optifine download; TODO: postActions are added by implementation */
+                    "version": "OptiFine_1.16.5_HD_U_G7.jar",
+                    "directory": "${MODS}"
+                },
+                {
+                    "url": "https://lclpnet.work/lclplauncher/installations/ls5/client-mods",
+                    "size": 34879697,
+                    "directory": "${TEMP}",
+                    "name": "provided.zip",
+                    "toVariable": "providedModsPath",
+                    "postActions": [
+                        {
+                            "action": "extractZip",
+                            "file": "${providedModsPath}",
+                            "outputDirectory": "${MODS}"
+                        },
+                        {
+                            "action": "delete",
+                            "path": "${providedModsPath}"
+                        }
+                    ]
+                },
+                {
+                    "url": "https://github.com/LCLPYT/MrCrayfishFurnitureMod/releases/download/7.0.0/furniture-7.0.0-pre19-1.16.4.jar",
+                    "size": 1878095,
+                    "directory": "${MODS}",
+                    "name": "furniture-7.0.0-pre19-1.16.4.jar"
+                },
+                {
+                    "url": "https://github.com/MrCrayfish/GoblinTraders/releases/download/1.3.1-1.16.3/goblintraders-1.3.1-1.16.3.jar",
+                    "size": 416380,
+                    "directory": "${MODS}",
+                    "name": "goblintraders-1.3.1-1.16.3.jar"
+                },
+                {
+                    "url": "https://github.com/LCLPYT/LCLPUpdateChecker/releases/download/1.3/lclpupdater-1.3.2.jar",
+                    "size": 56013,
+                    "directory": "${MODS}",
+                    "name": "lclpupdater-1.3.2.jar"
+                },
+                {
+                    "url": "https://github.com/LCLPYT/LCLPMMO/releases/download/1.6/lclpmmo-1.6.17.jar",
+                    "size": 8317913,
+                    "directory": "${MODS}",
+                    "name": "lclpmmo-1.6.17.jar"
+                },
+                {
+                    "url": "https://github.com/LCLPYT/CoreBase/releases/download/1.6/corebase-1.6.15.jar",
+                    "size": 215539,
+                    "directory": "${MODS}",
+                    "name": "corebase-1.6.15.jar"
+                }
+            ]
+        },
+        {
+            "action": "addMCProfile",
+            "profile": {
+                "name": "LCLPServer 5.0",
+                "lastVersionId": "${forgeVersionId}",
+                "gameDirectory": "${DIR}",
+                "icon": "https://lclpnet.work/lclplauncher/installations/ls5/profile-icon" /* can be url or file */
+            }
+        }
+    ]
+}
