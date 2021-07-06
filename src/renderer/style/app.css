@@ -193,3 +193,7 @@ a[href^="ftp://"] {
     flex-grow: 1;
     overflow-y: auto;
 }
+
+.ws-pre-line {
+    white-space: pre-line;
+}
