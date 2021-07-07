@@ -1,5 +1,8 @@
 import React, { Component } from 'react';
 import { Carousel } from 'bootstrap';
+import tippy, { followCursor } from 'tippy.js';
+import 'tippy.js/dist/tippy.css';
+import 'tippy.js/animations/scale.css';
 
 class FeaturedItems extends Component<{ items: FeaturedItem[] }> {
     render() {
@@ -83,18 +86,16 @@ class FeaturedItems extends Component<{ items: FeaturedItem[] }> {
 }
 
 class CarouselSlide extends Component<{ first: boolean, item: FeaturedItem }> {
+    uniqueId?: string;
+
     render() {
         const item = this.props.item;
+        this.uniqueId = `${item.id}`;
+        const img = <img src={item.banner} id={`banner${this.uniqueId}`} className={'d-block w-100 featured-banner' + (item.link ? ' pointer-click' : '')} alt="Featured banner" />;
         return (
             <div className={'carousel-item' + (this.props.first ? ' active' : '')}>
                 {
-                    item.link ? (
-                        <a href={item.link}>
-                            <img src={item.banner} className="d-block w-100 pointer-click" alt="Featured banner" />
-                        </a>
-                    ) : (
-                        <img src={item.banner} className="d-block w-100" alt="Featured banner" />
-                    )
+                    item.link ? <a href={item.link}>{img}</a> : img
                 }
                 <div className="carousel-item-desc d-none">
                     <h4 className="card-title text-lighter">{item.title}</h4>
@@ -102,6 +103,21 @@ class CarouselSlide extends Component<{ first: boolean, item: FeaturedItem }> {
                 </div>
             </div>
         );
+    }
+
+    componentDidMount() {
+        if (this.uniqueId) {
+            const img = document.getElementById(`banner${this.uniqueId}`);
+            if (img && img.parentElement && img.parentElement instanceof HTMLAnchorElement) {
+                tippy(img, {
+                    content: 'Click to view',
+                    followCursor: true,
+                    plugins: [followCursor],
+                    animation: 'scale',
+                    delay: [300, 0]
+                });
+            }
+        }
     }
 }
 

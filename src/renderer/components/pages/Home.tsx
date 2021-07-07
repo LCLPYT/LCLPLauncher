@@ -20,7 +20,7 @@ class Home extends Component {
                 <div className="container-lg mt-3">
                     <div id="previewFrame" />
                     <div className="mt-5">
-                        <h5 className="text-light">Actions</h5>
+                        <h5 className="text-light">Quick Navigation</h5>
                         <div className="row action-list">
                             <HomeAction icon="search" name="Search games" link="/library/search" />
                             <HomeAction icon="apps" name="My apps" link="/library/apps" />
@@ -38,7 +38,7 @@ class HomeAction extends Component<{ icon: string, name: string, link: string }>
         return (
             <div className="col">
                 <Link to={this.props.link} className="navigation-link-color-dimmed no-underline">
-                    <div className="card py-3 text-center shadow">
+                    <div className="card py-3 text-center shadow action-card">
                         <span className="material-icons action-card-icon">{this.props.icon}</span>
                         <span>{this.props.name}</span>
                     </div>

@@ -13,3 +13,20 @@
 span.action-card-icon {
     font-size: 85px;
 }
+
+.action-card {
+    transition: .2s;
+}
+
+.action-card:hover {
+    color: rgba(255, 255, 255, 0.85);
+    transform: scale(1.05);
+}
+
+.featured-banner {
+    transition: .75s;
+}
+
+.featured-banner:hover {
+    transform: scale(1.1);
+}
