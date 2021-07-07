@@ -1,42 +1,21 @@
 import React, { Component } from 'react';
 import { Carousel } from 'bootstrap';
 
-class FeaturedItems extends Component<Properties> {
+class FeaturedItems extends Component<{ items: FeaturedItem[] }> {
     render() {
         return (
             <div className="card shadow">
-                <div className="card-header text-muted">Featured</div>
+                <div className="card-header text-light">Featured</div>
                 <div className="card-body p-0">
                     <div id="featuredSlider" className="carousel slide" data-bs-ride="carousel">
                         <div className="carousel-indicators">
                             {
-                                this.props.items.map((item, index) => {
-                                    let first = index <= 0;
-                                    return <button key={item.id} type="button" data-bs-target="#featuredSlider" data-bs-slide-to={index} aria-label={item.title} className={first ? "active" : undefined} aria-current={first ? "true" : undefined} />
-                                })
+                                this.props.items.map((item, index) => <CarouselSlideButton item={item} index={index} key={item.id} />)
                             }
                         </div>
                         <div className="carousel-inner">
                             {
-                                this.props.items.map((item, index) => {
-                                    return (
-                                        <div key={item.id} className={'carousel-item' + (index <= 0 ? ' active' : '')}>
-                                            {
-                                                item.link ? (
-                                                    <a href={item.link}>
-                                                        <img src={item.banner} className="d-block w-100 pointer-click" alt="Featured banner" />
-                                                    </a>
-                                                ) : (
-                                                    <img src={item.banner} className="d-block w-100" alt="Featured banner" />
-                                                )
-                                            }
-                                            <div className="carousel-item-desc d-none">
-                                                <h4 className="card-title">{item.title}</h4>
-                                                <p className="card-text ws-pre-line">{item.description}</p>
-                                            </div>
-                                        </div>
-                                    );
-                                })
+                                this.props.items.map((item, index) => <CarouselSlide item={item} first={index <= 0} key={item.id} />)
                             }
                         </div>
                         <button className="carousel-control-prev" type="button" data-bs-target="#featuredSlider" data-bs-slide="prev">
@@ -103,14 +82,35 @@ class FeaturedItems extends Component<Properties> {
     }
 }
 
-export async function fetchFeaturedItems(): Promise<FeaturedItem[]> {
-    const response = await fetch('https://lclpnet.work/api/lclplauncher/featured');
-    const data = await response.json();
-    return data as FeaturedItem[];
+class CarouselSlide extends Component<{ first: boolean, item: FeaturedItem }> {
+    render() {
+        const item = this.props.item;
+        return (
+            <div className={'carousel-item' + (this.props.first ? ' active' : '')}>
+                {
+                    item.link ? (
+                        <a href={item.link}>
+                            <img src={item.banner} className="d-block w-100 pointer-click" alt="Featured banner" />
+                        </a>
+                    ) : (
+                        <img src={item.banner} className="d-block w-100" alt="Featured banner" />
+                    )
+                }
+                <div className="carousel-item-desc d-none">
+                    <h4 className="card-title text-lighter">{item.title}</h4>
+                    <p className="card-text ws-pre-line text-lighter">{item.description}</p>
+                </div>
+            </div>
+        );
+    }
 }
 
-export type Properties = {
-    items: FeaturedItem[];
+class CarouselSlideButton extends Component<{ item: FeaturedItem, index: number }> {
+    render() {
+        let first = this.props.index <= 0;
+        return <button type="button" data-bs-target="#featuredSlider" data-bs-slide-to={this.props.index} aria-label={this.props.item.title}
+            className={first ? "active" : undefined} aria-current={first ? "true" : undefined} />
+    }
 }
 
 export type FeaturedItem = {
@@ -120,6 +120,12 @@ export type FeaturedItem = {
     link?: string;
     title: string;
     page: number;
+}
+
+export async function fetchFeaturedItems(): Promise<FeaturedItem[]> {
+    const response = await fetch('https://lclpnet.work/api/lclplauncher/featured');
+    const data = await response.json();
+    return data as FeaturedItem[];
 }
 
 export default FeaturedItems;

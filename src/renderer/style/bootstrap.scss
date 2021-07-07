@@ -25,6 +25,20 @@ $offcanvas-border-color: lighten($offcanvas-bg-color, 5%);
 $list-group-border-color: lighten($dark, 10%);
 
 @import "~bootswatch/dist/darkly/variables";
+
+$theme-colors: (
+  "primary":    $primary,
+  "secondary":  $secondary,
+  "success":    $success,
+  "info":       $info,
+  "warning":    $warning,
+  "danger":     $danger,
+  "light":      $light,
+  "dark":       $dark,
+  // custom
+  "lighter": $gray-400
+);
+
 @import "~bootstrap/scss/bootstrap";
 @import "~bootswatch/dist/darkly/bootswatch";
 
@@ -48,4 +62,8 @@ $list-group-border-color: lighten($dark, 10%);
 
 .danger-link-color {
     color: rgba($danger, 0.6)
+}
+
+.action-list {
+    @include row-cols(5);
 }

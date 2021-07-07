@@ -163,6 +163,19 @@ body {
     color: #fff;
 }
 
+.navigation-link-color-dimmed:hover {
+    color: rgba(255, 255, 255, 0.85);
+    transition: color 0.15s ease-in-out, background-color 0.15s ease-in-out, border-color 0.15s ease-in-out;
+}
+
+.navigation-link-color-dimmed {
+    color: rgba(255, 255, 255, 0.6)
+}
+
+.navigation-link-color-dimmed-active {
+    color: rgba(255, 255, 255, 0.9);
+}
+
 .sidemenu-item {
     font-size: 20px;
 }

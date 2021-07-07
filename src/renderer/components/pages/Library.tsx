@@ -12,13 +12,13 @@ class Library extends Component {
                 <div id="libraryContainer">
                     <div id="librarySidebar" className="separator-border-dark-right">
                         <div className="tab-btn mb-1">
-                            <NavLink to="/library/apps" className="navigation-link-color no-underline" activeClassName="navigation-link-color-active">
+                            <NavLink to="/library/apps" className="navigation-link-color-dimmed no-underline" activeClassName="navigation-link-color-dimmed-active">
                                 <span className="material-icons tab-icon">apps</span>
                                 <div className="tab-desc">Apps</div>
                             </NavLink>
                         </div>
                         <div className="tab-btn">
-                            <NavLink to="/library/search" className="navigation-link-color no-underline" activeClassName="navigation-link-color-active">
+                            <NavLink to="/library/search" className="navigation-link-color-dimmed no-underline" activeClassName="navigation-link-color-dimmed-active">
                                 <span className="material-icons tab-icon">search</span>
                                 <div className="tab-desc">Search</div>
                             </NavLink>

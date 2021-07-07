@@ -9,3 +9,7 @@
 .pointer-click {
     cursor: pointer;
 }
+
+span.action-card-icon {
+    font-size: 85px;
+}
