@@ -11,7 +11,7 @@ class App extends Component {
         return (
             <HashRouter>
                 <Menubar/>
-                <div id="pageContent">
+                <div id="pageContent" className="custom-scrollbar">
                     <Switch>
                         <Route exact path="/" render={() => (<Redirect to="/home" />)} />
                         <Route exact path="/home" component={ Home } />

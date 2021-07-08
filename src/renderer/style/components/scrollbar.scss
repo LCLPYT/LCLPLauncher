@@ -1,0 +1,22 @@
+$scrollbarBG: $body-bg;
+$thumbBG: darken($gray-600, 5%);
+
+.custom-scrollbar::-webkit-scrollbar {
+    width: 15px;
+    height: 15px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-corner {
+    background: transparent;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb {
+    background-color: $thumbBG;
+    border-radius: 16px;
+    border: 4px solid transparent;
+    background-clip: content-box;
+}
+
+.custom-scrollbar::-webkit-scrollbar-track {
+    background-color: transparent;
+}

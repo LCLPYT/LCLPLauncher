@@ -7,9 +7,8 @@ import Titlebar from './components/Titlebar';
 import { isDevelopment } from '../common/env';
 
 import 'bootstrap'; // bootstrap js
-import './style/bootstrap.scss'; // bootstrap css
 import './style/material-icons/material-icons.css'; // material-icons
-import './style/app.css'; // app css for e.g. the title bar
+import './style/app.scss'; // general application style
 
 // Add content security policy tag when in production
 if (!isDevelopment) {

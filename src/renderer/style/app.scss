@@ -1,4 +1,9 @@
-/* General application CSS; for example for the custom title bar */
+/* General application style */
+
+@import "bootstrap"; // include bootstrap css
+
+// components
+@import "components/scrollbar";
 
 html {
     height: 100%;
@@ -9,7 +14,6 @@ body {
     overflow-y: hidden;
     margin: 0px;
     height: 100%;
-    /* background-color: #24292E; */
 }
 
 #titlebar {
@@ -146,7 +150,7 @@ body {
 
 .btn-nostyle {
     padding: 6px 12px 6px 12px;
-    background-color: rgba(0,0,0,0);
+    background-color: transparent;
     border: none;
 }
 
