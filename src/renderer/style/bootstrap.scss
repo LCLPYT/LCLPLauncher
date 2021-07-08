@@ -42,7 +42,7 @@ $theme-colors: (
 @import "~bootstrap/scss/bootstrap";
 @import "~bootswatch/dist/darkly/bootswatch";
 
-// Add additional custom code here
+// Add additional custom bootstrap related styling here
 .separator-border-dark-bottom {
     border-bottom: 1px solid lighten($dark, 7%);
 }

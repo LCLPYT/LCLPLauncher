@@ -37,7 +37,7 @@ class Menubar extends Component {
                             </a>
                         </div>
                         <div className="w-100 py-2" style={{ left: '0px', bottom: '0px', position: 'absolute' }}>
-                            <NavLink to="/settings" className="btn-nostyle navigation-link-color float-start no-underline close-menu-on-click" activeClassName="navigation-link-color-active">
+                            <NavLink to="/settings" className="btn-nostyle navigation-link-color float-start no-underline close-menu-on-click" activeClassName="active">
                                 <span className="material-icons" style={{ verticalAlign: 'bottom' }}>settings</span> Settings
                             </NavLink>
                             <button id="menuCloseBtn" className="btn-nostyle danger-link-color float-end" type="button">
