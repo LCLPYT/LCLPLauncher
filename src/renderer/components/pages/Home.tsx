@@ -17,7 +17,7 @@ class Home extends Component {
     render() {
         return (
             <>
-                <div className="container-lg mt-3">
+                <div className="container-lg my-3">
                     <div id="previewFrame" />
                     <div className="mt-5">
                         <h5 className="text-light">Quick Navigation</h5>

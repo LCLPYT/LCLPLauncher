@@ -1,3 +1,6 @@
+// set NODE_ENV correctly for react-router-dom, so it will work in production...
+process.env['NODE_' + 'ENV'] = process.env.NODE_ENV;
+
 import { app, shell, BrowserWindow } from 'electron'
 import * as path from 'path'
 import { isDevelopment } from '../common/env';

@@ -24,7 +24,7 @@ class Library extends Component {
                             </NavLink>
                         </div>
                     </div>
-                    <div id="libraryContent" className="pt-3 ps-3">
+                    <div id="libraryContent" className="py-3 ps-3">
                         <Switch>
                             <Route exact path="/library" render={() => (<Redirect to="/library/apps" />)} />
                             <Route exact path="/library/apps" component={ Apps } />

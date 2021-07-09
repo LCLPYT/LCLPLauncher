@@ -3,7 +3,7 @@ import { NavLink } from 'react-router-dom';
 import { closeCurrentWindow } from '../utils/app';
 import { Offcanvas } from 'bootstrap';
 import logo from '../img/logo.svg';
-import { getAppVersion } from '../../common/env';
+import { getAppVersion, isDevelopment } from '../../common/env';
 
 class Menubar extends Component {
     render() {
@@ -29,6 +29,7 @@ class Menubar extends Component {
                         <img src={logo} alt="Logo" className="me-2" width="40px" height="40px" />
                         <h5 className="offcanvas-title" id="sideMenuLabel">LCLPLauncher</h5>
                         <span className="badge bg-secondary px-1 ms-1 mt-1">v{ getAppVersion() }</span>
+                        { isDevelopment ? (<span className="badge bg-warning px-1 ms-1 mt-1">dev</span>) : '' }
                         <button type="button" className="btn-close text-reset" data-bs-dismiss="offcanvas" aria-label="Close"></button>
                     </div>
                     <div className="offcanvas-body p-0">
