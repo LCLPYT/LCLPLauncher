@@ -1,8 +1,9 @@
 import React, { Component } from 'react';
 import { NavLink } from 'react-router-dom';
-import { getAppVersion, closeCurrentWindow } from '../utils/app';
+import { closeCurrentWindow } from '../utils/app';
 import { Offcanvas } from 'bootstrap';
 import logo from '../img/logo.svg';
+import { getAppVersion } from '../../common/env';
 
 class Menubar extends Component {
     render() {
