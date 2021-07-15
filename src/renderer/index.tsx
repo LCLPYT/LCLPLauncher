@@ -18,9 +18,6 @@ if (!isDevelopment) {
     document.head.appendChild(contentPolicyMeta);
 }
 
-// enable dark mode (required for autocomplete-theme-classic)
-document.body.setAttribute('data-theme', 'dark');
-
 /* Add keybinds */
 registerKeybinds();
 
