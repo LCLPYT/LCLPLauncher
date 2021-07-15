@@ -3,9 +3,9 @@ import React, { Component } from 'react';
 class Apps extends Component {
     render() {
         return (
-            <>
-                <h2>Apps</h2>
-            </>
+            <div className="p-3">
+                <h2 className="text-lighter">Apps</h2>
+            </div>
         );
     }
 }

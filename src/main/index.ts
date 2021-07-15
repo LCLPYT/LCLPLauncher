@@ -5,6 +5,7 @@ import { app, shell, BrowserWindow } from 'electron'
 import * as path from 'path'
 import { isDevelopment } from '../common/env';
 import { isExternalResource } from '../common/urls';
+import { customWords } from './utils/dictionary';
 
 // global reference to mainWindow (necessary to prevent window from being garbage collected)
 let mainWindow: BrowserWindow | null;
@@ -66,6 +67,9 @@ function createMainWindow(): BrowserWindow {
             return { action: 'deny' };
         } else return { action: 'allow' }
     });
+
+    // mixin custom words for spell checking
+    customWords.forEach(word => window.webContents.session.addWordToSpellCheckerDictionary(word));
 
     return window;
 }

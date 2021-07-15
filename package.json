@@ -44,11 +44,14 @@
     "dist:dir": "yarn dist --dir -c.compression=store -c.mac.identity=null"
   },
   "build": {
-    "appId": "lclplauncher",
+    "appId": "work.lclpnet.lclplauncher",
     "productName": "LCLPLauncher",
     "copyright": "Copyright © 2021 LCLP",
     "directories": {
       "buildResources": "build_resources"
+    },
+    "extraMetadata": {
+      "name": "LCLPLauncher"
     },
     "mac": {
       "category": "public.app-category.games"
@@ -69,7 +72,8 @@
     },
     "linux": {
       "target": [
-        "AppImage"
+        "AppImage",
+        "deb"
       ],
       "files": [
         "!bin/*",
