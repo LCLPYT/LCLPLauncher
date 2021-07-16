@@ -2,8 +2,9 @@
     display: block;
     position: fixed;
     height: 32px;
-    width: calc(100% - 2px); /*Compensate for body 1px border*/
+    width: 100%;
     background: #1F2428;
+    top: 0px;
 }
 
 #titlebar #drag-region {
