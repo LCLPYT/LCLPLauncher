@@ -1,11 +1,29 @@
 import React, { Component } from 'react';
 import '../../../style/pages/search.scss';
 
-class Search extends Component {
+interface IProps {
+
+}
+
+interface IState {
+    autoCompleteItems: AppAutoComplete[];
+}
+
+class Search extends Component<IProps, IState> {
+    constructor(props: IProps) {
+        super(props);
+        this.state = {
+            autoCompleteItems: []
+        };
+    }
+
+    private query: string = '';
+
     render() {
         return (
-            <div className="p-3">
-                <h2 className="text-lighter">Search Applications</h2>
+            <div className="container-lg p-3">
+                <h2 className="text-lighter">Search Apps</h2>
+                <p className="text-lighter">Search for app titles, tags, genres or keywords.</p>
                 <div id="autocomplete" className="d-flex align-items-center mt-3">
                     <div className="ac-wrapper-prefix">
                         <button className="ac-submit h-100" id="searchBtn">
@@ -25,6 +43,11 @@ class Search extends Component {
                         </button>
                     </div>
                 </div>
+                <ul id="acItems" className="list-group">
+                    {
+                        this.state.autoCompleteItems.map((item, idx) => <AutoCompleteItem item={item} query={this.query} index={idx} key={item.key} />)
+                    }
+                </ul>
             </div>
         );
     }
@@ -33,10 +56,100 @@ class Search extends Component {
         const clearBtn = document.getElementById('clearBtn');
 
         input.addEventListener('input', () => {
-            console.log('change');
-            if(clearBtn) clearBtn.hidden = input.value.trim().length <= 0;
+            this.query = input.value.trim();
+            if (clearBtn) clearBtn.hidden = this.query.length <= 0;
+            this.onInputChanged(this.query);
         });
-        clearBtn?.addEventListener('click', () => input.value = '');
+        input.addEventListener('focusin', event => {
+            const acItems = document.getElementById('acItems');
+            acItems?.firstElementChild?.classList.add('is-offset');
+        });
+        input.addEventListener('focusout', () => {
+            const acItems = document.getElementById('acItems');
+            acItems?.firstElementChild?.classList.remove('is-offset');
+        });
+        clearBtn?.addEventListener('click', () => {
+            input.value = '';
+            this.onInputChanged('');
+        });
+    }
+
+    private debounceTimer?: NodeJS.Timeout;
+
+    onInputChanged(query: string) {
+        if (this.debounceTimer) clearTimeout(this.debounceTimer);
+
+        const minCharacters = 2;
+        if (query.length < minCharacters) {
+            this.displayAutoComplete([]); // clear items
+            return;
+        }
+
+        const debounce = 300; // ms
+        this.debounceTimer = setTimeout(() => this.doAutoComplete(query), debounce);
+    }
+
+    doAutoComplete(query: string) {
+        fetch(`http://localhost:8000/api/lclplauncher/apps/search?q=${query}&format=short`)
+            .then(response => response.json())
+            .then(result => this.displayAutoComplete(result as AppAutoComplete[]));
+    }
+
+    displayAutoComplete(items: AppAutoComplete[]) {
+        const autocomplete = document.getElementById('autocomplete');
+        if (autocomplete) {
+            if (items.length > 0) autocomplete.classList.add('ac-has-items')
+            else autocomplete.classList.remove('ac-has-items');
+        }
+
+        this.setState({ autoCompleteItems: items });
+    }
+}
+
+type AppAutoComplete = {
+    readonly id: number;
+    readonly key: string;
+    readonly title: string;
+};
+
+class AutoCompleteItem extends Component<{ item: AppAutoComplete, query: string, index: number }> {
+    render() {
+        const first = this.props.index <= 0;
+        const isOffset = first && document.activeElement && document.activeElement.id === 'searchInput';
+        return (
+            <li className={`list-group-item p-2 d-flex align-items-center${isOffset ? ' is-offset' : ''}`}>
+                <img src="https://lclpnet.work/img/ls5/ls5_preview.jpg" alt="App preview" width="120" height="45" />
+                <div className="ms-3 flex-grow-1">{ this.constructTitle() }</div>
+            </li>
+        );
+    }
+
+    constructTitle(): JSX.Element[] {
+        let spanCount = 0;
+
+        function createSpan(content: string, marked: boolean) {
+            return <span key={`sp${spanCount++}`} className={marked ? 'text-warning fw-bold' : 'fw-bold'}>{content}</span>;
+        }
+
+        const title = this.props.item.title;
+        const query = this.props.query;
+
+        const splitIdx = title.toLowerCase().indexOf(query.toLowerCase());
+
+        if(splitIdx < 0) {
+            return [ createSpan(title, false), <span className="badge bg-info ms-2">Matching tags</span> ];
+        } else {
+            const spans: JSX.Element[] = [];
+            
+            if(splitIdx > 0) spans.push(createSpan(title.substring(0, splitIdx), false));
+
+            const splitEnd = splitIdx + query.length;
+            spans.push(createSpan(title.substring(splitIdx, splitEnd), true));
+
+            if(splitEnd < title.length) spans.push(createSpan(title.substring(splitEnd, title.length), false));
+
+            return spans;
+        }
     }
 }
 

@@ -16,7 +16,11 @@ $searchHeight: 44px;
     border: 1px solid $gray-600;
     border-radius: 3px;
     background-color: $gray-700;
-    transition: border-color 0.15s ease-in-out, box-shadow 0.1s ease-in-out;
+    transition: border-color 0.15s ease-in-out, 
+        box-shadow 0.1s ease-in-out,
+        border-radius 0.2s ease-in-out;
+    z-index: 2;
+    position: relative;
 
     &:focus-within {
         border-color: rgba($secondary, 0.85);
@@ -83,4 +87,29 @@ $searchHeight: 44px;
 .ac-clear-icon {
     color: rgba($gray-500, 0.6);
     width: 20px;
+}
+
+li.list-group-item:first-child {
+    border-top: 0;
+    border-top-left-radius: 0;
+    border-top-right-radius: 0;
+    transition: margin-top 0.1s ease-in-out;
+}
+
+li.list-group-item:first-child.is-offset {
+    margin-top: 0.2rem;
+}
+
+#autocomplete.ac-has-items {
+    border-bottom-left-radius: 0;
+    border-bottom-right-radius: 0;
+}
+
+#acItems {
+    z-index: 1;
+}
+
+#acItems .list-group-item {
+    background-color: $gray-700;
+    border-color: $gray-600;
 }
