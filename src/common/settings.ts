@@ -37,10 +37,8 @@ function initDefaults(store: ElectronStore, structure: Structure) {
             const value = keyVal[1];
             if(!isSetting(value)) iterate(value, [...pathSegments, key]);
             else {
-                const setting = <Setting> value;
                 const path = [...pathSegments, key].join('.');
-
-                if(!store.has(path)) store.set(path, setting.default);
+                if(!store.has(path)) store.set(path, value.default);
             }
         });
     };
@@ -49,12 +47,7 @@ function initDefaults(store: ElectronStore, structure: Structure) {
 }
 
 declare type Structure = {
-    backend: Setting,
-    network: {
-        host_live: Setting,
-        host_staging: Setting,
-        host_debug: Setting
-    }
+    [key: string]: Setting | Structure
 }
 
 declare type Setting = {
