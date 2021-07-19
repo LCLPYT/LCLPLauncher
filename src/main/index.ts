@@ -4,8 +4,12 @@ process.env['NODE_' + 'ENV'] = process.env.NODE_ENV;
 import { app, shell, BrowserWindow } from 'electron'
 import * as path from 'path'
 import { isDevelopment } from '../common/env';
+import * as Settings from '../common/settings';
 import { isExternalResource } from '../common/urls';
 import { customWords } from './utils/dictionary';
+
+// init settings
+Settings.init();
 
 // global reference to mainWindow (necessary to prevent window from being garbage collected)
 let mainWindow: BrowserWindow | null;
