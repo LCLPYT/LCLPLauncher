@@ -3,6 +3,7 @@ import { Carousel } from 'bootstrap';
 import tippy, { followCursor } from 'tippy.js';
 import 'tippy.js/dist/tippy.css';
 import 'tippy.js/animations/scale.css';
+import { getBackendHost } from '../../../../common/settings';
 
 class FeaturedItems extends Component<{ items: FeaturedItem[] }> {
     render() {
@@ -139,7 +140,7 @@ export type FeaturedItem = {
 }
 
 export async function fetchFeaturedItems(): Promise<FeaturedItem[]> {
-    const response = await fetch('https://lclpnet.work/api/lclplauncher/featured');
+    const response = await fetch(`${getBackendHost()}/api/lclplauncher/featured`);
     const data = await response.json();
     return data as FeaturedItem[];
 }

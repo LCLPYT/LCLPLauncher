@@ -1,4 +1,5 @@
 import React, { Component } from 'react';
+import { getBackendHost } from '../../../../common/settings';
 import '../../../style/pages/search.scss';
 
 interface IProps {
@@ -90,7 +91,7 @@ class Search extends Component<IProps, IState> {
     }
 
     doAutoComplete(query: string) {
-        fetch(`https://lclpnet.work/api/lclplauncher/apps/search?q=${query}&format=short`)
+        fetch(`${getBackendHost()}/api/lclplauncher/apps/search?q=${query}&format=short`)
             .then(response => response.json())
             .then(result => this.displayAutoComplete(result as AppAutoComplete[]));
     }
@@ -118,7 +119,7 @@ class AutoCompleteItem extends Component<{ item: AppAutoComplete, query: string,
         const isOffset = first && document.activeElement && document.activeElement.id === 'searchInput';
         return (
             <li className={`list-group-item p-2 d-flex align-items-center${isOffset ? ' is-offset' : ''}`}>
-                <img src={`https://lclpnet.work/api/lclplauncher/apps/assets/banner-small/${this.props.item.key}`} alt="App preview" width="120" height="45" />
+                <img src={`${getBackendHost()}/api/lclplauncher/apps/assets/banner-small/${this.props.item.key}`} alt="App preview" width="120" height="45" />
                 <div className="ms-3 flex-grow-1">{ this.constructTitle() }</div>
             </li>
         );

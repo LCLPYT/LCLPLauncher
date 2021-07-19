@@ -1,37 +1,54 @@
 import ElectronStore from "electron-store";
 
-export function init() {
-    const store = new ElectronStore();
+let store: ElectronStore | undefined;
 
-    initDefaults(store, {
-        backend: {
-            default: 'live',
+// default values
+const defaults: Config = {
+    backend: {
+        default: 'live',
+        debugOnly: true,
+        options: ['live', 'staging', 'debug']
+    },
+    network: {
+        host_live: {
+            default: 'https://lclpnet.work',
             debugOnly: true,
-            options: ['live', 'staging', 'debug']
+            textType: 'url'
         },
-        network: {
-            host_live: {
-                default: 'https://lclpnet.work',
-                debugOnly: true,
-                textType: 'url'
-            },
-            host_staging: {
-                default: 'https://staging.lclpnet.work',
-                debugOnly: true,
-                textType: 'url'
-            },
-            host_debug: {
-                default: 'http://localhost:8000',
-                debugOnly: true,
-                textType: 'url'
-            }
+        host_staging: {
+            default: 'https://staging.lclpnet.work',
+            debugOnly: true,
+            textType: 'url'
+        },
+        host_debug: {
+            default: 'http://localhost:8000',
+            debugOnly: true,
+            textType: 'url'
         }
+    }
+};
+
+export function getConfigItem<ItemType>(accessor: (config: Config) => Setting): ItemType {
+    if(!store) store = new ElectronStore();
+    return <ItemType> <unknown> accessor(<Config> store.store);
+}
+
+export function getBackendHost(): string {
+    const backend: string = getConfigItem(conf => conf.backend);
+    return getConfigItem(conf => {
+        const property = conf.network[`host_${backend}`];
+        if(!property) throw new TypeError(`The property 'host_${backend}' is not a valid config setting.`);
+        return <Setting> property;
     });
 }
 
-function initDefaults(store: ElectronStore, structure: Structure) {
+export function init() {
+    store = new ElectronStore();
+    initDefaults(store, defaults);
+}
 
-    function iterate(obj: object, pathSegments: string[]) {
+function initDefaults(store: ElectronStore, structure: Config) {
+    const iterate = (obj: object, pathSegments: string[]) => {
         Object.entries(obj).forEach(keyVal => {
             const key = keyVal[0];
             const value = keyVal[1];
@@ -44,6 +61,15 @@ function initDefaults(store: ElectronStore, structure: Structure) {
     };
 
     iterate(structure, []);
+}
+
+declare type Config = Structure & {
+    backend: Setting,
+    network: Structure & {
+        host_live: Setting,
+        host_staging: Setting,
+        host_debug: Setting
+    }
 }
 
 declare type Structure = {
