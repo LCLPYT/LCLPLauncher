@@ -7,7 +7,6 @@
     width: 70px;
     position: fixed;
     height: 100%;
-    padding-top: 15px;
 }
 
 #libraryContent {
@@ -21,8 +20,7 @@ span.tab-icon {
 
 .tab-desc {
     font-size: 12px;
-    position: relative;
-    bottom: 10px;
+    margin-top: -10px;
 }
 
 .tab-btn {

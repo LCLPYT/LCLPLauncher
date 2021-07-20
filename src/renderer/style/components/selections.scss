@@ -16,3 +16,10 @@ a[href^="https://"],
 a[href^="ftp://"] {
     -webkit-user-drag: auto;
 }
+
+.cursor-pointer {
+    cursor: pointer;
+    * {
+        cursor: pointer;
+    }
+}

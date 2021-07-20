@@ -25,6 +25,10 @@ $theme-colors: (
     border-right: 1px solid lighten($dark, 7%);
 }
 
+.separator-border-dark-top {
+    border-top: 1px solid lighten($dark, 7%);
+}
+
 .separator-border-dark-slim-top {
     border-top: 1px solid darken($dark, 0.75%);
 }

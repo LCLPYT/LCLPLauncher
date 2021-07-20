@@ -49,13 +49,6 @@ $searchHeight: 44px;
     color: $searchPrimaryColor;
 }
 
-.svg-icon {
-    cursor: pointer;
-    * {
-        cursor: pointer;
-    }
-}
-
 .ac-wrapper {
     order: 3;
     position: relative;
@@ -97,14 +90,14 @@ $searchHeight: 44px;
     width: 20px;
 }
 
-li.list-group-item:first-child {
+a.list-group-item:first-child {
     border-top: 0;
     border-top-left-radius: 0;
     border-top-right-radius: 0;
     transition: margin-top 0.1s ease-in-out;
 }
 
-li.list-group-item:first-child.is-offset {
+a.list-group-item:first-child.is-offset {
     margin-top: 0.2rem;
 }
 
@@ -122,4 +115,16 @@ li.list-group-item:first-child.is-offset {
 #acItems .list-group-item {
     background-color: $gray-700;
     border-color: $gray-600;
+    transition: background-color .1s ease-in-out,
+        border-color .1s ease-in-out;
+
+    &:hover {
+        background-color: lighten($gray-700, 5%);
+        border-color: lighten($gray-600, 5%);
+    }
+
+
+    * {
+
+    }
 }
