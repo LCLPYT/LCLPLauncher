@@ -40,12 +40,20 @@ $searchHeight: 44px;
     background: none;
     margin: 0;
     border: 0;
-    padding: 1px 8px 1px 11px;
-    width: 47px;
+    padding: 1px 11px 1px 16px;
 }
 
 .ac-search-icon {
+    position: relative;
+    top: 1px;
     color: $searchPrimaryColor;
+}
+
+.svg-icon {
+    cursor: pointer;
+    * {
+        cursor: pointer;
+    }
 }
 
 .ac-wrapper {
@@ -101,8 +109,10 @@ li.list-group-item:first-child.is-offset {
 }
 
 #autocomplete.ac-has-items {
-    border-bottom-left-radius: 0;
-    border-bottom-right-radius: 0;
+    &:not(:focus-within) {
+        border-bottom-left-radius: 0;
+        border-bottom-right-radius: 0;
+    }
 }
 
 #acItems {

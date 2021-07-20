@@ -2,11 +2,9 @@
 :not(input):not(textarea),
 :not(input):not(textarea)::after,
 :not(input):not(textarea)::before {
-    &:not(.selectable) {
-        -webkit-user-select: none;
-        user-select: none;
-        cursor: default;
-    }
+    -webkit-user-select: none;
+    user-select: none;
+    cursor: default;
 }
 
 a:not([draggable=true]), img:not([draggable=true]) {
