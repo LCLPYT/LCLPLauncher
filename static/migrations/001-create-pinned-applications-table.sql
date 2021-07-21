@@ -2,14 +2,12 @@
 -- Up
 --------------------------------------------------------------------------------
 
-CREATE TABLE `cache_items` (
-  `id` INTEGER PRIMARY KEY NOT NULL,
-  `resource` varchar(512) NOT NULL UNIQUE,
-  `fetched_at` timestamp NOT NULL
+CREATE TABLE `pinned_applications` (
+  `id` INTEGER UNIQUE NOT NULL
 );
 
 --------------------------------------------------------------------------------
 -- Down
 --------------------------------------------------------------------------------
 
-DROP TABLE `cache_items`;
+DROP TABLE `pinned_applications`;
