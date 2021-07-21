@@ -24,7 +24,8 @@
     "sass": "1.32.13",
     "sass-loader": "10.1.1",
     "typescript": "^4.3.2",
-    "webpack": "^4.42.1"
+    "webpack": "^4.42.1",
+    "workbox-webpack-plugin": "^6.1.5"
   },
   "dependencies": {
     "@popperjs/core": "^2.9.2",
@@ -45,6 +46,11 @@
     "compile": "electron-webpack",
     "dist": "yarn compile && electron-builder",
     "dist:dir": "yarn dist --dir -c.compression=store -c.mac.identity=null"
+  },
+  "electronWebpack": {
+    "renderer": {
+      "webpackConfig": "webpack.renderer.additions.js"
+    }
   },
   "build": {
     "appId": "work.lclpnet.lclplauncher",

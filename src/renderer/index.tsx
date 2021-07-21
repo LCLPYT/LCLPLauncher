@@ -65,6 +65,13 @@ function handleWindowControls() {
     }
 }
 
+// register service worker for cache
+if ('serviceWorker' in navigator) {
+    window.addEventListener('load', () => {
+        navigator.serviceWorker.register('/service-worker.js');
+    });
+}
+
 /* Render react components */
 
 ReactDOM.render(<Titlebar />, toolbarDiv);

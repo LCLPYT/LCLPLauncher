@@ -61,9 +61,9 @@ class Search extends Component<IProps, IState> {
         const searchBtn = document.getElementById('searchBtn');
 
         input.addEventListener('input', () => {
-            this.query = input.value.trim();
-            if (clearBtn) clearBtn.hidden = this.query.length <= 0;
-            this.onInputChanged(this.query);
+            const query = input.value.trim();
+            if (clearBtn) clearBtn.hidden = query.length <= 0;
+            this.onInputChanged(query);
         });
         container?.addEventListener('focusin', () => {
             const acItems = document.getElementById('acItems');
@@ -85,6 +85,8 @@ class Search extends Component<IProps, IState> {
     private debounceTimer?: NodeJS.Timeout;
 
     onInputChanged(query: string) {
+        query = query.toLowerCase();
+        this.query = query;
         if (this.debounceTimer) clearTimeout(this.debounceTimer);
 
         const minCharacters = 2;
@@ -146,7 +148,7 @@ class AutoCompleteItem extends Component<{ item: AppAutoComplete, query: string,
         const splitIdx = title.toLowerCase().indexOf(query.toLowerCase());
 
         if(splitIdx < 0) {
-            return [ createSpan(title, false), <span className="badge bg-info ms-2">Matching tags</span> ];
+            return [ createSpan(title, false), <span className="badge bg-info ms-2" key="_tags-matching">Matching tags</span> ];
         } else {
             const spans: JSX.Element[] = [];
             
