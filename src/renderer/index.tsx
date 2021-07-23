@@ -5,6 +5,7 @@ import { registerKeybinds } from './utils/keybinds';
 import App from './components/App';
 import Titlebar from './components/Titlebar';
 import { isDevelopment } from '../common/env';
+import path from 'path';
 
 import 'bootstrap'; // bootstrap js
 import './style/material-icons/material-icons.css'; // material-icons
@@ -68,7 +69,12 @@ function handleWindowControls() {
 // register service worker for cache
 if ('serviceWorker' in navigator) {
     window.addEventListener('load', () => {
-        navigator.serviceWorker.register('/service-worker.js');
+        const workerPath = isDevelopment ? '/service-worker.js' : path.resolve(remote.app.getAppPath(), 'service-worker.js');
+        console.log('Registring service worker:', workerPath);
+        navigator.serviceWorker.register(workerPath)
+            .then(registration => console.log('ServiceWorker registration successful with scope:', registration.scope),
+                error => console.error('ServiceWorker registration failed:', error)
+            );
     });
 }
 

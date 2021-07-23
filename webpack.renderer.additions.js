@@ -3,9 +3,8 @@ const WorkboxPlugin = require('workbox-webpack-plugin')
 module.exports = {
     plugins: [
         new WorkboxPlugin.GenerateSW({
-            // Do not precache images
-            exclude: [/\.(?:png|jpg|jpeg|svg)$/],
-
+            // Do not precache anything (service worker will fail fetching file protocol which electron uses in production)
+            exclude: [/[\s\S]*/],
             // Define runtime caching rules.
             runtimeCaching: [{
                 // Match any request that ends with .png, .jpg, .jpeg or .svg.
@@ -21,9 +20,8 @@ module.exports = {
                     },
                 },
             },
-            // any LCLPNetwork URL regex: /https:\/\/(www\.)?([-a-zA-Z0-9@:%._\+~#=]+\.)?lclpnet\.work\b([-a-zA-Z0-9()@:%_\+.~#?&//=]*)/
             {
-                // match any LCLPNetwork request
+                // match any LCLPNetwork request and cache it
                 urlPattern: /https:\/\/(www\.)?([-a-zA-Z0-9@:%._\+~#=]+\.)?lclpnet\.work\b([-a-zA-Z0-9()@:%_\+.~#?&//=]*)/,
                 handler: 'CacheFirst',
                 options: {
@@ -34,6 +32,6 @@ module.exports = {
                     }
                 }
             }],
-        })
+        }),
     ]
 }
