@@ -33,6 +33,11 @@ export function getConfigItem<ItemType>(accessor: (config: Config) => Setting): 
     return <ItemType> <unknown> accessor(<Config> store.store);
 }
 
+/**
+ * Gets the protocol and host prefix for backend requests.
+ * E.g. 'https://lclpnet.work'
+ * @returns A string containing the protocol and host for backend interaction.
+ */
 export function getBackendHost(): string {
     const backend: string = getConfigItem(conf => conf.backend);
     return getConfigItem(conf => {
