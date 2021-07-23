@@ -4,7 +4,7 @@
 
 #librarySidebar {
     float: left;
-    width: 70px;
+    width: 71px;
     position: fixed;
     height: 100%;
 }
@@ -23,6 +23,28 @@ span.tab-icon {
     margin-top: -10px;
 }
 
+.tab-desc-less {
+    font-size: 12px;
+    margin-top: -2px;
+}
+
 .tab-btn {
     text-align: center;
+}
+
+.tab-img {
+    width: 46px;
+    height: 46px;
+}
+
+.tab-img-sm {
+    width: 40px;
+    height: 40px;
+}
+
+$sidebarPadding: 0.6rem;
+
+.sidebar-padding {
+    padding-top: $sidebarPadding;
+    padding-bottom: $sidebarPadding;
 }
