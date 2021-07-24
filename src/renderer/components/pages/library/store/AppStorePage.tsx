@@ -3,6 +3,8 @@ import { RouteComponentProps } from 'react-router-dom';
 import { App } from '../../../../../common/library/app';
 import { getBackendHost } from '../../../../../common/settings';
 
+import '../../../../style/pages/library/store_page.scss';
+
 interface MatchParams {
     app: string;
 }
@@ -59,12 +61,55 @@ interface ContentProps {
 
 class Content extends Component<ContentProps> {
     render() {
+        const isAppFree = this.props.app.cost && this.props.app.cost <= 0.00;
         return (
             <div className="container p-3">
-                <h2>{this.props.app.title}</h2>
-                Loaded
+                <h2 className="text-lighter">{this.props.app.title}</h2>
+                <p id="descriptionDummy" hidden>{this.props.app.description}</p>
+                <p className="collapse text-lighter" id="description" aria-expanded="false">{this.props.app.description}</p>
+                <div className="text-center">
+                    <button className="btn btn-sm btn-primary" id="descToggler" type="button" data-bs-toggle="collapse" data-bs-target="#description" aria-expanded="false" aria-controls="description" hidden>Show more</button>
+                </div>
+                <div className="highlight-area rounded p-4 shadow d-flex justify-content-between align-items-center">
+                    <button className="btn btn-lg btn-nostyle">
+                        { isAppFree ? `Play ${this.props.app.title}` : `Buy ${this.props.app.title}` }
+                    </button>
+                    <div className="price">{isAppFree ? 'Free' : this.props.app.cost?.toLocaleString('de-DE', {
+                        minimumFractionDigits: 2,
+                        maximumFractionDigits: 2,
+                        style: 'currency',
+                        currency: 'EUR'
+                    })}</div>
+                </div>
             </div>
         );
+    }
+    componentDidMount() {
+        const desc = document.getElementById('description');
+        const descDummy = document.getElementById('descriptionDummy');
+        const descToggler = document.getElementById('descToggler');
+
+        function recalcCollapse() {
+            if (desc && descDummy && descToggler) {
+                descDummy.hidden = false;
+                const descHeight = descDummy.getBoundingClientRect().height;
+                descDummy.hidden = true;
+
+                descToggler.hidden = descHeight <= 48;
+            }
+        }
+
+        recalcCollapse();
+
+        desc?.addEventListener('show.bs.collapse', () => {
+            if (descToggler) descToggler.innerHTML = 'Show less'
+        });
+
+        desc?.addEventListener('hide.bs.collapse', () => {
+            if (descToggler) descToggler.innerHTML = 'Show more'
+        });
+
+        window.addEventListener('resize', () => recalcCollapse());
     }
 }
 

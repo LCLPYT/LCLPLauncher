@@ -1,0 +1,32 @@
+@font-face {
+    font-family: "Poppins";
+    src: url("../../fonts/Poppins-Bold.ttf") format("truetype");
+}
+
+$descSize: 16px;
+$descLines: $descSize * 3;
+
+#description.collapse:not(.show) {
+    display: block;
+    font-size: $descSize;
+    height: $descLines;
+    overflow: hidden;
+}
+
+#description.collapsing {
+    height: $descLines;
+}
+
+#descToggler {
+    margin-top: -20px;
+}
+
+.highlight-area {
+    background: rgba(45,148,255,0.9);
+    background: linear-gradient(118deg, rgba(45,148,255,0.9) 19%, rgba(106,48,255,0.9) 53%, rgba(208,51,255,0.9) 100%);
+    font-family: Poppins;
+}
+
+.price {
+    font-size: 32px;
+}
