@@ -29,4 +29,16 @@ $descLines: $descSize * 3;
 
 .price {
     font-size: 32px;
+    margin-bottom: 1px;
+}
+
+.play-title {
+    font-size: 20px;
+}
+
+.buy-btn {
+    border: 0;
+    background: none;
+    background-color: white;
+    position: relative;
 }

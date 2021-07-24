@@ -61,6 +61,7 @@ interface ContentProps {
 
 class Content extends Component<ContentProps> {
     render() {
+        // this.props.app.cost = 20.3;
         const isAppFree = this.props.app.cost && this.props.app.cost <= 0.00;
         return (
             <div className="container p-3">
@@ -70,10 +71,11 @@ class Content extends Component<ContentProps> {
                 <div className="text-center">
                     <button className="btn btn-sm btn-primary" id="descToggler" type="button" data-bs-toggle="collapse" data-bs-target="#description" aria-expanded="false" aria-controls="description" hidden>Show more</button>
                 </div>
-                <div className="highlight-area rounded p-4 shadow d-flex justify-content-between align-items-center">
-                    <button className="btn btn-lg btn-nostyle">
+                <div id="buyArea" className="highlight-area rounded p-4 shadow d-flex justify-content-between align-items-center">
+                    <div className="play-title flex-grow-1">
                         { isAppFree ? `Play ${this.props.app.title}` : `Buy ${this.props.app.title}` }
-                    </button>
+                    </div>
+                    <button id="buyBtn" className="buy-btn rounded-pill px-3 py-2 me-5">{isAppFree ? 'Add to library' : 'Add to cart'}</button>
                     <div className="price">{isAppFree ? 'Free' : this.props.app.cost?.toLocaleString('de-DE', {
                         minimumFractionDigits: 2,
                         maximumFractionDigits: 2,
@@ -88,8 +90,11 @@ class Content extends Component<ContentProps> {
         const desc = document.getElementById('description');
         const descDummy = document.getElementById('descriptionDummy');
         const descToggler = document.getElementById('descToggler');
+        const buyArea = document.getElementById('buyArea');
+        const buyBtn = document.getElementById('buyBtn');
 
-        function recalcCollapse() {
+        function onResize() {
+            // Collapse
             if (desc && descDummy && descToggler) {
                 descDummy.hidden = false;
                 const descHeight = descDummy.getBoundingClientRect().height;
@@ -97,9 +102,12 @@ class Content extends Component<ContentProps> {
 
                 descToggler.hidden = descHeight <= 48;
             }
+
+            // Buy button offset
+            if(buyArea && buyBtn) buyBtn.style.top = `${Math.floor(buyArea.getBoundingClientRect().height / 2).toFixed(0)}px`;
         }
 
-        recalcCollapse();
+        onResize();
 
         desc?.addEventListener('show.bs.collapse', () => {
             if (descToggler) descToggler.innerHTML = 'Show less'
@@ -109,7 +117,7 @@ class Content extends Component<ContentProps> {
             if (descToggler) descToggler.innerHTML = 'Show more'
         });
 
-        window.addEventListener('resize', () => recalcCollapse());
+        window.addEventListener('resize', () => onResize());
     }
 }
 
