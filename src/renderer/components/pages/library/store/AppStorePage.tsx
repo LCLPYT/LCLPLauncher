@@ -61,7 +61,6 @@ interface ContentProps {
 
 class Content extends Component<ContentProps> {
     render() {
-        // this.props.app.cost = 20.3;
         const isAppFree = this.props.app.cost && this.props.app.cost <= 0.00;
         return (
             <div className="container p-3">
@@ -75,7 +74,7 @@ class Content extends Component<ContentProps> {
                     <div className="play-title flex-grow-1">
                         { isAppFree ? `Play ${this.props.app.title}` : `Buy ${this.props.app.title}` }
                     </div>
-                    <button id="buyBtn" className="buy-btn rounded-pill px-3 py-2 me-5">{isAppFree ? 'Add to library' : 'Add to cart'}</button>
+                    <button id="buyBtn" className="buy-btn rounded-pill px-3 py-2 me-5 shadow">{isAppFree ? 'Add to library' : 'Add to cart'}</button>
                     <div className="price">{isAppFree ? 'Free' : this.props.app.cost?.toLocaleString('de-DE', {
                         minimumFractionDigits: 2,
                         maximumFractionDigits: 2,
