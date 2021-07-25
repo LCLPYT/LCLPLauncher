@@ -52,7 +52,7 @@ interface SideTabProps {
 class SideTab extends Component<SideTabProps> {
     render() {
         return (
-            <NavLink to={this.props.route} className="navigation-link-color-dimmed no-underline" activeClassName="active">
+            <NavLink to={this.props.route} className="navigation-link-color-dimmed no-underline cursor-pointer" activeClassName="active">
                 <div className="tab-btn py-1">
                     <span className="material-icons tab-icon">{this.props.icon}</span>
                     <div className="tab-desc">{this.props.title}</div>

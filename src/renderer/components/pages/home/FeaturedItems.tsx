@@ -22,11 +22,11 @@ class FeaturedItems extends Component<{ items: FeaturedItem[] }> {
                                 this.props.items.map((item, index) => <CarouselSlide item={item} first={index <= 0} key={item.id} />)
                             }
                         </div>
-                        <button className="carousel-control-prev" type="button" data-bs-target="#featuredSlider" data-bs-slide="prev">
+                        <button className="carousel-control-prev cursor-pointer" type="button" data-bs-target="#featuredSlider" data-bs-slide="prev">
                             <span className="carousel-control-prev-icon" aria-hidden="true" />
                             <span className="visually-hidden">Previous</span>
                         </button>
-                        <button className="carousel-control-next" type="button" data-bs-target="#featuredSlider" data-bs-slide="next">
+                        <button className="carousel-control-next cursor-pointer" type="button" data-bs-target="#featuredSlider" data-bs-slide="next">
                             <span className="carousel-control-next-icon" aria-hidden="true" />
                             <span className="visually-hidden">Next</span>
                         </button>
