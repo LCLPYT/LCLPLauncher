@@ -3,7 +3,7 @@ import { NavLink } from 'react-router-dom';
 import { closeCurrentWindow } from '../utils/app';
 import { Offcanvas } from 'bootstrap';
 import logo from '../img/logo.svg';
-import { getAppVersion, isDevelopment } from '../../common/env';
+import { getAppVersion, isDevelopment } from '../../common/utils/env';
 
 class Menubar extends Component {
     render() {

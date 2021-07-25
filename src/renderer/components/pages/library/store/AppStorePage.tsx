@@ -1,7 +1,7 @@
 import React, { Component } from 'react';
 import { RouteComponentProps } from 'react-router-dom';
 import { App } from '../../../../../common/library/app';
-import { getBackendHost } from '../../../../../common/settings';
+import { getBackendHost } from '../../../../../common/utils/settings';
 
 import '../../../../style/pages/library/store_page.scss';
 
@@ -110,14 +110,22 @@ class Content extends Component<ContentProps> {
         onResize();
 
         desc?.addEventListener('show.bs.collapse', () => {
-            if (descToggler) descToggler.innerHTML = 'Show less'
+            if (descToggler) descToggler.innerHTML = 'Show less';
         });
 
         desc?.addEventListener('hide.bs.collapse', () => {
-            if (descToggler) descToggler.innerHTML = 'Show more'
+            if (descToggler) descToggler.innerHTML = 'Show more';
         });
 
         window.addEventListener('resize', () => onResize());
+
+        buyBtn?.addEventListener('click', () => {
+            if(this.props.app.cost && this.props.app.cost > 0) {
+                alert('Purchases are not yet implemented.');
+                return;
+            }
+
+        });
     }
 }
 

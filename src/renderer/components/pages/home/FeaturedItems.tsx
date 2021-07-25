@@ -3,7 +3,7 @@ import { Carousel } from 'bootstrap';
 import tippy, { followCursor } from 'tippy.js';
 import 'tippy.js/dist/tippy.css';
 import 'tippy.js/animations/scale.css';
-import { getBackendHost } from '../../../../common/settings';
+import { getBackendHost } from '../../../../common/utils/settings';
 
 class FeaturedItems extends Component<{ items: FeaturedItem[] }> {
     render() {

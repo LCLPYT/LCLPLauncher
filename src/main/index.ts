@@ -3,10 +3,10 @@ process.env['NODE_' + 'ENV'] = process.env.NODE_ENV;
 
 import { app, shell, BrowserWindow } from 'electron'
 import * as path from 'path'
-import { isDevelopment } from '../common/env';
-import * as Settings from '../common/settings';
+import { isDevelopment } from '../common/utils/env';
+import * as Settings from '../common/utils/settings';
 import * as Database from './utils/database';
-import { isExternalResource } from '../common/urls';
+import { isExternalResource } from '../common/utils/urls';
 import { customWords } from './utils/dictionary';
 
 // init settings

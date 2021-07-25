@@ -1,7 +1,7 @@
 import React, { Component } from 'react';
 import { Link } from 'react-router-dom';
 import tippy from 'tippy.js';
-import { getBackendHost } from '../../../../common/settings';
+import { getBackendHost } from '../../../../common/utils/settings';
 import '../../../style/pages/search.scss';
 
 interface IProps {

@@ -5,7 +5,7 @@ import Search from './library/Search';
 
 import '../../style/pages/library.scss';
 import AppStorePage from './library/store/AppStorePage';
-import { getBackendHost } from '../../../common/settings';
+import { getBackendHost } from '../../../common/utils/settings';
 
 class Library extends Component {
     render() {

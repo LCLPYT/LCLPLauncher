@@ -4,7 +4,7 @@ import { remote } from 'electron';
 import { registerKeybinds } from './utils/keybinds';
 import App from './components/App';
 import Titlebar from './components/Titlebar';
-import { isDevelopment } from '../common/env';
+import { isDevelopment } from '../common/utils/env';
 import path from 'path';
 
 import 'bootstrap'; // bootstrap js
