@@ -1,4 +1,4 @@
-export type App = {
+type App = {
     id: number,
     key: string,
     title: string,
@@ -6,3 +6,5 @@ export type App = {
     description?: string,
     cost?: number
 }
+
+export default App;

@@ -5,7 +5,8 @@ import { app, shell, BrowserWindow } from 'electron'
 import * as path from 'path'
 import { isDevelopment } from '../common/utils/env';
 import * as Settings from '../common/utils/settings';
-import * as Database from './utils/database';
+import * as Database from './database/database';
+import * as Ipc from './utils/ipc';
 import { isExternalResource } from '../common/utils/urls';
 import { customWords } from './utils/dictionary';
 
@@ -14,6 +15,9 @@ Settings.init();
 
 // init database in background
 Database.initDatabase();
+
+// init IPC
+Ipc.initIPC();
 
 // global reference to mainWindow (necessary to prevent window from being garbage collected)
 let mainWindow: BrowserWindow | null;

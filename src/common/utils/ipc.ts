@@ -7,3 +7,9 @@ export abstract class GenericIPCHandler<T extends Electron.IpcMainEvent | Electr
 
     public abstract onMessage(event: T, ...args: any[]): void;
 }
+
+export const ACTIONS = {
+    library: {
+        addAppToLibrary: 'add-app-to-libary'
+    }
+}

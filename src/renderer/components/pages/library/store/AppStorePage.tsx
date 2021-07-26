@@ -1,9 +1,10 @@
 import React, { Component } from 'react';
 import { RouteComponentProps } from 'react-router-dom';
-import { App } from '../../../../../common/library/app';
+import App from '../../../../../common/types/App';
 import { getBackendHost } from '../../../../../common/utils/settings';
 
 import '../../../../style/pages/library/store_page.scss';
+import { LIBRARY } from '../../../../utils/ipc';
 
 interface MatchParams {
     app: string;
@@ -103,7 +104,7 @@ class Content extends Component<ContentProps> {
             }
 
             // Buy button offset
-            if(buyArea && buyBtn) buyBtn.style.top = `${Math.floor(buyArea.getBoundingClientRect().height / 2).toFixed(0)}px`;
+            if(buyArea && buyBtn) buyBtn.style.top = `${Math.floor(buyArea.getBoundingClientRect().height / 2 - buyBtn.getBoundingClientRect().height / 4).toFixed(0)}px`;
         }
 
         onResize();
@@ -123,7 +124,7 @@ class Content extends Component<ContentProps> {
                 alert('Purchases are not yet implemented.');
                 return;
             }
-
+            LIBRARY.addAppToLibrary(this.props.app);
         });
     }
 }

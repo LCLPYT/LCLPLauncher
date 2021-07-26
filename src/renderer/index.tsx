@@ -6,6 +6,7 @@ import App from './components/App';
 import Titlebar from './components/Titlebar';
 import { isDevelopment } from '../common/utils/env';
 import path from 'path';
+import * as Ipc from './utils/ipc';
 
 import 'bootstrap'; // bootstrap js
 import './style/material-icons/material-icons.css'; // material-icons
@@ -18,6 +19,9 @@ if (!isDevelopment) {
     contentPolicyMeta.setAttribute('content', "script-src 'self';");
     document.head.appendChild(contentPolicyMeta);
 }
+
+// init IPC
+Ipc.initIPC();
 
 /* Add keybinds */
 registerKeybinds();
