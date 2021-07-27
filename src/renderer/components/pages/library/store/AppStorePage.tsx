@@ -75,7 +75,19 @@ class Content extends Component<ContentProps> {
                     <div className="play-title flex-grow-1">
                         { isAppFree ? `Play ${this.props.app.title}` : `Buy ${this.props.app.title}` }
                     </div>
-                    <button id="buyBtn" className="buy-btn rounded-pill px-3 py-2 me-5 shadow">{isAppFree ? 'Add to library' : 'Add to cart'}</button>
+                    <button id="buyBtn" className="buy-btn rounded-pill px-3 py-2 me-5 shadow d-flex align-items-center">
+                        <span id="buyBtnText">{isAppFree ? 'Add to library' : 'Add to cart'}</span>
+                        <div id="buyBtnLoading" className="d-flex align-items-center" hidden>
+                            <div className="spinner-border spinner-border-sm" role="status" hidden>
+                                <span className="visually-hidden" hidden>Loading...</span>
+                            </div>
+                            <div className="ms-2" hidden>Loading...</div>
+                        </div>
+                        <div id="buyBtnChecked" className="d-flex align-items-center" hidden>
+                            <span className="text-success big-emoji" hidden>✔</span>
+                            <div className="ms-2" hidden>Show in library</div>
+                        </div>
+                    </button>
                     <div className="price">{isAppFree ? 'Free' : this.props.app.cost?.toLocaleString('de-DE', {
                         minimumFractionDigits: 2,
                         maximumFractionDigits: 2,
@@ -119,13 +131,40 @@ class Content extends Component<ContentProps> {
 
         window.addEventListener('resize', () => onResize());
 
+        // buyBtn states
+        const buyBtnText = document.getElementById('buyBtnText');
+        const buyBtnLoading = document.getElementById('buyBtnLoading');
+        const buyBtnChecked = document.getElementById('buyBtnChecked');
+
+        function recursiveVisibility(element: HTMLElement | null, visible: boolean) {
+            if(!element) return;
+            element.hidden = !visible;
+            Array.from(element.children).forEach(child => {
+                if(child instanceof HTMLElement) recursiveVisibility(child, visible)
+            });
+        }
+
+        // TODO: make use of react state
+        LIBRARY.isAppInLibrary(this.props.app).then(inLibrary => {
+            if(!inLibrary) return;
+            recursiveVisibility(buyBtnText, false);
+            recursiveVisibility(buyBtnLoading, false);
+            recursiveVisibility(buyBtnChecked, true);
+        });
+
         buyBtn?.addEventListener('click', () => {
             if(this.props.app.cost && this.props.app.cost > 0) {
                 alert('Purchases are not yet implemented.');
                 return;
             }
+
+            recursiveVisibility(buyBtnText, false);
+            recursiveVisibility(buyBtnLoading, true);
+
             LIBRARY.addAppToLibrary(this.props.app).then(success => {
-                console.log('Add App to library:', success);
+                if (!success) return;
+                recursiveVisibility(buyBtnLoading, false);
+                recursiveVisibility(buyBtnChecked, true);
             });
         });
     }

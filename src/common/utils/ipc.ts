@@ -25,6 +25,7 @@ export abstract class GenericIPCActionHandler<T extends ElectronIpcEvent, U> ext
 
 export const ACTIONS = {
     library: {
-        addAppToLibrary: 'add-app-to-libary'
+        addAppToLibrary: 'add-app-to-libary',
+        isAppInLibrary: 'is-app-in-library'
     }
 }

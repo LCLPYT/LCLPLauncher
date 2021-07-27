@@ -2,7 +2,7 @@ import { ipcMain } from "electron";
 import { IpcMainEvent } from "electron/main";
 import App from "../../common/types/App";
 import { ACTIONS, GenericIPCActionHandler, GenericIPCHandler } from "../../common/utils/ipc";
-import { addToLibary } from "./library";
+import { addToLibary, isInLibrary } from "./library";
 
 class IpcActionEvent {
     public readonly event: IpcMainEvent;
@@ -46,6 +46,15 @@ export const LIBRARY = registerHandler(new class extends IPCActionHandler {
                     .then(() => event.reply(true))
                     .catch(err => {
                         console.error('Error adding library app:', err);
+                        event.reply(false);
+                    });
+                break;
+            case ACTIONS.library.isAppInLibrary:
+                if(args.length < 1) throw new Error('App argument is missing');
+                isInLibrary(<App> args[0])
+                    .then(inLibrary => event.reply(inLibrary))
+                    .catch(err => {
+                        console.error('Error checking for library app:', err);
                         event.reply(false);
                     });
                 break;

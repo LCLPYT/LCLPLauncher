@@ -30,6 +30,7 @@ function registerHandler<T extends GenericIPCHandler<IpcRendererEvent>>(handler:
 
 export const LIBRARY = registerHandler(new class extends IPCActionHandler {
     protected addAppToLibraryCB?: (success: boolean) => void;
+    protected isAppInLibraryCB?: (inLibrary: boolean) => void;
 
     protected onAction(action: string, _event: IpcRendererEvent, args: any[]): void {
         switch (action) {
@@ -39,6 +40,13 @@ export const LIBRARY = registerHandler(new class extends IPCActionHandler {
                     this.addAppToLibraryCB(<boolean> args[0]);
                     this.addAppToLibraryCB = undefined;
                 } else console.warn('No callback defined for', ACTIONS.library.addAppToLibrary);
+                break;
+            case ACTIONS.library.isAppInLibrary:
+                if(args.length < 1) throw new Error('Result argument does not exist.');
+                if(this.isAppInLibraryCB) {
+                    this.isAppInLibraryCB(<boolean> args[0]);
+                    this.isAppInLibraryCB = undefined;
+                } else console.warn('No callback defined for', ACTIONS.library.isAppInLibrary);
                 break;
             default:
                 throw new Error(`Action '${action}' not implemented.`);
@@ -50,6 +58,14 @@ export const LIBRARY = registerHandler(new class extends IPCActionHandler {
         return new Promise(resolve => {
             this.addAppToLibraryCB = success => resolve(success);
             this.sendAction(ACTIONS.library.addAppToLibrary, app);
+        });
+    }
+
+    public isAppInLibrary(app: App): Promise<boolean | null> {
+        if(this.isAppInLibraryCB) return Promise.resolve(null);
+        return new Promise(resolve => {
+            this.isAppInLibraryCB = inLibrary => resolve(inLibrary);
+            this.sendAction(ACTIONS.library.isAppInLibrary, app);
         });
     }
 }('library'));
