@@ -1,35 +1,55 @@
 import { ipcRenderer } from "electron";
 import { IpcRendererEvent } from "electron/renderer";
 import App from "../../common/types/App";
-import { ACTIONS, GenericIPCHandler } from "../../common/utils/ipc";
+import { ACTIONS, GenericIPCActionHandler, GenericIPCHandler } from "../../common/utils/ipc";
 
-abstract class IPCHandler extends GenericIPCHandler<IpcRendererEvent> {
+abstract class IPCActionHandler extends GenericIPCActionHandler<IpcRendererEvent, IpcRendererEvent> {
+    protected getIpcEvent(event: IpcRendererEvent): IpcRendererEvent {
+        return event;
+    }
+
     public sendRawMessage(...args: any[]) {
         ipcRenderer.send(this.channel, args);
     }
 
-    public sendMessage(action: string, ...args: any[]) {
+    public sendAction(action: string, ...args: any[]) {
         this.sendRawMessage(action, ...args);
     }
 }
 
-const IPC_HANDLERS: IPCHandler[] = [];
+const IPC_HANDLERS: GenericIPCHandler<IpcRendererEvent>[] = [];
 
 export function initIPC() {
     IPC_HANDLERS.forEach(handler => ipcRenderer.on(handler.channel, (event, args) => handler.onMessage(event, args)));
 }
 
-function registerHandler<T extends IPCHandler>(handler: T) {
+function registerHandler<T extends GenericIPCHandler<IpcRendererEvent>>(handler: T) {
     IPC_HANDLERS.push(handler);
     return handler;
 }
 
-export const LIBRARY = registerHandler(new class extends IPCHandler {
-    public onMessage(event: Electron.IpcRendererEvent, ...args: any[]): void {
-        throw new Error("Method not implemented.");
+export const LIBRARY = registerHandler(new class extends IPCActionHandler {
+    protected addAppToLibraryCB?: (success: boolean) => void;
+
+    protected onAction(action: string, _event: IpcRendererEvent, args: any[]): void {
+        switch (action) {
+            case ACTIONS.library.addAppToLibrary:
+                if(args.length < 1) throw new Error('Success argument does not exist.');
+                if(this.addAppToLibraryCB) {
+                    this.addAppToLibraryCB(<boolean> args[0]);
+                    this.addAppToLibraryCB = undefined;
+                } else console.warn('No callback defined for', ACTIONS.library.addAppToLibrary);
+                break;
+            default:
+                throw new Error(`Action '${action}' not implemented.`);
+        }
     }
 
-    public addAppToLibrary(app: App) {
-        this.sendMessage(ACTIONS.library.addAppToLibrary, app);
+    public addAppToLibrary(app: App): Promise<boolean> {
+        if(this.addAppToLibraryCB) return Promise.resolve(false);
+        return new Promise(resolve => {
+            this.addAppToLibraryCB = success => resolve(success);
+            this.sendAction(ACTIONS.library.addAppToLibrary, app);
+        });
     }
 }('library'));

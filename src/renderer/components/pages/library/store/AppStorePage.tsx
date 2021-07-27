@@ -69,7 +69,7 @@ class Content extends Component<ContentProps> {
                 <p id="descriptionDummy" hidden>{this.props.app.description}</p>
                 <p className="collapse text-lighter" id="description" aria-expanded="false">{this.props.app.description}</p>
                 <div className="text-center">
-                    <button className="btn btn-sm btn-primary" id="descToggler" type="button" data-bs-toggle="collapse" data-bs-target="#description" aria-expanded="false" aria-controls="description" hidden>Show more</button>
+                    <button className="btn btn-sm btn-primary mb-2" id="descToggler" type="button" data-bs-toggle="collapse" data-bs-target="#description" aria-expanded="false" aria-controls="description" hidden>Show more</button>
                 </div>
                 <div id="buyArea" className="highlight-area rounded p-4 shadow d-flex justify-content-between align-items-center">
                     <div className="play-title flex-grow-1">
@@ -124,7 +124,9 @@ class Content extends Component<ContentProps> {
                 alert('Purchases are not yet implemented.');
                 return;
             }
-            LIBRARY.addAppToLibrary(this.props.app);
+            LIBRARY.addAppToLibrary(this.props.app).then(success => {
+                console.log('Add App to library:', success);
+            });
         });
     }
 }

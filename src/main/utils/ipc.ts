@@ -1,62 +1,38 @@
 import { ipcMain } from "electron";
 import { IpcMainEvent } from "electron/main";
 import App from "../../common/types/App";
-import { ACTIONS, GenericIPCHandler } from "../../common/utils/ipc";
+import { ACTIONS, GenericIPCActionHandler, GenericIPCHandler } from "../../common/utils/ipc";
 import { addToLibary } from "./library";
 
-class IpcEvent {
+class IpcActionEvent {
     public readonly event: IpcMainEvent;
     public readonly channel: string;
-
-    constructor(event: IpcMainEvent, channel: string) {
-        this.event = event;
-        this.channel = channel;
-    }
-
-    public reply(...args: any[]) {
-        this.event.reply(this.channel, ...args);
-    }
-}
-
-class IpcActionEvent extends IpcEvent {
     public readonly action: string;
 
-    constructor(extend: IpcEvent, action: string) {
-        super(extend.event, extend.channel);
+    constructor(event: IpcMainEvent, channel: string, action: string) {
+        this.event = event;
+        this.channel = channel;
         this.action = action;
     }
 
     public reply(...args: any[]) {
-        this.event.reply(this.action, ...args);
+        this.event.reply(this.channel, [this.action, ...args]);
     }
 }
 
-abstract class IPCHandler extends GenericIPCHandler<IpcMainEvent> {
-    public onMessage(event: IpcMainEvent, args: any[]) {
-        this.onMsg(new IpcEvent(event, this.channel), args);
+abstract class IPCActionHandler extends GenericIPCActionHandler<IpcMainEvent, IpcActionEvent> {
+    protected getIpcEvent(event: IpcMainEvent, action: string): IpcActionEvent {
+        return new IpcActionEvent(event, this.channel, action);
     }
-
-    protected abstract onMsg(event: IpcEvent, args: any[]): void;
 }
 
-abstract class IPCActionHandler extends IPCHandler {
-    protected onMsg(event: IpcEvent, args: any[]) {
-        if(args.length < 1) throw new Error('Action argument does not exist.');
-        const action = args[0];
-        const actionEvent = new IpcActionEvent(event, action);
-        this.onAction(action, actionEvent, args.slice(1));
-    }
-
-    protected abstract onAction(action: string, event: IpcActionEvent, args: any[]): void
-}
-
-const IPC_HANDLERS: IPCHandler[] = [];
+const IPC_HANDLERS: GenericIPCHandler<IpcMainEvent>[] = [];
 
 export function initIPC() {
     IPC_HANDLERS.forEach(handler => ipcMain.on(handler.channel, (event, args) => handler.onMessage(event, args)));
 }
 
-function registerHandler<T extends IPCHandler>(handler: T) {
+function registerHandler<T extends GenericIPCHandler<IpcMainEvent>>(handler: T) {
     IPC_HANDLERS.push(handler);
     return handler;
 }
