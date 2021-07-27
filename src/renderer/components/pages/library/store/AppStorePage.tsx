@@ -62,7 +62,7 @@ interface ContentProps {
 
 class Content extends Component<ContentProps> {
     render() {
-        const isAppFree = this.props.app.cost && this.props.app.cost <= 0.00;
+        const isAppFree = this.props.app.cost !== undefined && this.props.app.cost <= 0.00;
         return (
             <div className="container p-3">
                 <h2 className="text-lighter">{this.props.app.title}</h2>
@@ -73,21 +73,9 @@ class Content extends Component<ContentProps> {
                 </div>
                 <div id="buyArea" className="highlight-area rounded p-4 shadow d-flex justify-content-between align-items-center">
                     <div className="play-title flex-grow-1">
-                        { isAppFree ? `Play ${this.props.app.title}` : `Buy ${this.props.app.title}` }
+                        {isAppFree ? `Play ${this.props.app.title}` : `Buy ${this.props.app.title}`}
                     </div>
-                    <button id="buyBtn" className="buy-btn rounded-pill px-3 py-2 me-5 shadow d-flex align-items-center">
-                        <span id="buyBtnText">{isAppFree ? 'Add to library' : 'Add to cart'}</span>
-                        <div id="buyBtnLoading" className="d-flex align-items-center" hidden>
-                            <div className="spinner-border spinner-border-sm" role="status" hidden>
-                                <span className="visually-hidden" hidden>Loading...</span>
-                            </div>
-                            <div className="ms-2" hidden>Loading...</div>
-                        </div>
-                        <div id="buyBtnChecked" className="d-flex align-items-center" hidden>
-                            <span className="text-success big-emoji" hidden>✔</span>
-                            <div className="ms-2" hidden>Show in library</div>
-                        </div>
-                    </button>
+                    <BuyBtn app={this.props.app} />
                     <div className="price">{isAppFree ? 'Free' : this.props.app.cost?.toLocaleString('de-DE', {
                         minimumFractionDigits: 2,
                         maximumFractionDigits: 2,
@@ -103,7 +91,6 @@ class Content extends Component<ContentProps> {
         const descDummy = document.getElementById('descriptionDummy');
         const descToggler = document.getElementById('descToggler');
         const buyArea = document.getElementById('buyArea');
-        const buyBtn = document.getElementById('buyBtn');
 
         function onResize() {
             // Collapse
@@ -116,7 +103,8 @@ class Content extends Component<ContentProps> {
             }
 
             // Buy button offset
-            if(buyArea && buyBtn) buyBtn.style.top = `${Math.floor(buyArea.getBoundingClientRect().height / 2 - buyBtn.getBoundingClientRect().height / 4).toFixed(0)}px`;
+            const buyBtn = document.getElementById('buyBtn');
+            if (buyArea && buyBtn) buyBtn.style.top = `${Math.floor(buyArea.getBoundingClientRect().height / 2 - buyBtn.getBoundingClientRect().height / 4).toFixed(0)}px`;
         }
 
         onResize();
@@ -130,43 +118,66 @@ class Content extends Component<ContentProps> {
         });
 
         window.addEventListener('resize', () => onResize());
+    }
+}
 
-        // buyBtn states
-        const buyBtnText = document.getElementById('buyBtnText');
-        const buyBtnLoading = document.getElementById('buyBtnLoading');
-        const buyBtnChecked = document.getElementById('buyBtnChecked');
+interface BuyBtnProps {
+    app: App
+}
 
-        function recursiveVisibility(element: HTMLElement | null, visible: boolean) {
-            if(!element) return;
-            element.hidden = !visible;
-            Array.from(element.children).forEach(child => {
-                if(child instanceof HTMLElement) recursiveVisibility(child, visible)
-            });
-        }
+interface BuyBtnState {
+    btnState?: 'loading' | 'added'
+}
 
-        // TODO: make use of react state
-        LIBRARY.isAppInLibrary(this.props.app).then(inLibrary => {
-            if(!inLibrary) return;
-            recursiveVisibility(buyBtnText, false);
-            recursiveVisibility(buyBtnLoading, false);
-            recursiveVisibility(buyBtnChecked, true);
-        });
+class BuyBtn extends Component<BuyBtnProps, BuyBtnState> {
+    constructor(props: BuyBtnProps) {
+        super(props);
+        this.state = {} as BuyBtnState;
+    }
+    
+    render() {
+        const isAppFree = this.props.app.cost !== undefined && this.props.app.cost <= 0.00;
+        return (
+            <button id="buyBtn" className="buy-btn rounded-pill px-3 py-2 me-5 shadow d-flex align-items-center">
+                {
+                    this.state.btnState !== undefined ? undefined : <span id="buyBtnText">{isAppFree ? 'Add to library' : 'Add to cart'}</span>
+                }
+                {
+                    !this.state.btnState || this.state.btnState !== 'loading' ? undefined : (
+                        <div id="buyBtnLoading" className="d-flex align-items-center">
+                            <div className="spinner-border spinner-border-sm" role="status">
+                                <span className="visually-hidden">Loading...</span>
+                            </div>
+                            <div className="ms-2">Loading...</div>
+                        </div>
+                    )
+                }
+                {
+                    !this.state.btnState || this.state.btnState !== 'added' ? undefined : (
+                        <div id="buyBtnChecked" className="d-flex align-items-center">
+                            <span className="text-success big-emoji">✔</span>
+                            <div className="ms-2">Show in library</div>
+                        </div>
+                    )
+                }
+            </button>
+        );
+    }
 
+    componentDidMount() {
+        const buyBtn = document.getElementById('buyBtn');
         buyBtn?.addEventListener('click', () => {
-            if(this.props.app.cost && this.props.app.cost > 0) {
+            if (this.props.app.cost && this.props.app.cost > 0) {
                 alert('Purchases are not yet implemented.');
                 return;
             }
 
-            recursiveVisibility(buyBtnText, false);
-            recursiveVisibility(buyBtnLoading, true);
+            this.setState({ btnState: 'loading' });
 
-            LIBRARY.addAppToLibrary(this.props.app).then(success => {
-                if (!success) return;
-                recursiveVisibility(buyBtnLoading, false);
-                recursiveVisibility(buyBtnChecked, true);
-            });
+            LIBRARY.addAppToLibrary(this.props.app).then(success => this.setState({ btnState: success ? 'added' : undefined }));
         });
+
+        LIBRARY.isAppInLibrary(this.props.app).then(inLibrary => this.setState({ btnState: inLibrary ? 'added' : undefined }));
     }
 }
 
