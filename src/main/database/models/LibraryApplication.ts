@@ -6,4 +6,8 @@ export class LibaryApplication extends Model {
     static get tableName() {
         return 'library_apps';
     }
+
+    static get jsonAttributes() {
+        return ['genres'];
+    }
 }

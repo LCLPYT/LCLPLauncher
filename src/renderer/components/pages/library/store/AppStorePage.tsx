@@ -1,6 +1,7 @@
 import React, { Component } from 'react';
 import { Redirect, RouteComponentProps } from 'react-router-dom';
 import App from '../../../../../common/types/App';
+import Genre from '../../../../../common/types/Genre';
 import { getBackendHost } from '../../../../../common/utils/settings';
 
 import '../../../../style/pages/library/store_page.scss';
@@ -81,6 +82,7 @@ class Content extends Component<ContentProps, ContentState> {
                 <div className="text-center">
                     <button className="btn btn-sm btn-primary mb-2" id="descToggler" type="button" data-bs-toggle="collapse" data-bs-target="#description" aria-expanded="false" aria-controls="description" hidden>Show more</button>
                 </div>
+                <Genres values={this.props.app.genres} />
                 <div id="buyArea" className="highlight-area rounded p-4 shadow d-flex justify-content-between align-items-center">
                     <div className="play-title flex-grow-1">
                         {isAppFree ? `Play ${this.props.app.title}` : `Buy ${this.props.app.title}`}
@@ -194,6 +196,18 @@ class BuyBtn extends Component<BuyBtnProps, BuyBtnState> {
         });
 
         LIBRARY.isAppInLibrary(this.props.app).then(inLibrary => this.setState({ btnState: inLibrary ? 'added' : undefined }));
+    }
+}
+
+class Genres extends Component<{ values: Genre[] }> {
+    render() {
+        return (
+            <div className="d-flex pb-3 flex-wrap" id="genres-display">
+                {
+                    this.props.values.map(genre => <span key={genre.id} className="badge rounded-pill bg-secondary me-1 mb-1 text-lighter">{genre.name}</span>)
+                }
+            </div>
+        );
     }
 }
 

@@ -17,6 +17,10 @@ $descLines: $descSize * 3;
     height: $descLines;
 }
 
+#description {
+    margin-bottom: 0.5rem;
+}
+
 #descToggler {
     margin-top: -15px;
 }
@@ -56,4 +60,8 @@ $descLines: $descSize * 3;
 
 .big-emoji {
     font-size: 24px;
+}
+
+#genres-display span.badge {
+    font-size: 14px;
 }
