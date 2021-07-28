@@ -1,5 +1,5 @@
 import React, { Component } from 'react';
-import { RouteComponentProps } from 'react-router-dom';
+import { Redirect, RouteComponentProps } from 'react-router-dom';
 import App from '../../../../../common/types/App';
 import { getBackendHost } from '../../../../../common/utils/settings';
 
@@ -60,9 +60,19 @@ interface ContentProps {
     app: App
 }
 
-class Content extends Component<ContentProps> {
+interface ContentState {
+    redirectTo?: string;
+}
+
+class Content extends Component<ContentProps, ContentState> {
+    constructor(props: ContentProps) {
+        super(props);
+        this.state = {} as ContentState;
+    }
+
     render() {
         const isAppFree = this.props.app.cost !== undefined && this.props.app.cost <= 0.00;
+        if(this.state.redirectTo) return <Redirect push to={this.state.redirectTo} />;
         return (
             <div className="container p-3">
                 <h2 className="text-lighter">{this.props.app.title}</h2>
@@ -75,7 +85,7 @@ class Content extends Component<ContentProps> {
                     <div className="play-title flex-grow-1">
                         {isAppFree ? `Play ${this.props.app.title}` : `Buy ${this.props.app.title}`}
                     </div>
-                    <BuyBtn app={this.props.app} />
+                    <BuyBtn app={this.props.app} onClick={() => this.setState({ redirectTo: '/library' })} />
                     <div className="price">{isAppFree ? 'Free' : this.props.app.cost?.toLocaleString('de-DE', {
                         minimumFractionDigits: 2,
                         maximumFractionDigits: 2,
@@ -122,7 +132,8 @@ class Content extends Component<ContentProps> {
 }
 
 interface BuyBtnProps {
-    app: App
+    app: App,
+    onClick: () => void;
 }
 
 interface BuyBtnState {
@@ -167,6 +178,11 @@ class BuyBtn extends Component<BuyBtnProps, BuyBtnState> {
     componentDidMount() {
         const buyBtn = document.getElementById('buyBtn');
         buyBtn?.addEventListener('click', () => {
+            if(this.state.btnState && this.state.btnState === 'added') {
+                this.props.onClick();
+                return;
+            }
+
             if (this.props.app.cost && this.props.app.cost > 0) {
                 alert('Purchases are not yet implemented.');
                 return;
