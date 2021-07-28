@@ -18,4 +18,27 @@ export function initDatabase() {
     });
 
     Model.knex(knexInstance);
+
+    // knexInstance.migrate.rollback({ migrationSource: new WebpackMigrationSource(require.context('./migrations', false, /^\.\/.*\.ts$/)) });
+    knexInstance.migrate.latest({ migrationSource: new WebpackMigrationSource(require.context('./migrations', false, /^\.\/.*\.ts$/)) });
+}
+
+class WebpackMigrationSource {
+    protected migrationContext: __WebpackModuleApi.RequireContext;
+
+    constructor(migrationContext: __WebpackModuleApi.RequireContext) {
+        this.migrationContext = migrationContext;
+    }
+
+    getMigrations() {
+        return Promise.resolve(this.migrationContext.keys().sort())
+    }
+
+    getMigrationName(migration: string) {
+        return path.parse(migration).base;
+    }
+
+    getMigration(migration: string) {
+        return this.migrationContext(migration);
+    }
 }
