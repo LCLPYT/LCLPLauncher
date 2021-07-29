@@ -122,7 +122,7 @@ class Content extends Component<ContentProps, ContentState> {
     }
 
     fetchPreview() {
-        fetch(`http://localhost:8000/api/lclplauncher/app-preview/${this.props.app.key}`)
+        fetch(`${getBackendHost()}/api/lclplauncher/app-preview/${this.props.app.key}`)
             .then(response => response.json())
             .then(data => this.setState({ previewData: data as AppPreviewItem[] }))
             .catch(reason => console.error('Failed to fetch preview:', reason));
