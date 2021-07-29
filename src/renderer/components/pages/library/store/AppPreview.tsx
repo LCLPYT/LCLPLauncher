@@ -117,6 +117,8 @@ class CarouselSlide extends Component<SlideProps> {
     render() {
         let first = this.props.index <= 0;
         let content: JSX.Element | undefined = undefined;
+        let hideControls = false;
+
         if (this.props.item.type === 'youtube') {
             const ytOptions = {
                 playerVars: {
@@ -124,9 +126,14 @@ class CarouselSlide extends Component<SlideProps> {
                     mute: 1
                 }
             } as YoutubeOptions;
-            content = <YouTube videoId={this.props.item.content} className="preview-youtube" opts={ytOptions} onPlay={event => this.onVideoPlay(event)} onPause={() => this.onVideoPause()} onEnd={() => this.onVideoPause()} />
+            hideControls = true;
+            content = <YouTube videoId={this.props.item.content} className="preview-item" opts={ytOptions} onPlay={event => this.onVideoPlay(event)} onPause={() => this.onVideoPause()} onEnd={() => this.onVideoPause()} />
         }
-        return <div className={first ? 'carousel-item preview active' : 'carousel-item preview'}>{content}</div>;
+        else if (this.props.item.type === 'image') {
+            content = <img src={this.props.item.content} alt="Preview" className="preview-item" />
+        }
+
+        return <div className={'carousel-item' + (hideControls ? ' preview' : '') + (first ? ' active' : '')}>{content}</div>;
     }
 
     protected player: any;
