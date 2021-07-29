@@ -22,7 +22,7 @@ $descLines: $descSize * 3;
 }
 
 #descToggler {
-    margin-top: -15px;
+    margin-top: -5px;
 }
 
 .highlight-area {
@@ -62,6 +62,23 @@ $descLines: $descSize * 3;
     font-size: 24px;
 }
 
-#genres-display span.badge {
+#genres-display {
     font-size: 14px;
+
+    span.badge {
+        font-size: 14px;
+    }
+}
+
+.preview-youtube {
+    aspect-ratio: 16 / 9;
+    width: 100%;
+    height: auto;
+    border-top-left-radius: 4px;
+    border-bottom-left-radius: 4px;
+    display: block;
+}
+
+#appPreviewContainer {
+    border-top-left-radius: 4px;
 }
