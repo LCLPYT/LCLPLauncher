@@ -23,7 +23,7 @@ class CollapsableDescription extends Component<{ content: string }> {
                 const descHeight = descDummy.getBoundingClientRect().height;
                 descDummy.hidden = true;
 
-                descToggler.hidden = descHeight <= 48;
+                descToggler.hidden = descHeight <= 24 * 4;
             }
         }
 

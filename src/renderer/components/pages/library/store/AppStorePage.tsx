@@ -79,10 +79,16 @@ class Content extends Component<ContentProps, ContentState> {
         return (
             <div className="container p-3">
                 <h2 className="text-lighter">{this.props.app.title}</h2>
-                {this.props.app.description ? <CollapsableDescription content={this.props.app.description} /> : undefined}
-                <GenresDisplay values={this.props.app.genres} />
-                {this.state.previewData ? <AppPreview app={this.props.app} previewData={this.state.previewData} /> : undefined}
-                <div id="buyArea" className="highlight-area rounded p-4 mt-3 shadow d-flex justify-content-between align-items-center">
+                <div className="d-flex rounded shadow mt-2" id="appPreviewContainer">
+                  <div className="w-50">
+                      {this.state.previewData ? <AppPreview app={this.props.app} previewData={this.state.previewData} /> : undefined}
+                  </div>
+                  <div className="w-50 p-3 overflow-auto custom-scrollbar" id="previewContainerRight">
+                      {this.props.app.description ? <CollapsableDescription content={this.props.app.description} /> : undefined}
+                      <GenresDisplay values={this.props.app.genres} />
+                  </div>
+                </div>
+                <div id="buyArea" className="highlight-area rounded p-4 mt-4 shadow d-flex justify-content-between align-items-center">
                     <div className="play-title flex-grow-1">
                         {isAppFree ? `Play ${this.props.app.title}` : `Buy ${this.props.app.title}`}
                     </div>
@@ -99,17 +105,20 @@ class Content extends Component<ContentProps, ContentState> {
     }
 
     componentDidMount() {
+        this.onResize();
+        window.addEventListener('resize', () => this.onResize());
+    }
+
+    onResize() {
+        // Buy button offset
         const buyArea = document.getElementById('buyArea');
+        const buyBtn = document.getElementById('buyBtn');
+        if (buyArea && buyBtn) buyBtn.style.top = `${Math.floor(buyArea.getBoundingClientRect().height / 2 - buyBtn.getBoundingClientRect().height / 4).toFixed(0)}px`;
 
-        function onResize() {
-            // Buy button offset
-            const buyBtn = document.getElementById('buyBtn');
-            if (buyArea && buyBtn) buyBtn.style.top = `${Math.floor(buyArea.getBoundingClientRect().height / 2 - buyBtn.getBoundingClientRect().height / 4).toFixed(0)}px`;
-        }
-
-        onResize();
-
-        window.addEventListener('resize', () => onResize());
+        // max height of right container part
+        const appPreviewCarousel =  document.getElementById('appPreviewCarousel');
+        const previewContainerRight = document.getElementById('previewContainerRight');
+        if(appPreviewCarousel && previewContainerRight) previewContainerRight.style.maxHeight = `${appPreviewCarousel.getBoundingClientRect().height}px`;
     }
 
     fetchPreview() {
@@ -117,6 +126,10 @@ class Content extends Component<ContentProps, ContentState> {
             .then(response => response.json())
             .then(data => this.setState({ previewData: data as AppPreviewItem[] }))
             .catch(reason => console.error('Failed to fetch preview:', reason));
+    }
+
+    componentDidUpdate() {
+        this.onResize();
     }
 }
 

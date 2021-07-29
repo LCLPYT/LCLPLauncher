@@ -4,17 +4,18 @@
 }
 
 $descSize: 16px;
-$descLines: $descSize * 3;
+$descLines: $descSize * 1.5 * 4;
 
 #description.collapse:not(.show) {
     display: block;
     font-size: $descSize;
-    height: $descLines;
+    max-height: $descLines;
     overflow: hidden;
 }
 
 #description.collapsing {
-    height: $descLines;
+    min-height: $descLines;
+    transition-timing-function: linear;
 }
 
 #description {
@@ -80,5 +81,5 @@ $descLines: $descSize * 3;
 }
 
 #appPreviewContainer {
-    border-top-left-radius: 4px;
+    background-color: #1F2428;
 }

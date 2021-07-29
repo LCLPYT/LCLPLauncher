@@ -15,30 +15,26 @@ class AppPreview extends Component<Props> {
 
     render() {
         return (
-            <div className="d-flex rounded bg-dark shadow" id="appPreviewContainer">
-                <div className="w-50">
-                    <div id="appPreviewCarousel" className="carousel slide" data-bs-ride="false" data-bs-pause="hover">
-                        <div className="carousel-indicators preview-controls">
-                            {
-                                this.props.previewData.map((item, index) => <CarouselSlideButton key={item.id} item={item} index={index} />)
-                            }
-                        </div>
-                        <div className="carousel-inner">
-                            {
-                                this.props.previewData.map((item, index) => <CarouselSlide key={item.id} item={item} index={index} playManager={this.playController} setPreviewControlsVisible={visible => this.setPreviewControlsVisible(visible)} />)
-                            }
-                        </div>
-                        <button className="carousel-control-prev preview-controls cursor-pointer" type="button" data-bs-target="#appPreviewCarousel" data-bs-slide="prev">
-                            <span className="carousel-control-prev-icon preview-controls" aria-hidden="true" />
-                            <span className="visually-hidden preview-controls">Previous</span>
-                        </button>
-                        <button className="carousel-control-next preview-controls cursor-pointer" type="button" data-bs-target="#appPreviewCarousel" data-bs-slide="next">
-                            <span className="carousel-control-next-icon preview-controls" aria-hidden="true" />
-                            <span className="visually-hidden preview-controls">Next</span>
-                        </button>
-                    </div>
+
+            <div id="appPreviewCarousel" className="carousel slide" data-bs-ride="false" data-bs-pause="hover">
+                <div className="carousel-indicators preview-controls">
+                    {
+                        this.props.previewData.map((item, index) => <CarouselSlideButton key={item.id} item={item} index={index} />)
+                    }
                 </div>
-                <div className="w-50"></div>
+                <div className="carousel-inner">
+                    {
+                        this.props.previewData.map((item, index) => <CarouselSlide key={item.id} item={item} index={index} playManager={this.playController} setPreviewControlsVisible={visible => this.setPreviewControlsVisible(visible)} />)
+                    }
+                </div>
+                <button className="carousel-control-prev preview-controls cursor-pointer" type="button" data-bs-target="#appPreviewCarousel" data-bs-slide="prev">
+                    <span className="carousel-control-prev-icon preview-controls" aria-hidden="true" />
+                    <span className="visually-hidden preview-controls">Previous</span>
+                </button>
+                <button className="carousel-control-next preview-controls cursor-pointer" type="button" data-bs-target="#appPreviewCarousel" data-bs-slide="next">
+                    <span className="carousel-control-next-icon preview-controls" aria-hidden="true" />
+                    <span className="visually-hidden preview-controls">Next</span>
+                </button>
             </div>
         );
     }
@@ -60,7 +56,7 @@ class AppPreview extends Component<Props> {
                     this.setPreviewControlsVisible(false);
                 });
                 elem.addEventListener('mouseleave', () => {
-                    if(!this.playController.isPlaying()) this.setPreviewControlsVisible(true);
+                    if (!this.playController.isPlaying()) this.setPreviewControlsVisible(true);
                 });
             });
         }
@@ -91,15 +87,15 @@ class PlayListener {
     onPlay(player: any) {
         this.players.push(player);
     }
-    
+
     onPause(player: any) {
         const idx = this.players.indexOf(player);
-        if(idx >= 0) this.players.splice(idx, 1);
+        if (idx >= 0) this.players.splice(idx, 1);
     }
 
     setPlaying(shouldPlay: boolean) {
         this.players.forEach(player => {
-            if(!player) return;
+            if (!player) return;
             if (shouldPlay) player.playVideo();
             else player.pauseVideo();
         });
@@ -121,7 +117,7 @@ class CarouselSlide extends Component<SlideProps> {
     render() {
         let first = this.props.index <= 0;
         let content: JSX.Element | undefined = undefined;
-        if(this.props.item.type === 'youtube') {
+        if (this.props.item.type === 'youtube') {
             const ytOptions = {
                 playerVars: {
                     autoplay: 0,
