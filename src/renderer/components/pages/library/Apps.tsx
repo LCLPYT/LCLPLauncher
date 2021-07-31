@@ -5,6 +5,7 @@ import { LIBRARY } from '../../../utils/ipc';
 
 import '../../../style/pages/library/library.scss';
 import tippy from 'tippy.js';
+import { Link } from 'react-router-dom';
 
 interface State {
     apps?: App[]
@@ -67,29 +68,31 @@ class AppEntry extends Component<{ app: App }> {
     render() {
         return (
             <div className="col pb-2 px-2">
-                <div id={`card${this.props.app.id}`} className="text-center d-inline-block cursor-pointer card-wrapper overflow-hidden">
-                    <div className="card-banner-wrapper rounded shadow">
-                        <img className="card-banner" src={`${getBackendHost()}/api/lclplauncher/apps/assets/card-banner/${this.props.app.key}`} alt="App banner" />
+                <Link to={`/library/app/${this.props.app.key}`}>
+                    <div id={`card${this.props.app.id}`} className="text-center d-inline-block cursor-pointer card-wrapper overflow-hidden">
+                        <div className="card-banner-wrapper rounded shadow">
+                            <img className="card-banner" src={`${getBackendHost()}/api/lclplauncher/apps/assets/card-banner/${this.props.app.key}`} alt="App banner" />
+                        </div>
+                        <div className="card-overlay-bottom p-2 text-lighter d-flex align-items-center">
+                            <div className="flex-fill text-start ps-2">{this.props.app.title}</div>
+                            <span className="material-icons overlay-arrow">chevron_right</span>
+                        </div>
                     </div>
-                    <div className="card-overlay-bottom p-2 text-lighter d-flex align-items-center">
-                        <div className="flex-fill text-start ps-2">{this.props.app.title}</div>
-                        <span className="material-icons overlay-arrow">chevron_right</span>
-                    </div>
-                </div>
+                </Link>
             </div>
         );
     }
 
     componentDidMount() {
         const wrapper = document.getElementById(`card${this.props.app.id}`);
-        if(wrapper) {
+        if (wrapper) {
             const overlay = wrapper.querySelector('.card-overlay-bottom');
-            if(overlay) {
+            if (overlay) {
                 wrapper.addEventListener('mouseenter', () => overlay.classList.add('wrapper-hover'));
                 wrapper.addEventListener('mouseleave', () => overlay.classList.remove('wrapper-hover'));
 
                 const arrow = overlay.querySelector('.overlay-arrow');
-                if(arrow) tippy(arrow, {
+                if (arrow) tippy(arrow, {
                     content: 'View app',
                     animation: 'scale'
                 });

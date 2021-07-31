@@ -35,6 +35,7 @@ class Library extends Component {
                             <Route exact path="/library/apps" component={Apps} />
                             <Route exact path="/library/search" component={Search} />
                             <Route exact path="/library/store/app/:app" component={AppStorePage} />
+                            <Route exact path="/library/app/:app" component={AppStorePage} />
                         </Switch>
                     </div>
                 </div>
