@@ -2,7 +2,7 @@ import { ipcMain } from "electron";
 import { IpcMainEvent } from "electron/main";
 import App from "../../common/types/App";
 import { ACTIONS, GenericIPCActionHandler, GenericIPCHandler } from "../../common/utils/ipc";
-import { addToLibary, isInLibrary } from "./library";
+import { addToLibary, getLibraryApps, isInLibrary } from "./library";
 
 class IpcActionEvent {
     public readonly event: IpcMainEvent;
@@ -57,6 +57,14 @@ export const LIBRARY = registerHandler(new class extends IPCActionHandler {
                         console.error('Error checking for library app:', err);
                         event.reply(false);
                     });
+                break;
+            case ACTIONS.library.getLibraryApps:
+                getLibraryApps()
+                    .then(apps => event.reply(apps))
+                    .catch(err => {
+                        console.error('Error getting library apps:', err);
+                        event.reply(null);
+                    })
                 break;
             default:
                 throw new Error(`Action '${action}' not implemented.`);

@@ -26,7 +26,6 @@ class Search extends Component<IProps, IState> {
         return (
             <div className="container-lg p-3">
                 <h2 className="text-lighter">Search Apps</h2>
-                <p className="text-lighter">Search for app titles, tags, genres or keywords.</p>
                 <div id="autocomplete" className="d-flex align-items-center mt-3">
                     <div className="ac-wrapper-prefix">
                         <button className="ac-submit h-100 d-flex align-items-center" id="searchBtn">

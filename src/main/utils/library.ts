@@ -10,3 +10,7 @@ export async function isInLibrary(app: App): Promise<boolean> {
     return await LibaryApplication.query().findById(app.id)
         .then(result => result ? true : false);
 }
+
+export async function getLibraryApps(): Promise<App[]> {
+    return await LibaryApplication.query();
+}
