@@ -6,6 +6,7 @@ import { LIBRARY } from '../../../utils/ipc';
 import '../../../style/pages/library/library.scss';
 import tippy from 'tippy.js';
 import { Link } from 'react-router-dom';
+import LoadingSpinner from '../../utility/LoadingSpinner';
 
 interface State {
     apps?: App[]
@@ -35,9 +36,7 @@ class Loading extends Component {
     render() {
         return (
             <div className="h-100 w-100 d-flex align-items-center text">
-                <div className="spinner-border mx-auto text-lighter" role="status">
-                    <span className="visually-hidden">Loading...</span>
-                </div>
+                <LoadingSpinner />
             </div>
         );
     }

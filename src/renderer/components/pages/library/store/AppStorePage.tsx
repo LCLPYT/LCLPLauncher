@@ -5,6 +5,7 @@ import AppPreviewItem from '../../../../../common/types/AppPreviewItem';
 import { getBackendHost } from '../../../../../common/utils/settings';
 
 import '../../../../style/pages/library/store_page.scss';
+import LoadingSpinner from '../../../utility/LoadingSpinner';
 import AppPreview from './AppPreview';
 import BuyButton from './BuyButton';
 import CollapsableDescription from './CollapsableDescription';
@@ -48,9 +49,7 @@ class Loading extends Component {
     render() {
         return (
             <div className="h-100 w-100 d-flex align-items-center text">
-                <div className="spinner-border mx-auto text-lighter" role="status">
-                    <span className="visually-hidden">Loading...</span>
-                </div>
+                <LoadingSpinner />
             </div>
         );
     }

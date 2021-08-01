@@ -1,0 +1,27 @@
+@import "../../bootstrap/variables.scss";
+
+#appWrapper {
+    position: relative;
+}
+
+#appBackground {
+    position: absolute;
+    top: 0;
+    overflow: hidden;
+}
+
+#appForeground {
+    position: absolute;
+    top: 30%;
+    width: 100%;
+    z-index: 2;
+    min-height: 70%;
+    display: flex;
+    flex-direction: column;
+}
+
+.foreground-container {
+    background-color: rgba($body-bg, 0.6);
+    flex: 1;
+    backdrop-filter: blur(10px);
+}

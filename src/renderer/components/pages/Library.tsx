@@ -6,6 +6,7 @@ import Search from './library/Search';
 import '../../style/pages/library.scss';
 import AppStorePage from './library/store/AppStorePage';
 import { getBackendHost } from '../../../common/utils/settings';
+import AppPage from './library/AppPage';
 
 class Library extends Component {
     render() {
@@ -35,7 +36,7 @@ class Library extends Component {
                             <Route exact path="/library/apps" component={Apps} />
                             <Route exact path="/library/search" component={Search} />
                             <Route exact path="/library/store/app/:app" component={AppStorePage} />
-                            <Route exact path="/library/app/:app" component={AppStorePage} />
+                            <Route exact path="/library/app/:app" component={AppPage} />
                         </Switch>
                     </div>
                 </div>
