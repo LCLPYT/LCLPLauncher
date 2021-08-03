@@ -21,7 +21,30 @@
 }
 
 .foreground-container {
-    background-color: rgba($body-bg, 0.6);
+    background-color: rgba($body-bg, 0.7);
     flex: 1;
-    backdrop-filter: blur(10px);
+    backdrop-filter: blur(16px);
+}
+
+.app-title {
+    font-size: calc(2.5rem + 2.1vw);
+}
+
+.app-title-branding {
+    display: block;
+    max-width: 100%;
+    max-height: 200px;
+    width: auto;
+    height: auto;
+}
+
+#playBar {
+    font-size: 18px;
+    background-color: rgba(black, 0.1);
+}
+
+
+#appDetails {
+    background-color: rgba(white, 0.05);
+    width: 30%;
 }

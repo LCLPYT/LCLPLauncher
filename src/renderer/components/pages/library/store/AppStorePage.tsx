@@ -8,8 +8,8 @@ import '../../../../style/pages/library/store_page.scss';
 import LoadingSpinner from '../../../utility/LoadingSpinner';
 import AppPreview from './AppPreview';
 import BuyButton from './BuyButton';
-import CollapsableDescription from './CollapsableDescription';
-import GenresDisplay from './GenresDisplay';
+import CollapsableDescription from '../../../utility/CollapsableDescription';
+import GenresDisplay from '../../../utility/GenresDisplay';
 
 interface Props extends RouteComponentProps<{ app: string }> {}
 
@@ -84,7 +84,9 @@ class Content extends Component<ContentProps, ContentState> {
                   </div>
                   <div className="w-50 p-3 overflow-auto custom-scrollbar" id="previewContainerRight">
                       {this.props.app.description ? <CollapsableDescription content={this.props.app.description} /> : undefined}
-                      <GenresDisplay values={this.props.app.genres} />
+                      <div className="pt-2 border-top border-secondary">
+                          <GenresDisplay values={this.props.app.genres} />
+                      </div>
                   </div>
                 </div>
                 <div id="buyArea" className="highlight-area rounded p-4 mt-4 shadow d-flex justify-content-between align-items-center">
