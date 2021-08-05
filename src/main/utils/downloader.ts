@@ -130,26 +130,32 @@ class Installer {
         if(this.actionQueue.length <= 0 || this.actionWorkerActive) return;
         this.actionWorkerActive = true;
 
-        const action = this.actionQueue[0];
+        const action = this.actionQueue[0]; // get next post action
         this.currentPostAction = action.handle;
-        this.actionQueue.splice(0, 1);
+        this.actionQueue.splice(0, 1); // remove it from the queue
         
-        await action.handle.call(action.argument);
+        await action.handle.call(action.argument); // wait for the action to complete
         this.currentPostAction = null;
         this.actionWorkerActive = false;
-        this.doNextPostAction();
+        this.doNextPostAction(); // start next post action, but do not wait for it to finish, so the causing artifact gets finished. 
+        // Note: To ensure the installation to wait for all actions to finish, the completePostActions() function is used.
     }
 
     protected completePostActions() {
+        // called after downloads have finished
         return new Promise<void>((resolve) => {
+            // check if there are any queued actions left
             if(this.actionQueue.length <= 0) {
+                // no enqueued actions, check if there is an action running currently
                 if(this.currentPostAction) {
-                    this.currentPostAction.getLastAction().onCompleted = () => resolve();
+                    // resolve at completion of action chain
+                    this.currentPostAction.lastChild().onCompleted = () => resolve();
                 } else resolve();
             } else {
+                // resolve at completion of the last action chain in queue
                 const lastAction = this.actionQueue[this.actionQueue.length - 1]
-                lastAction.handle.getLastAction().onCompleted = () => resolve();
-                this.doNextPostAction();
+                lastAction.handle.lastChild().onCompleted = () => resolve();
+                this.doNextPostAction(); // start the post action worker, if it somehow died
             }
         });
     }
@@ -230,8 +236,8 @@ class PostActionHandle {
     /**
      * @returns The last action in this action chain.
      */
-    public getLastAction(): PostActionHandle {
-        return this.child ? this.child.getLastAction() : this;
+    public lastChild(): PostActionHandle {
+        return this.child ? this.child.lastChild() : this;
     }
 
     /**
@@ -250,6 +256,6 @@ class PostActionHandle {
      * @param action The action to execute at the end of this action chain.
      */
     public doLast(action: PostActionHandle) {
-        this.getLastAction().child = action; // safe, because the last action has no child
+        this.lastChild().child = action; // safe, because the last action has no child
     }
 }
