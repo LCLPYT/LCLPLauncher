@@ -5,11 +5,14 @@ import Installation, { Artifact, PostAction } from "../types/Installation";
 import Downloader from 'nodejs-file-downloader';
 import * as Path from 'path';
 import { unzip } from "./zip";
+import { checksumFile } from "./checksums";
+import { strict as assert } from 'assert';
+import { rmdirRecusive, unlink } from "./fshelper";
 
-let currentDownloadManager: DownloadManager | null = null;
+let currentInstaller: Installer | null = null;
 
 export async function startInstallationProcess(app: App) {
-    if(currentDownloadManager) throw new Error('Multiple installation processes are currently not supported.');
+    if(currentInstaller) throw new Error('Multiple installation processes are currently not supported.');
     console.log(`Starting installation process of '${app.title}'...`);
 
     const headers = new Headers();
@@ -27,17 +30,17 @@ export async function startInstallationProcess(app: App) {
     const installationDir = Path.join('C:', 'Users', 'lukas', 'Documents', 'projects', 'misc', 'LCLPLauncher', '.temp', 'test');
     console.log('Installing to:', installationDir);
 
-    const downloadManager = new DownloadManager(installationDir);
-    currentDownloadManager = downloadManager;
-    installation.artifacts.forEach(artifact => downloadManager.addToQueue(artifact));
+    const installer = new Installer(installationDir);
+    currentInstaller = installer;
+    installation.artifacts.forEach(artifact => installer.addToQueue(artifact));
 
-    await downloadManager.startDownloading();
+    await installer.startDownloading();
 
-    currentDownloadManager = null;
+    currentInstaller = null;
     console.log(`Installation of '${app.title}' finished successfully.`);
 }
 
-class DownloadManager {
+class Installer {
     protected readonly installationDirectory: string;
     protected readonly tmpDir: string;
     protected downloadQueue: Artifact[] = [];
@@ -63,6 +66,7 @@ class DownloadManager {
         this.downloadQueue.forEach(artifact => this.totalBytes += Math.max(0, artifact.size));
         await this.downloadNext();
         await this.completePostActions();
+        await this.cleanUp();
     }
 
     protected async downloadNext() {
@@ -95,16 +99,29 @@ class DownloadManager {
         await downloader.download();
         console.log(`Downloaded '${artifact.url}'.`);
 
-        const finalPath = finalName ? Path.resolve(dir, finalName) : null;
+        const downloadedPath = finalName ? Path.resolve(dir, finalName) : null;
 
-        // TODO add md5 checking + if valid move to destination directory as post action
-        if(artifact.post) this.enqueuePostAction(this.createPostActionHandle(artifact.post), finalPath);
+        let postActionHandles = [];
+        if(artifact.md5) postActionHandles.push(this.createMD5ActionHandle());
+        if(artifact.post) postActionHandles.push(this.createPostActionHandle(artifact.post));
+
+        if(postActionHandles.length > 0) {
+            const firstAction = postActionHandles[0];
+            postActionHandles.forEach((postAction, index) => {
+                if(index > 0) firstAction.doLast(postAction);
+            });
+
+            this.enqueuePostAction(firstAction, {
+                artifact: artifact,
+                result: downloadedPath
+            });
+        }
 
         // download next artifact
         await this.downloadNext();
     }
 
-    protected enqueuePostAction(action: PostActionHandle, argument: any) {
+    protected enqueuePostAction(action: PostActionHandle, argument: PostActionArgument) {
         this.actionQueue.push(new PostActionWrapper(action, argument));
         this.doNextPostAction();
     }
@@ -127,14 +144,29 @@ class DownloadManager {
         return new Promise<void>((resolve) => {
             if(this.actionQueue.length <= 0) {
                 if(this.currentPostAction) {
-                    this.currentPostAction.onCompleted = () => resolve();
+                    this.currentPostAction.getLastAction().onCompleted = () => resolve();
                 } else resolve();
             } else {
                 const lastAction = this.actionQueue[this.actionQueue.length - 1]
-                lastAction.handle.onCompleted = () => resolve();
+                lastAction.handle.getLastAction().onCompleted = () => resolve();
                 this.doNextPostAction();
             }
         });
+    }
+
+    protected async cleanUp() {
+        console.log('Cleaning up...')
+        await rmdirRecusive(this.tmpDir);
+        console.log('Cleaned up.');
+    }
+
+    protected createMD5ActionHandle(): PostActionHandle {
+        return new PostActionHandle(async ({result: file, artifact: { md5 }}) => {
+            console.log(`Checking integrity of '${file}'...`);
+            const calculatedMd5 = await checksumFile(file, 'md5');
+            assert(md5 && calculatedMd5 === md5, `Checksum mismatch '${file}'.`);
+            console.log(`Integrity valid: '${file}'`);
+        }, null);
     }
 
     protected createPostActionHandle(action: PostAction): PostActionHandle {
@@ -142,11 +174,13 @@ class DownloadManager {
             case 'extractZip':
                 const child: PostActionHandle | null = action.post ? this.createPostActionHandle(action.post) : null;
                 const target = Path.resolve(this.installationDirectory, ...action.destination);
-                return new PostActionHandle(async (zipFile) => {
+                return new PostActionHandle(async ({result: zipFile}) => {
                     console.log(`Unzipping '${zipFile}'...`);
                     // await unzip(zipFile, target, progress => console.log(`${((progress.transferredBytes / progress.totalBytes) * 100).toFixed(2)}% - ${progress.transferredBytes} / ${progress.totalBytes}`));
                     await unzip(zipFile, target);
-                    console.log(`Unzipped '${zipFile}'.`);
+                    console.log(`Unzipped '${zipFile}'. Deleting it...`);
+                    await unlink(zipFile);
+                    console.log(`Deleted '${zipFile}'.`);
                 }, child);
             default:
                 throw new Error(`Unimplemented action: '${action.type}'`);
@@ -154,29 +188,68 @@ class DownloadManager {
     }
 }
 
+type PostActionArgument = {
+    artifact: Artifact;
+    result: any;
+}
+
 class PostActionWrapper {
     public readonly handle: PostActionHandle;
-    public readonly argument: any;
+    public readonly argument: PostActionArgument;
 
-    constructor(handle: PostActionHandle, argument: any) {
+    constructor(handle: PostActionHandle, argument: PostActionArgument) {
         this.handle = handle;
         this.argument = argument;
     }
 }
 
 class PostActionHandle {
-    protected readonly action: (arg: any) => Promise<any>;
-    protected readonly child: PostActionHandle | null;
+    protected readonly action: (arg: PostActionArgument) => Promise<any>;
+    protected child: PostActionHandle | null;
     public onCompleted?: () => void;
 
-    constructor(action: (arg: any) => Promise<any>, child: PostActionHandle | null) {
+    /**
+     * Construct a new handle.
+     * @param action The action function. This function will receive the return result of it's parent's action in action.result (or their argument if nothing is returned).
+     * @param child The action to be executed after this action.
+     */
+    constructor(action: (arg: PostActionArgument) => Promise<any>, child: PostActionHandle | null) {
         this.action = action;
         this.child = child;
     }
 
-    public async call(arg: any): Promise<void> {
+    public async call(arg: PostActionArgument): Promise<void> {
         const result = await this.action(arg);
         if(this.onCompleted) this.onCompleted();
-        if(this.child) await this.child.call(result);
+        if(this.child) {
+            if(result !== undefined) arg.result = result;
+            await this.child.call(arg);
+        }
+    }
+
+    /**
+     * @returns The last action in this action chain.
+     */
+    public getLastAction(): PostActionHandle {
+        return this.child ? this.child.getLastAction() : this;
+    }
+
+    /**
+     * Enqueues an action to be run, after this action is done. 
+     * If this action already has a successor, the new action will be executed between them.
+     * @param action The action to execute after this action.
+     */
+    public doAfter(action: PostActionHandle) {
+        const oldChild = this.child;
+        if(oldChild) action.doLast(oldChild);
+        this.child = action;
+    }
+
+    /**
+     * Enqueues an action to be run, after this action chain is done.
+     * @param action The action to execute at the end of this action chain.
+     */
+    public doLast(action: PostActionHandle) {
+        this.getLastAction().child = action; // safe, because the last action has no child
     }
 }

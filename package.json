@@ -30,6 +30,7 @@
   "dependencies": {
     "@popperjs/core": "^2.9.2",
     "@types/progress-stream": "^2.0.2",
+    "@types/rimraf": "^3.0.1",
     "@types/yauzl": "^2.9.2",
     "babel-loader": "^8.2.2",
     "bootstrap": "^5.0.1",
@@ -45,6 +46,7 @@
     "react-dom": "^17.0.2",
     "react-router-dom": "^5.2.0",
     "react-youtube": "^7.13.1",
+    "rimraf": "^3.0.2",
     "source-map-support": "^0.5.19",
     "sqlite": "^4.0.23",
     "sqlite3": "^5.0.2",
