@@ -2,6 +2,7 @@ import { ipcMain } from "electron";
 import { IpcMainEvent } from "electron/main";
 import App from "../../common/types/App";
 import { ACTIONS, GenericIPCActionHandler, GenericIPCHandler } from "../../common/utils/ipc";
+import { startInstallationProcess } from "./downloader";
 import { addToLibary, getLibraryApps, isInLibrary } from "./library";
 
 class IpcActionEvent {
@@ -71,3 +72,21 @@ export const LIBRARY = registerHandler(new class extends IPCActionHandler {
         }
     }
 }('library'));
+
+export const DOWNLOADER = registerHandler(new class extends IPCActionHandler {
+    protected onAction(action: string, event: IpcActionEvent, args: any[]): void {
+        switch(action) {
+            case ACTIONS.downloader.startInstallationProcess:
+                if(args.length < 1) throw new Error('App argument is missing');
+                startInstallationProcess(<App> args[0])
+                    .then(() => event.reply(true))
+                    .catch(err => {
+                        console.error('Error in installation process:', err);
+                        event.reply(false, err);
+                    });
+                break;
+            default:
+                throw new Error(`Action '${action}' not implemented.`);
+        }
+    }
+}('downloader'));

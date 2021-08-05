@@ -88,3 +88,36 @@ export const LIBRARY = registerHandler(new class extends IPCActionHandler {
         })
     }
 }('library'));
+
+export const DOWNLOADER = registerHandler(new class extends IPCActionHandler {
+    protected startInstallationProcessCB?: {
+        resolve: (finishedWithSuccess: boolean) => void,
+        reject: (error: any) => void
+    };
+    protected onAction(action: string, _event: Electron.IpcRendererEvent, args: any[]): void {
+        switch (action) {
+            case ACTIONS.downloader.startInstallationProcess:
+                if(args.length < 1) throw new Error('Success argument does not exist.');
+                if(this.startInstallationProcessCB) {
+                    const success = <boolean> args[0];
+                    if(success) this.startInstallationProcessCB.resolve(<boolean> args[0]);
+                    else this.startInstallationProcessCB.reject(args[1]);
+                    this.startInstallationProcessCB = undefined;
+                } else console.warn('No callback defined for', ACTIONS.downloader.startInstallationProcess);
+                break;
+            default:
+                throw new Error(`Action '${action}' not implemented.`);
+        }
+    }
+
+    public startInstallationProcess(app: App): Promise<boolean | null> {
+        if(this.startInstallationProcessCB) return Promise.resolve(null);
+        return new Promise((resolve, reject) => {
+            this.startInstallationProcessCB = {
+                resolve: success => resolve(success),
+                reject: error => reject(error)
+            };
+            this.sendAction(ACTIONS.downloader.startInstallationProcess, app);
+        });
+    }
+}('downloader'))

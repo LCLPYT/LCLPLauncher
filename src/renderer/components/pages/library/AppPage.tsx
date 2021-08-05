@@ -9,6 +9,7 @@ import tippy from 'tippy.js';
 import CollapsableDescription from '../../utility/CollapsableDescription';
 import GenresDisplay from '../../utility/GenresDisplay';
 import YouTube from 'react-youtube';
+import { DOWNLOADER } from '../../../utils/ipc';
 
 interface Props extends RouteComponentProps<{ app: string }> { }
 
@@ -118,7 +119,19 @@ class Content extends Component<ContentProps, ContentState> {
         if(shopPageLink) tippy(shopPageLink, {
             'content': 'Visit store page',
             'animation': 'scale'
-        })
+        });
+
+        const playBtn = document.getElementById('playBtn');
+        playBtn?.addEventListener('click', () => {
+            console.info(`Starting installation process of '${this.props.app.title}'...`);
+            DOWNLOADER.startInstallationProcess(this.props.app)
+                .then(success => {
+                    if(success === null) return; // Button clicked while installation process is running
+                    if(success) console.info(`Installation of '${this.props.app.title}' has finished successfully.`);
+                    else console.error(`Could not complete installation process of '${this.props.app.title}'.`);
+                })
+                .catch(error => console.error('Could not finish the installation process:', error));
+        });
     }
 
     componentDidUpdate() {

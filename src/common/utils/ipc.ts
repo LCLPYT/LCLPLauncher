@@ -28,5 +28,8 @@ export const ACTIONS = {
         addAppToLibrary: 'add-app-to-libary',
         isAppInLibrary: 'is-app-in-library',
         getLibraryApps: 'get-library-apps'
+    },
+    downloader: {
+        startInstallationProcess: 'start-installation-process'
     }
 }
