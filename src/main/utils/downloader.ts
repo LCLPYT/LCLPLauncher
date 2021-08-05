@@ -146,7 +146,7 @@ class Installer {
         return new Promise<void>((resolve) => {
             // check if there are any queued actions left
             if(this.actionQueue.length <= 0) {
-                // no enqueued actions, check if there is an action running currently
+                // no enqueued actions, check if there is an action currently running
                 if(this.currentPostAction) {
                     // resolve at completion of action chain
                     this.currentPostAction.lastChild().onCompleted = () => resolve();
