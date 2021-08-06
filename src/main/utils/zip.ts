@@ -3,20 +3,21 @@ import Path from 'path';
 import fs from 'fs';
 import progress_stream from 'progress-stream';
 import { mkdirp } from './fshelper';
+import ArtifactTrackerWriter from '../downloader/ArtifactTracker';
 
-export async function unzip(zipFile: string, destination: string, onProgress?: (progress: Progress) => void): Promise<void> {
+export async function unzip(zipFile: string, destination: string, tracker: ArtifactTrackerWriter, onProgress?: (progress: Progress) => void): Promise<void> {
     if (onProgress) {
         const totalUncompressedSize = await getTotalUncompressedSize(zipFile);
-        await unzipWithTotalSize(zipFile, destination, {
-            totalUncompressedSize: totalUncompressedSize, 
+        await unzipWithTotalSize(zipFile, destination, tracker, {
+            totalUncompressedSize: totalUncompressedSize,
             onProgress: progress => onProgress(progress)
         });
     } else {
-        await unzipWithTotalSize(zipFile, destination);
+        await unzipWithTotalSize(zipFile, destination, tracker);
     }
 }
 
-function unzipWithTotalSize(zipFile: string, destination: string, progressListener?: ProgressCallback): Promise<void> {
+function unzipWithTotalSize(zipFile: string, destination: string, tracker: ArtifactTrackerWriter, progressListener?: ProgressCallback): Promise<void> {
     const getPath = (path: string) => Path.join(destination, path);
     return new Promise((resolve, reject) => {
         yauzl.open(zipFile, {
@@ -36,21 +37,23 @@ function unzipWithTotalSize(zipFile: string, destination: string, progressListen
                 } else { // entry is a file
                     const unzippedPath = getPath(entry.fileName);
                     // ensure parent directory exists
-                    mkdirp(Path.dirname(unzippedPath))
-                        .then(() => {
-                            if(progressListener) {
-                                extractZipEntry(zip, entry, unzippedPath, progress => {
-                                    totallyTransferred += progress.delta;
-                                    progressListener.onProgress({
-                                        totalBytes: progressListener.totalUncompressedSize,
-                                        transferredBytes: totallyTransferred,
-                                        speed: progress.speed
-                                    })
-                                }).then(() => zip.readEntry()).catch(err => reject(err))
-                            } else {
-                                extractZipEntry(zip, entry, unzippedPath).then(() => zip.readEntry()).catch(err => reject(err))
-                            }
-                        }).catch(err => reject(err));
+                    mkdirp(Path.dirname(unzippedPath)).then(async () => {
+                        // track the extracted file
+                        await tracker.pushArchivePath(unzippedPath);
+                    }).then(() => {
+                        if (progressListener) {
+                            extractZipEntry(zip, entry, unzippedPath, progress => {
+                                totallyTransferred += progress.delta;
+                                progressListener.onProgress({
+                                    totalBytes: progressListener.totalUncompressedSize,
+                                    transferredBytes: totallyTransferred,
+                                    speed: progress.speed
+                                })
+                            }).then(() => zip.readEntry()).catch(err => reject(err))
+                        } else {
+                            extractZipEntry(zip, entry, unzippedPath).then(() => zip.readEntry()).catch(err => reject(err))
+                        }
+                    }).catch(err => reject(err));
                 }
             });
             zip.once('end', () => {

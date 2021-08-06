@@ -3,20 +3,20 @@ type Installation = {
 }
 
 export type Artifact = {
+    /** The identifier of the artifact, used to determine which artifacts need to be updated between versions */
+    id: string;
     /** Url of the artifact to download */
-    url: string,
+    url: string;
     /** Size of the artifact in bytes; used to calculate the download progress */
-    size: number,
+    size: number;
     /** MD5 checksum of the downloaded file, if there is a mismatch, the installation will fail */
-    md5?: string,
+    md5?: string;
     /** The name, the downloaded file will get; If omitted, the file name from the response headers will be used */
-    fileName?: string,
-    /** If this condition is fulfilled, the artifact will not be downloaded. So this should check if an artifact is still valid when updating and thus makes updates quicker. */
-    check?: CheckCondition[],
+    fileName?: string;
     /** Path segments for the destination directory; If omitted, file will remain in the .temp directory */
-    destination?: Path,
+    destination?: Path;
     /** Action to execute after the download is finished */
-    post?: PostAction
+    post?: PostAction;
 }
 
 /* Check Conditions */

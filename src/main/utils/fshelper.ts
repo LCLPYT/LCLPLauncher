@@ -1,6 +1,8 @@
 import * as fs from 'fs';
 import * as Path from 'path';
 import rimraf from 'rimraf';
+import App from '../../common/types/App';
+import { app as electronApp } from 'electron';
 
 export function unlink(file: string): Promise<void> {
     return new Promise((resolve, reject) => fs.unlink(file, error => {
@@ -39,4 +41,12 @@ export function mkdirp(dir: string): Promise<void> {
             }
         });
     });
+}
+
+export function exists(file: string): Promise<boolean> {
+    return new Promise(resolve => fs.stat(file, err => resolve(err === null)));
+}
+
+export function getInstallerAppDir(app: App) {
+    return Path.resolve(electronApp.getPath('userData'), '.installer', 'apps', app.id.toString());
 }

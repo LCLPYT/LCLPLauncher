@@ -6,11 +6,13 @@ import App from "../../common/types/App";
 import Installation, { Artifact, Path as SegmentedPath } from "../types/Installation";
 import { rmdirRecusive } from "../utils/fshelper";
 import { PostActionArgument, PostActionHandle, PostActionWrapper, ActionFactory } from "./postActions";
+import ArtifactTrackerWriter, { ArtifactTrackerReader, ArtifactType } from "./ArtifactTracker";
+import { checksumFile } from "../utils/checksums";
 
 let currentInstaller: Installer | null = null;
 
 export async function startInstallationProcess(app: App) {
-    if(currentInstaller) throw new Error('Multiple installation processes are currently not supported.');
+    if (currentInstaller) throw new Error('Multiple installation processes are currently not supported.');
     console.log(`Starting installation process of '${app.title}'...`);
 
     const headers = new Headers();
@@ -22,13 +24,13 @@ export async function startInstallationProcess(app: App) {
     }).then(response => response.text())
         .then(text => jsoncSafe.parse(text));
 
-    if(err) throw err;
+    if (err) throw err;
 
-    const installation = <Installation> result;
+    const installation = <Installation>result;
     const installationDir = Path.join('C:', 'Users', 'lukas', 'Documents', 'projects', 'misc', 'LCLPLauncher', '.temp', 'test');
     console.log('Installing to:', installationDir);
 
-    const installer = new Installer(installationDir);
+    const installer = new Installer(app, installationDir);
     currentInstaller = installer;
     installation.artifacts.forEach(artifact => installer.addToQueue(artifact));
 
@@ -41,6 +43,7 @@ export async function startInstallationProcess(app: App) {
 export class Installer {
     public readonly installationDirectory: string;
     public readonly tmpDir: string;
+    public readonly app: App;
     protected downloadQueue: Artifact[] = [];
     protected actionQueue: PostActionWrapper[] = [];
     protected totalBytes: number = 0;
@@ -48,7 +51,8 @@ export class Installer {
     protected actionWorkerActive = false;
     protected currentPostAction: PostActionHandle | null = null;
 
-    constructor(installationDirectory: string) {
+    constructor(app: App, installationDirectory: string) {
+        this.app = app;
         this.installationDirectory = installationDirectory;
         this.tmpDir = Path.resolve(this.installationDirectory, '.tmp');
     }
@@ -58,7 +62,7 @@ export class Installer {
     }
 
     public async startDownloading() {
-        if(this.active) return;
+        if (this.active) return;
         this.active = true;
         this.totalBytes = 0;
         this.downloadQueue.forEach(artifact => this.totalBytes += Math.max(0, artifact.size));
@@ -68,9 +72,22 @@ export class Installer {
     }
 
     protected async downloadNext() {
-        if(this.downloadQueue.length <= 0) return;
+        if (this.downloadQueue.length <= 0) return;
         const artifact = this.downloadQueue[0];
         this.downloadQueue.splice(0, 1);
+
+        console.log(`Resolving artifact '${artifact.id}...'`);
+
+        // TODO when doing the progress display, filter artifacts before starting the downloads
+        if (!await this.doesArtifactNeedUpdate(artifact).catch((err: Error) => {
+            if(err.name === 'VersionError') console.error(err.message);
+            else console.error(err);
+            return true;
+        })) {
+            // download next artifact
+            await this.downloadNext();
+            return;
+        }
 
         // determine directory to place the downloaded file into; if md5 validation should be done, the file will be put in the .tmp dir first
         const dir = artifact.md5 || !artifact.destination ? this.tmpDir : this.toActualPath(artifact.destination);
@@ -82,10 +99,10 @@ export class Installer {
             cloneFiles: false,
             onResponse: response => {
                 const sizeHeader = response.headers['content-length'];
-                if(sizeHeader) {
+                if (sizeHeader) {
                     const size = Number(sizeHeader);
                     // correct total bytes, if the actual size deviates from the given size
-                    if(artifact.size !== size) this.totalBytes -= artifact.size - size;
+                    if (artifact.size !== size) this.totalBytes -= artifact.size - size;
                 }
             },
             onBeforeSave: deducedName => {
@@ -100,22 +117,29 @@ export class Installer {
         const downloadedPath = downloadedName ? Path.resolve(dir, downloadedName) : null;
 
         let postActionHandles = [];
-        if(artifact.md5) {
+        if (artifact.md5) {
             postActionHandles.push(ActionFactory.createMD5ActionHandle());
-            // if md5 validation is done, the file is in the .tmp directory. The file needs to be moved to it's destination afterwards.
-            if(artifact.destination) postActionHandles.push(ActionFactory.createMoveActionHandle(this));
-        }
-        if(artifact.post) postActionHandles.push(ActionFactory.createPostActionHandle(this, artifact.post));
 
-        if(postActionHandles.length > 0) {
+            // if md5 validation is done, the file is in the .tmp directory. The file needs to be moved to it's destination afterwards.
+            if (artifact.destination && downloadedName) {
+                const movedFile = Path.resolve(this.toActualPath(artifact.destination), downloadedName);
+                postActionHandles.push(ActionFactory.createMoveActionHandle(movedFile));
+            }
+        }
+        if (artifact.post) postActionHandles.push(ActionFactory.createPostActionHandle(this, artifact.post));
+
+        if (postActionHandles.length > 0) {
             const firstAction = postActionHandles[0];
             postActionHandles.forEach((postAction, index) => {
-                if(index > 0) firstAction.doLast(postAction);
+                if (index > 0) firstAction.doLast(postAction);
             });
+
+            firstAction.doLast(ActionFactory.createDefaultTrackerHandle())
 
             this.enqueuePostAction(firstAction, {
                 artifact: artifact,
-                result: downloadedPath
+                result: downloadedPath,
+                tracker: new ArtifactTrackerWriter(this.app, artifact)
             });
         }
 
@@ -129,13 +153,13 @@ export class Installer {
     }
 
     protected async doNextPostAction() {
-        if(this.actionQueue.length <= 0 || this.actionWorkerActive) return;
+        if (this.actionQueue.length <= 0 || this.actionWorkerActive) return;
         this.actionWorkerActive = true;
 
         const action = this.actionQueue[0]; // get next post action
         this.currentPostAction = action.handle;
         this.actionQueue.splice(0, 1); // remove it from the queue
-        
+
         await action.handle.call(action.argument); // wait for the action to complete
         this.currentPostAction = null;
         this.actionWorkerActive = false;
@@ -147,9 +171,9 @@ export class Installer {
         // called after downloads have finished
         return new Promise<void>((resolve) => {
             // check if there are any queued actions left
-            if(this.actionQueue.length <= 0) {
+            if (this.actionQueue.length <= 0) {
                 // no enqueued actions, check if there is an action currently running
-                if(this.currentPostAction) {
+                if (this.currentPostAction) {
                     // resolve at completion of action chain
                     this.currentPostAction.lastChild().onCompleted = () => resolve();
                 } else resolve();
@@ -168,7 +192,78 @@ export class Installer {
         console.log('Cleaned up.');
     }
 
+    protected async doesArtifactNeedUpdate(artifact: Artifact): Promise<boolean> {
+        if(!artifact.md5) {
+            console.info('Artifact does not provide a MD5 checksum; cannot check if the artifact is already up-to-date. Artifact will be updated.');
+            return true;
+        }
+
+        const reader = new ArtifactTrackerReader(this.app, artifact);
+        if(!await reader.doesFileExist()) return true; // first download, defenitely needs update
+
+        await reader.openFile();
+
+        const { type } = await reader.readHeader()
+            .catch(async err => {
+                await reader.deleteFile();
+                return await Promise.reject(err);
+            });
+        let needsUpdate = true;
+
+        console.log(`Checking if '${artifact.id}' is already up-to-date...`);
+
+        switch (type) {
+            case ArtifactType.SINGLE_FILE:
+                const oldPath = await reader.readString();
+                if (this.hasArtifactPathChanged(artifact, oldPath)) {
+                    console.log('Artifact path has changed. Artifacts needs an update.');
+                    break;
+                }
+                // artifact will be at the same location
+                const calculatedMd5 = await checksumFile(oldPath, 'md5').catch(() => undefined); // on error, return undefined
+                if(calculatedMd5 === artifact.md5) needsUpdate = false;
+                break;
+            case ArtifactType.EXTRACTED_ARCHIVE:
+                const hasOldMd5 = await reader.readBoolean();
+                if(!hasOldMd5) break;
+
+                const oldMd5 = await reader.readString();
+                if (oldMd5 === artifact.md5) needsUpdate = false;
+                break;
+            default:
+                console.warn('Artifact type not implemented for update check:', type, '(try updating the launcher)');
+                break;
+        }
+
+        if (needsUpdate) console.log(`Artifact '${artifact.id}' needs an update...`)
+        else console.log(`Artifact '${artifact.id}' is already up-to-date.`)
+
+        reader.closeFile();
+        return needsUpdate;
+    }
+
     public toActualPath(path: SegmentedPath) {
         return Path.resolve(this.installationDirectory, ...path);
+    }
+
+    protected hasArtifactPathChanged(artifact: Artifact, oldPath: string): boolean {
+        const finalDir = this.guessFinalDirectory(artifact);
+        const finalName = this.guessFinalName(artifact);
+        if (finalName) { // set final name
+            const newPath = Path.resolve(finalDir, finalName);
+            return newPath !== oldPath;
+        } else { // unknown final name
+            // check if directory is matching
+            const oldDir = Path.dirname(oldPath);
+            return finalDir !== oldDir;
+        }
+    }
+
+    protected guessFinalDirectory(artifact: Artifact) {
+        return artifact.destination ? this.toActualPath(artifact.destination) : this.tmpDir;
+    }
+
+    protected guessFinalName(artifact: Artifact) {
+        return artifact.fileName ? artifact.fileName : undefined;
     }
 }

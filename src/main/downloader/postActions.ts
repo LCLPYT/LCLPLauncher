@@ -1,13 +1,15 @@
 import { Artifact, PostAction } from "../types/Installation";
-import { checksumFile } from "../utils/checksums";
-import { rename, unlink } from "../utils/fshelper";
 import * as Path from 'path';
 import { Installer } from "./downloader";
+import { checksumFile } from "../utils/checksums";
+import { rename, unlink } from "../utils/fshelper";
 import { unzip } from "../utils/zip";
+import ArtifactTrackerWriter from "./ArtifactTracker";
 
 export type PostActionArgument = {
     artifact: Artifact;
     result: any;
+    tracker: ArtifactTrackerWriter;
 }
 
 export class PostActionWrapper {
@@ -72,28 +74,12 @@ export class PostActionHandle {
 }
 
 export namespace ActionFactory {
-    export function createMD5ActionHandle(): PostActionHandle {
-        return new PostActionHandle(async ({result: file, artifact: { md5 }}) => {
-            if(!md5) return;
-            console.log(`Checking integrity of '${file}'...`);
-            const calculatedMd5 = await checksumFile(file, 'md5');
-            if(calculatedMd5 !== md5) {
-                await unlink(file);
-                throw new Error(`Checksum mismatch '${file}'. File was deleted.`);
-            }
-            console.log(`Integrity valid: '${file}'`);
-        }, null);
+    export function createMD5ActionHandle() {
+        return new ValidateMD5Action(null);
     }
     
-    export function createMoveActionHandle(installer: Installer): PostActionHandle {
-        return new PostActionHandle(async ({result: file, artifact: { destination }}) => {
-            if(!destination) return;
-            const targetFile = Path.resolve(installer.toActualPath(destination), Path.basename(file));
-            console.log(`Moving '${file}' to '${targetFile}'`);
-            await rename(file, targetFile);
-            console.log(`Moved '${file}' to '${targetFile}' successfully.`);
-            return targetFile;
-        }, null);
+    export function createMoveActionHandle(targetFile: string) {
+        return new MoveAction(targetFile, null);
     }
     
     export function createPostActionHandle(installer: Installer, action: PostAction): PostActionHandle {
@@ -101,16 +87,56 @@ export namespace ActionFactory {
             case 'extractZip':
                 const child: PostActionHandle | null = action.post ? createPostActionHandle(installer, action.post) : null;
                 const target = Path.resolve(installer.installationDirectory, ...action.destination);
-                return new PostActionHandle(async ({result: zipFile}) => {
-                    console.log(`Unzipping '${zipFile}'...`);
-                    // await unzip(zipFile, target, progress => console.log(`${((progress.transferredBytes / progress.totalBytes) * 100).toFixed(2)}% - ${progress.transferredBytes} / ${progress.totalBytes}`));
-                    await unzip(zipFile, target);
-                    console.log(`Unzipped '${zipFile}'. Deleting it...`);
-                    await unlink(zipFile);
-                    console.log(`Deleted '${zipFile}'.`);
-                }, child);
+                return new ExtractZipAction(target, child);
             default:
                 throw new Error(`Unimplemented action: '${action.type}'`);
+        }
+    }
+
+    export function createDefaultTrackerHandle() {
+        return new PostActionHandle(async ({ result: finalPath, tracker }) => {
+            if (!tracker.isFinished()) await tracker.trackSinglePath(finalPath);
+        }, null);
+    }
+
+    class ValidateMD5Action extends PostActionHandle {
+        constructor(child: PostActionHandle | null) {
+            super(async ({result: file, artifact: { md5 }}) => {
+                if(!md5) return;
+                console.log(`Checking integrity of '${file}'...`);
+                const calculatedMd5 = await checksumFile(file, 'md5');
+                if(calculatedMd5 !== md5) {
+                    await unlink(file);
+                    throw new Error(`Checksum mismatch '${file}'. File was deleted.`);
+                }
+                console.log(`Integrity valid: '${file}'`);
+            }, child);
+        }
+    }
+
+    class MoveAction extends PostActionHandle {
+        constructor(targetFile: string, child: PostActionHandle | null) {
+            super(async ({result: file}) => {
+                console.log(`Moving '${file}' to '${targetFile}'`);
+                await rename(file, targetFile);
+                console.log(`Moved '${file}' to '${targetFile}' successfully.`);
+                return targetFile;
+            }, child);
+        }
+    }
+
+    class ExtractZipAction extends PostActionHandle {
+        constructor(targetDirectory: string, child: PostActionHandle | null) {
+            super(async ({result: zipFile, tracker}) => {
+                console.log(`Unzipping '${zipFile}'...`);
+                await tracker.beginExtractedArchive(zipFile);
+                // await unzip(zipFile, targetDirectory, progress => console.log(`${((progress.transferredBytes / progress.totalBytes) * 100).toFixed(2)}% - ${progress.transferredBytes} / ${progress.totalBytes}`));
+                await unzip(zipFile, targetDirectory, tracker);
+                tracker.finishExtractedArchive();
+                console.log(`Unzipped '${zipFile}'. Deleting it...`);
+                // await unlink(zipFile);
+                console.log(`Deleted '${zipFile}'.`);
+            }, child)
         }
     }
 }
