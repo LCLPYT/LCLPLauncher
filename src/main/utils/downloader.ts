@@ -1,13 +1,12 @@
 import fetch, { Headers } from "electron-fetch";
 import { jsoncSafe } from "jsonc/lib/jsonc.safe";
 import App from "../../common/types/App";
-import Installation, { Artifact, PostAction } from "../types/Installation";
+import Installation, { Artifact, PostAction, Path as SegmentedPath } from "../types/Installation";
 import Downloader from 'nodejs-file-downloader';
 import * as Path from 'path';
 import { unzip } from "./zip";
 import { checksumFile } from "./checksums";
-import { strict as assert } from 'assert';
-import { rmdirRecusive, unlink } from "./fshelper";
+import { rename, rmdirRecusive, unlink } from "./fshelper";
 
 let currentInstaller: Installer | null = null;
 
@@ -74,9 +73,9 @@ class Installer {
         const artifact = this.downloadQueue[0];
         this.downloadQueue.splice(0, 1);
 
-        const dir = artifact.md5 || !artifact.destination ? this.tmpDir : Path.resolve(this.installationDirectory, ...artifact.destination);
-
-        let finalName: string | null = null;
+        // determine directory to place the downloaded file into; if md5 validation should be done, the file will be put in the .tmp dir first
+        const dir = artifact.md5 || !artifact.destination ? this.tmpDir : this.toActualPath(artifact.destination);
+        let downloadedName: string | null = null;
 
         const downloader = new Downloader({
             url: artifact.url,
@@ -91,7 +90,7 @@ class Installer {
                 }
             },
             onBeforeSave: deducedName => {
-                return finalName = artifact.fileName ? artifact.fileName : deducedName;
+                return downloadedName = artifact.fileName ? artifact.fileName : deducedName;
             }
         });
 
@@ -99,10 +98,14 @@ class Installer {
         await downloader.download();
         console.log(`Downloaded '${artifact.url}'.`);
 
-        const downloadedPath = finalName ? Path.resolve(dir, finalName) : null;
+        const downloadedPath = downloadedName ? Path.resolve(dir, downloadedName) : null;
 
         let postActionHandles = [];
-        if(artifact.md5) postActionHandles.push(this.createMD5ActionHandle());
+        if(artifact.md5) {
+            postActionHandles.push(this.createMD5ActionHandle());
+            // if md5 validation is done, the file is in the .tmp directory. The file needs to be moved to it's destination afterwards.
+            if(artifact.destination) postActionHandles.push(this.createMoveActionHandle());
+        }
         if(artifact.post) postActionHandles.push(this.createPostActionHandle(artifact.post));
 
         if(postActionHandles.length > 0) {
@@ -168,10 +171,25 @@ class Installer {
 
     protected createMD5ActionHandle(): PostActionHandle {
         return new PostActionHandle(async ({result: file, artifact: { md5 }}) => {
+            if(!md5) return;
             console.log(`Checking integrity of '${file}'...`);
             const calculatedMd5 = await checksumFile(file, 'md5');
-            assert(md5 && calculatedMd5 === md5, `Checksum mismatch '${file}'.`);
+            if(calculatedMd5 !== md5) {
+                await unlink(file);
+                throw new Error(`Checksum mismatch '${file}'. File was deleted.`);
+            }
             console.log(`Integrity valid: '${file}'`);
+        }, null);
+    }
+
+    protected createMoveActionHandle(): PostActionHandle {
+        return new PostActionHandle(async ({result: file, artifact: { destination }}) => {
+            if(!destination) return;
+            const targetFile = Path.resolve(this.toActualPath(destination), Path.basename(file));
+            console.log(`Moving '${file}' to '${targetFile}'`);
+            await rename(file, targetFile);
+            console.log(`Moved '${file}' to '${targetFile}' successfully.`);
+            return targetFile;
         }, null);
     }
 
@@ -191,6 +209,10 @@ class Installer {
             default:
                 throw new Error(`Unimplemented action: '${action.type}'`);
         }
+    }
+
+    protected toActualPath(path: SegmentedPath) {
+        return Path.resolve(this.installationDirectory, ...path);
     }
 }
 
