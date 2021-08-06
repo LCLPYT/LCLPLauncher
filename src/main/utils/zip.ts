@@ -4,22 +4,19 @@ import fs from 'fs';
 import progress_stream from 'progress-stream';
 import { mkdirp } from './fshelper';
 
-export function unzip(zipFile: string, destination: string, onProgress?: (progress: Progress) => void): Promise<void> {
-    return new Promise((resolve, reject) => {
-        if (onProgress) {
-            getTotalUncompressedSize(zipFile)
-                .then(totalUncompressedSize => unzipWithTotalSize(zipFile, destination, totalUncompressedSize, progress => onProgress(progress)))
-                .then(() => resolve())
-                .catch(err => reject(err));
-        } else {
-            unzipWithTotalSize(zipFile, destination)
-                .then(() => resolve())
-                .catch(err => reject(err));
-        }
-    });
+export async function unzip(zipFile: string, destination: string, onProgress?: (progress: Progress) => void): Promise<void> {
+    if (onProgress) {
+        const totalUncompressedSize = await getTotalUncompressedSize(zipFile);
+        await unzipWithTotalSize(zipFile, destination, {
+            totalUncompressedSize: totalUncompressedSize, 
+            onProgress: progress => onProgress(progress)
+        });
+    } else {
+        await unzipWithTotalSize(zipFile, destination);
+    }
 }
 
-function unzipWithTotalSize(zipFile: string, destination: string, totalUncompressedSize?: number, onProgress?: (progress: Progress) => void): Promise<void> {
+function unzipWithTotalSize(zipFile: string, destination: string, progressListener?: ProgressCallback): Promise<void> {
     const getPath = (path: string) => Path.join(destination, path);
     return new Promise((resolve, reject) => {
         yauzl.open(zipFile, {
@@ -41,11 +38,11 @@ function unzipWithTotalSize(zipFile: string, destination: string, totalUncompres
                     // ensure parent directory exists
                     mkdirp(Path.dirname(unzippedPath))
                         .then(() => {
-                            if(totalUncompressedSize !== undefined && onProgress) {
+                            if(progressListener) {
                                 extractZipEntry(zip, entry, unzippedPath, progress => {
                                     totallyTransferred += progress.delta;
-                                    onProgress({
-                                        totalBytes: totalUncompressedSize,
+                                    progressListener.onProgress({
+                                        totalBytes: progressListener.totalUncompressedSize,
                                         transferredBytes: totallyTransferred,
                                         speed: progress.speed
                                     })
@@ -117,6 +114,11 @@ export function getTotalUncompressedSize(zipFile: string): Promise<number> {
             })
         });
     })
+}
+
+type ProgressCallback = {
+    totalUncompressedSize: number;
+    onProgress: (progress: Progress) => void;
 }
 
 type Progress = {

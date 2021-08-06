@@ -2,7 +2,7 @@ import { ipcMain } from "electron";
 import { IpcMainEvent } from "electron/main";
 import App from "../../common/types/App";
 import { ACTIONS, GenericIPCActionHandler, GenericIPCHandler } from "../../common/utils/ipc";
-import { startInstallationProcess } from "./downloader";
+import { startInstallationProcess } from "../downloader/downloader";
 import { addToLibary, getLibraryApps, isInLibrary } from "./library";
 
 class IpcActionEvent {
