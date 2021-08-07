@@ -48,17 +48,16 @@ function unzipWithTotalSize(zipFile: string, destination: string, tracker: Artif
                                         speed: progress.speed
                                     });
                                 });
-                                return zip.readEntry();
+                                await tracker.pushArchivePath(unzippedPath); // track the extracted file
+                                zip.readEntry();
                             } else {
                                 await extractZipEntry(zip, entry, unzippedPath);
-                                return zip.readEntry();
+                                await tracker.pushArchivePath(unzippedPath); // track the extracted file
+                                zip.readEntry();
                             }
                         } catch (err) {
                             return reject(err);
                         }
-                    }).then(async () => {
-                        // track the extracted file
-                        await tracker.pushArchivePath(unzippedPath);
                     }).catch(err => reject(err));
                 }
             });
