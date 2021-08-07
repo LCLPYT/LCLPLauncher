@@ -1,8 +1,9 @@
 import { Artifact, PostAction } from "../types/Installation";
 import * as Path from 'path';
+import * as fs from 'fs';
 import { Installer } from "./downloader";
 import { checksumFile } from "../utils/checksums";
-import { rename, unlink } from "../utils/fshelper";
+import { rename } from "../utils/fshelper";
 import { unzip } from "../utils/zip";
 import ArtifactTrackerWriter from "./ArtifactTracker";
 
@@ -106,7 +107,7 @@ export namespace ActionFactory {
                 console.log(`Checking integrity of '${file}'...`);
                 const calculatedMd5 = await checksumFile(file, 'md5');
                 if(calculatedMd5 !== md5) {
-                    await unlink(file);
+                    await fs.promises.unlink(file);
                     throw new Error(`Checksum mismatch '${file}'. File was deleted.`);
                 }
                 console.log(`Integrity valid: '${file}'`);
@@ -129,7 +130,7 @@ export namespace ActionFactory {
         constructor(targetDirectory: string, child: PostActionHandle | null) {
             super(async ({result: zipFile, tracker}) => {
                 console.log(`Unzipping '${zipFile}'...`);
-                await tracker.beginExtractedArchive(zipFile);
+                await tracker.beginExtractedArchive(zipFile, targetDirectory);
                 // await unzip(zipFile, targetDirectory, progress => console.log(`${((progress.transferredBytes / progress.totalBytes) * 100).toFixed(2)}% - ${progress.transferredBytes} / ${progress.totalBytes}`));
                 await unzip(zipFile, targetDirectory, tracker);
                 tracker.finishExtractedArchive();

@@ -38,21 +38,27 @@ function unzipWithTotalSize(zipFile: string, destination: string, tracker: Artif
                     const unzippedPath = getPath(entry.fileName);
                     // ensure parent directory exists
                     mkdirp(Path.dirname(unzippedPath)).then(async () => {
+                        try {
+                            if (progressListener) {
+                                await extractZipEntry(zip, entry, unzippedPath, progress => {
+                                    totallyTransferred += progress.delta;
+                                    progressListener.onProgress({
+                                        totalBytes: progressListener.totalUncompressedSize,
+                                        transferredBytes: totallyTransferred,
+                                        speed: progress.speed
+                                    });
+                                });
+                                return zip.readEntry();
+                            } else {
+                                await extractZipEntry(zip, entry, unzippedPath);
+                                return zip.readEntry();
+                            }
+                        } catch (err) {
+                            return reject(err);
+                        }
+                    }).then(async () => {
                         // track the extracted file
                         await tracker.pushArchivePath(unzippedPath);
-                    }).then(() => {
-                        if (progressListener) {
-                            extractZipEntry(zip, entry, unzippedPath, progress => {
-                                totallyTransferred += progress.delta;
-                                progressListener.onProgress({
-                                    totalBytes: progressListener.totalUncompressedSize,
-                                    transferredBytes: totallyTransferred,
-                                    speed: progress.speed
-                                })
-                            }).then(() => zip.readEntry()).catch(err => reject(err))
-                        } else {
-                            extractZipEntry(zip, entry, unzippedPath).then(() => zip.readEntry()).catch(err => reject(err))
-                        }
                     }).catch(err => reject(err));
                 }
             });

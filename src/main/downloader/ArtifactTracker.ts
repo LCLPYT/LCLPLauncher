@@ -1,12 +1,14 @@
 import { Artifact } from "../types/Installation";
-import { exists, getInstallerAppDir, mkdirp, unlink } from "../utils/fshelper";
+import { exists, getInstallerAppDir, mkdirp, unlinkRemoveParentIfEmpty } from "../utils/fshelper";
 import * as fs from 'fs';
 import * as Path from 'path';
 import App from "../../common/types/App";
 import { checksumFile } from "../utils/checksums";
 
 // if a tracker file has a version older than this string, it will be deleted and an update of the artifact will be required
-export const TRACKER_VERSION = 1;
+export const TRACKER_VERSION = 4;
+
+const ERR_EOS = new Error('End of stream');
 
 export enum ArtifactType {
     SINGLE_FILE,
@@ -64,7 +66,7 @@ class ArtifactTrackerWriter extends ArtifactTrackerBase {
         this.closeFile();
     }
 
-    public async beginExtractedArchive(archiveFile: string) {
+    public async beginExtractedArchive(archiveFile: string, extractedRoot: string) {
         this.ensureUnfinished();
         await this.openFile();
         await this.writeHeader(ArtifactType.EXTRACTED_ARCHIVE);
@@ -72,10 +74,11 @@ class ArtifactTrackerWriter extends ArtifactTrackerBase {
         const md5 = await checksumFile(archiveFile, 'md5').catch(() => undefined); // on error, return undefined
         await this.writeBoolean(md5 !== undefined);
         if (md5) await this.writeString(md5);
+        await this.writeString(extractedRoot);
     }
 
     public async pushArchivePath(path: string) {
-        if(this.type !== ArtifactType.EXTRACTED_ARCHIVE) throw new Error('Trying to push archive path before archive was begun.');
+        if (this.type !== ArtifactType.EXTRACTED_ARCHIVE) throw new Error('Trying to push archive path before archive was begun.');
         await this.writePath(path);
     }
 
@@ -86,7 +89,7 @@ class ArtifactTrackerWriter extends ArtifactTrackerBase {
     }
 
     protected async writeHeader(type: ArtifactType) {
-        if(this.type) throw new Error('Trying to write a header while there was already one written.');
+        if (this.type) throw new Error('Trying to write a header while there was already one written.');
         this.type = type;
 
         const buffer = Buffer.alloc(4); // 32 bits
@@ -164,59 +167,114 @@ export class ArtifactTrackerReader extends ArtifactTrackerBase {
 
     public async deleteFile() {
         if (this.readStream) this.closeFile();
-        await unlink(this.getTrackerFile());
+        await fs.promises.unlink(this.getTrackerFile());
     }
 
-    public readHeader(): Promise<TrackerHeader> {
-        return new Promise((resolve, reject) => {
-            if (!this.readStream) throw new Error('File is not opened (read)');
-            if (this.type) throw new Error('Trying to read a header while there was already one read.');
+    public readHeader(): [header: TrackerHeader | undefined, error: any] {
+        if (!this.readStream) throw new Error('File is not opened (read)');
+        if (this.type) throw new Error('Trying to read a header while there was already one read.');
 
-            const versionBuffer = <Buffer> this.readStream.read(2); // 16 bits; version is always the first two bytes
-            const version = versionBuffer.readInt16LE();
-            if(version < TRACKER_VERSION) {
-                reject(new VersionError(`Artifact tracker version is to old: ${version}; current: ${TRACKER_VERSION}`));
-                return;
-            }
-            else if(version > TRACKER_VERSION) {
-                reject(new VersionError(`Artifact tracker version is to new: ${version}; current: ${TRACKER_VERSION}; Consider an upgrade.`));
-                return;
-            }
+        const versionBuffer = <Buffer | null>this.readStream.read(2); // 16 bits; version is always the first two bytes
+        if (!versionBuffer) throw ERR_EOS;
+        const version = versionBuffer.readInt16LE();
+        if (version < TRACKER_VERSION) return [undefined, new VersionError(`Artifact tracker version is to old: ${version}; current: ${TRACKER_VERSION}`)];
+        else if (version > TRACKER_VERSION) throw [undefined, new VersionError(`Artifact tracker version is to new: ${version}; current: ${TRACKER_VERSION}; Consider an upgrade.`)];
 
-            // version specific deserialization; above code should never break
-            const lengthBuffer = <Buffer> this.readStream.read(2); // 16 bits
-            const type = <ArtifactType> lengthBuffer.readInt16LE();
+        // version specific deserialization; above code should never break
+        const lengthBuffer = <Buffer | null>this.readStream.read(2); // 16 bits
+        if (!lengthBuffer) throw ERR_EOS;
+        const type = <ArtifactType>lengthBuffer.readInt16LE();
 
-            resolve({
-                version: version,
-                type: type
-            });
-        });
+        return [{
+            version: version,
+            type: type
+        }, undefined];
     }
 
-    public readPath(): Promise<string> {
+    public readPath() {
         return this.readString();
     }
 
-    public readString(): Promise<string> {
-        return new Promise(resolve => {
-            if (!this.readStream) throw new Error('File is not opened (read)');
+    public readString() {
+        if (!this.readStream) throw new Error('File is not opened (read)');
 
-            const lengthBuffer = <Buffer> this.readStream.read(2); // 16 bits
-            const length = lengthBuffer.readInt16LE();
-            const buffer = <Buffer> this.readStream.read(length);
-            resolve(buffer.toString('utf8'));
-        });
+        const lengthBuffer = <Buffer | null>this.readStream.read(2); // 16 bits
+        if (!lengthBuffer) throw ERR_EOS;
+        const length = lengthBuffer.readInt16LE();
+        const buffer = <Buffer | null>this.readStream.read(length);
+        if (!buffer) throw ERR_EOS;
+        return buffer.toString('utf8');
     }
 
-    public readBoolean(): Promise<boolean> {
-        return new Promise(resolve => {
-            if (!this.readStream) throw new Error('File is not opened (read)');
+    public readBoolean() {
+        if (!this.readStream) throw new Error('File is not opened (read)');
+        const buffer = <Buffer | null>this.readStream.read(1); // 16 bits
+        if (!buffer) throw ERR_EOS;
+        const boolNumber = buffer.readInt8();
+        return boolNumber === 1;
+    }
 
-            const buffer = <Buffer> this.readStream.read(1); // 16 bits
-            const boolNumber = buffer.readInt8();
-            resolve(boolNumber === 1);
-        });
+    private static async createEntryOffsetReader(app: App, artifact: Artifact) {
+        const reader = new ArtifactTrackerReader(app, artifact);
+        await reader.openFile();
+        const [header, err] = reader.readHeader(); // header
+        if (err) throw err;
+        if (!header) throw new Error('Header could not be read');
+        switch (header.type) {
+            case ArtifactType.SINGLE_FILE:
+                break;
+            case ArtifactType.EXTRACTED_ARCHIVE:
+                const md5Exists = reader.readBoolean(); // md5 exists
+                if (md5Exists) reader.readString(); // md5 string
+                reader.readString(); // extraction root
+                break;
+        }
+        return reader;
+    }
+
+    static async deleteEntries(app: App, artifact: Artifact, reuseReader?: ArtifactTrackerReader) {
+        const deleteItems = async (trackerReader: ArtifactTrackerReader) => {
+            // delete all old files
+            try {
+                while (true) await unlinkRemoveParentIfEmpty(trackerReader.readPath()).catch(() => { });
+            } catch (err) {
+                if (err !== ERR_EOS) throw err;
+            }
+        };
+
+        if (reuseReader) await deleteItems(reuseReader);
+        else {
+            // create a new reader and read it to the entries offset
+            const reader = await ArtifactTrackerReader.createEntryOffsetReader(app, artifact);
+            // actually delete the entries
+            await deleteItems(reader);
+            reader.closeFile();
+        }
+    }
+
+    static async doAllArchiveItemsExist(app: App, artifact: Artifact, reuseReader?: ArtifactTrackerReader): Promise<boolean> {
+        async function checkItems(trackerReader: ArtifactTrackerReader): Promise<boolean> {
+            try {
+                // for each extracted entry, check if it exists
+                while (true) {
+                    if (!await exists(trackerReader.readPath())) return false;
+                }
+            } catch (err) {
+                if (err !== ERR_EOS) throw err;
+            }
+            return true;
+        }
+
+        if (reuseReader) {
+            return await checkItems(reuseReader);
+        } else {
+            // create a new reader and read it to the entries offset
+            const reader = await ArtifactTrackerReader.createEntryOffsetReader(app, artifact);
+            // actually check the entries
+            const allExist = await checkItems(reader);
+            reader.closeFile();
+            return allExist;
+        }
     }
 }
 

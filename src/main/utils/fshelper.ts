@@ -4,15 +4,8 @@ import rimraf from 'rimraf';
 import App from '../../common/types/App';
 import { app as electronApp } from 'electron';
 
-export function unlink(file: string): Promise<void> {
-    return new Promise((resolve, reject) => fs.unlink(file, error => {
-        if (error) reject(error);
-        resolve();
-    }));
-}
-
-export function rmdirRecusive(directory: string): Promise<void> {
-    return new Promise((resolve, reject) => rimraf(directory, {}, error => {
+export function rmdirRecusive(directory: string) {
+    return new Promise<void>((resolve, reject) => rimraf(directory, {}, error => {
         if (error) reject(error);
         else resolve();
     }));
@@ -20,31 +13,27 @@ export function rmdirRecusive(directory: string): Promise<void> {
 
 export async function rename(oldPath: string, newPath: string): Promise<void> {
     await mkdirp(Path.dirname(newPath));
-    return await new Promise<void>((resolve, reject) => fs.rename(oldPath, newPath, error => {
-        if (error) reject(error);
-        else resolve();
-    }));
+    await fs.promises.rename(oldPath, newPath);
 }
 
-export function mkdirp(dir: string): Promise<void> {
-    return new Promise(resolve => {
-        if (dir === '.') {
-            resolve();
-            return;
-        }
-        fs.stat(dir, err => {
-            if (err === null) resolve(); // directory already exists
-            else {
-                const parent = Path.dirname(dir);
-                mkdirp(parent)
-                    .then(() => fs.mkdir(dir, () => resolve()));
-            }
-        });
+export async function mkdirp(dir: string) {
+    if (dir === '.') return;
+    await fs.promises.stat(dir).catch(async () => { // does not exist
+        const parent = Path.dirname(dir);
+        await mkdirp(parent);
+        await fs.promises.mkdir(dir);
     });
 }
 
-export function exists(file: string): Promise<boolean> {
-    return new Promise(resolve => fs.stat(file, err => resolve(err === null)));
+export async function unlinkRemoveParentIfEmpty(file: string) {
+    await fs.promises.unlink(file);
+    const dir = Path.dirname(file);
+    const files = await fs.promises.readdir(dir);
+    if(files.length <= 0) await fs.promises.rmdir(dir)
+}
+
+export async function exists(file: string): Promise<boolean> {
+    return await fs.promises.stat(file).catch(() => undefined) !== undefined;
 }
 
 export function getInstallerAppDir(app: App) {

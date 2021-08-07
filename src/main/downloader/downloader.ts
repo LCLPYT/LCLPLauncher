@@ -2,8 +2,9 @@ import fetch, { Headers } from "electron-fetch";
 import { jsoncSafe } from "jsonc/lib/jsonc.safe";
 import Downloader from 'nodejs-file-downloader';
 import * as Path from 'path';
+import * as fs from 'fs';
 import App from "../../common/types/App";
-import Installation, { Artifact, Path as SegmentedPath } from "../types/Installation";
+import Installation, { Artifact, Path as SegmentedPath, PostAction } from "../types/Installation";
 import { rmdirRecusive } from "../utils/fshelper";
 import { PostActionArgument, PostActionHandle, PostActionWrapper, ActionFactory } from "./postActions";
 import ArtifactTrackerWriter, { ArtifactTrackerReader, ArtifactType } from "./ArtifactTracker";
@@ -78,6 +79,7 @@ export class Installer {
 
         console.log(`Resolving artifact '${artifact.id}...'`);
 
+        // TODO remove old unused artifacts
         // TODO when doing the progress display, filter artifacts before starting the downloads
         if (!await this.doesArtifactNeedUpdate(artifact).catch((err: Error) => {
             if(err.name === 'VersionError') console.error(err.message);
@@ -203,18 +205,20 @@ export class Installer {
 
         await reader.openFile();
 
-        const { type } = await reader.readHeader()
-            .catch(async err => {
-                await reader.deleteFile();
-                return await Promise.reject(err);
-            });
+        const [header, error] = reader.readHeader();
+        if(error) {
+            await reader.deleteFile();
+            return await Promise.reject(error);
+        }
+        if(!header) return true;
+
         let needsUpdate = true;
 
         console.log(`Checking if '${artifact.id}' is already up-to-date...`);
 
-        switch (type) {
+        switch (header.type) {
             case ArtifactType.SINGLE_FILE:
-                const oldPath = await reader.readString();
+                const oldPath = reader.readString();
                 if (this.hasArtifactPathChanged(artifact, oldPath)) {
                     console.log('Artifact path has changed. Artifacts needs an update.');
                     break;
@@ -222,16 +226,25 @@ export class Installer {
                 // artifact will be at the same location
                 const calculatedMd5 = await checksumFile(oldPath, 'md5').catch(() => undefined); // on error, return undefined
                 if(calculatedMd5 === artifact.md5) needsUpdate = false;
+                else await fs.promises.unlink(oldPath);
                 break;
             case ArtifactType.EXTRACTED_ARCHIVE:
-                const hasOldMd5 = await reader.readBoolean();
-                if(!hasOldMd5) break;
+                const hasOldMd5 = reader.readBoolean();
+                if(!hasOldMd5) break; // if md5 matching can't be done, there is no point in further checking
 
-                const oldMd5 = await reader.readString();
-                if (oldMd5 === artifact.md5) needsUpdate = false;
+                const oldMd5 = reader.readString();
+                const oldExtractionRoot = reader.readString();
+
+                if (oldMd5 === artifact.md5 && this.isSameExtractionRoot(artifact, oldExtractionRoot) 
+                    && await ArtifactTrackerReader.doAllArchiveItemsExist(this.app, artifact)) {
+                    needsUpdate = false;
+                } else {
+                    // delete all old files
+                    ArtifactTrackerReader.deleteEntries(this.app, artifact);
+                }
                 break;
             default:
-                console.warn('Artifact type not implemented for update check:', type, '(try updating the launcher)');
+                console.warn('Artifact type not implemented for update check:', header.type, '(try updating the launcher)');
                 break;
         }
 
@@ -265,5 +278,19 @@ export class Installer {
 
     protected guessFinalName(artifact: Artifact) {
         return artifact.fileName ? artifact.fileName : undefined;
+    }
+
+    protected isSameExtractionRoot(artifact: Artifact, oldExtractionRoot: string): boolean {
+        const recurse: (postAction: PostAction | undefined) => SegmentedPath | null = postAction => {
+            if(!postAction) return null;
+            if(postAction.type === 'extractZip') return postAction.destination;
+            if(postAction.post) return recurse(postAction.post);
+            return null;
+        };
+        const rootSegments = recurse(artifact.post);
+        if(!rootSegments) return false;
+
+        const path = this.toActualPath(rootSegments);
+        return path === oldExtractionRoot;
     }
 }
