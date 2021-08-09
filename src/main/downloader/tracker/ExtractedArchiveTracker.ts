@@ -36,7 +36,7 @@ export namespace ExtractedArchiveTracker {
             const oldExtractionRoot = this.readString();
             if(!this.isSameExtractionRoot(artifact, oldExtractionRoot)) return false; // archive extraction destination changed
 
-            return await this.doAllArchiveItemsExist(); // TODO maybe add reuse reader (this)
+            return await this.doAllArchiveItemsExist(this); // can be reused, since the archive items will be read next
         }
 
         protected cloneThisReader(): TrackerReader {
