@@ -14,7 +14,7 @@ export type Artifact = {
     /** The name, the downloaded file will get; If omitted, the file name from the response headers will be used */
     fileName?: string;
     /** Path segments for the destination directory; If omitted, file will remain in the .temp directory */
-    destination?: Path;
+    destination?: SegmentedPath;
     /** Action to execute after the download is finished */
     post?: PostAction;
 }
@@ -40,9 +40,9 @@ export type AbstractPostAction = {
     post?: PostAction
 }
 export type ExtractZipPostAction = AbstractPostAction & {
-    destination: Path
+    destination: SegmentedPath
 }
 
-export type Path = string[];
+export type SegmentedPath = string[];
 
 export default Installation;

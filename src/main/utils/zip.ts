@@ -3,9 +3,9 @@ import Path from 'path';
 import fs from 'fs';
 import progress_stream from 'progress-stream';
 import { mkdirp } from './fshelper';
-import ArtifactTrackerWriter from '../downloader/ArtifactTracker';
+import { ExtractedArchiveTracker } from '../downloader/tracker/ExtractedArchiveTracker';
 
-export async function unzip(zipFile: string, destination: string, tracker: ArtifactTrackerWriter, onProgress?: (progress: Progress) => void): Promise<void> {
+export async function unzip(zipFile: string, destination: string, tracker: ExtractedArchiveTracker.Writer, onProgress?: (progress: Progress) => void): Promise<void> {
     if (onProgress) {
         const totalUncompressedSize = await getTotalUncompressedSize(zipFile);
         await unzipWithTotalSize(zipFile, destination, tracker, {
@@ -17,7 +17,7 @@ export async function unzip(zipFile: string, destination: string, tracker: Artif
     }
 }
 
-function unzipWithTotalSize(zipFile: string, destination: string, tracker: ArtifactTrackerWriter, progressListener?: ProgressCallback): Promise<void> {
+function unzipWithTotalSize(zipFile: string, destination: string, tracker: ExtractedArchiveTracker.Writer, progressListener?: ProgressCallback): Promise<void> {
     const getPath = (path: string) => Path.join(destination, path);
     return new Promise((resolve, reject) => {
         yauzl.open(zipFile, {

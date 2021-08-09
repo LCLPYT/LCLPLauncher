@@ -3,6 +3,7 @@ import * as Path from 'path';
 import rimraf from 'rimraf';
 import App from '../../common/types/App';
 import { app as electronApp } from 'electron';
+import { SegmentedPath } from '../types/Installation';
 
 export function rmdirRecusive(directory: string) {
     return new Promise<void>((resolve, reject) => rimraf(directory, {}, error => {
@@ -38,4 +39,8 @@ export async function exists(file: string): Promise<boolean> {
 
 export function getInstallerAppDir(app: App) {
     return Path.resolve(electronApp.getPath('userData'), '.installer', 'apps', app.id.toString());
+}
+
+export function resolveSegmentedPath(rootDir: string, path: SegmentedPath) {
+    return Path.resolve(rootDir, ...path);
 }

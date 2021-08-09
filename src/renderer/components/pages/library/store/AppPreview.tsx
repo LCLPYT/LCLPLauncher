@@ -144,7 +144,7 @@ class CarouselSlide extends Component<SlideProps> {
         const carousel = document.getElementById('appPreviewCarousel');
         if (carousel) {
             const instance = Carousel.getInstance(carousel);
-            instance.pause();
+            if(instance) instance.pause();
             this.props.setPreviewControlsVisible(false);
         }
     }
@@ -154,7 +154,7 @@ class CarouselSlide extends Component<SlideProps> {
         const carousel = document.getElementById('appPreviewCarousel');
         if (carousel) {
             const instance = Carousel.getInstance(carousel);
-            instance.cycle();
+            if(instance) instance.cycle();
             this.props.setPreviewControlsVisible(true);
         }
     }

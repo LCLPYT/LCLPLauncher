@@ -1,0 +1,24 @@
+{
+    "artifacts": [
+        {
+            "id": "ls5_client_mods",
+            "url": "https://lclpnet.work/lclplauncher/installations/ls5/client-mods",
+            "size": 34879697,
+            "md5": "02c7190c80df5d3f53298df79ad136f7",
+            "post": {
+                "type": "extractZip",
+                "destination": ["mods"]
+            }
+        },
+        {
+            "id": "ls5_gamedir_resources",
+            "url": "https://lclpnet.work/lclplauncher/installations/ls5/gamedir-resources",
+            "size": 15110915,
+            "md5": "c12371905115fd7d09863232bd1c9be4",
+            "post": {
+                "type": "extractZip",
+                "destination": []
+            }
+        }
+    ]
+}

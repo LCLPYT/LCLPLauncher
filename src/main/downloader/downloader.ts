@@ -4,11 +4,12 @@ import Downloader from 'nodejs-file-downloader';
 import * as Path from 'path';
 import * as fs from 'fs';
 import App from "../../common/types/App";
-import Installation, { Artifact, Path as SegmentedPath, PostAction } from "../types/Installation";
-import { rmdirRecusive } from "../utils/fshelper";
-import { PostActionArgument, PostActionHandle, PostActionWrapper, ActionFactory } from "./postActions";
-import ArtifactTrackerWriter, { ArtifactTrackerReader, ArtifactType } from "./ArtifactTracker";
-import { checksumFile } from "../utils/checksums";
+import Installation, { Artifact, SegmentedPath } from "../types/Installation";
+import { resolveSegmentedPath, rmdirRecusive } from "../utils/fshelper";
+import { PostActionHandle, PostActionWrapper, ActionFactory, PostActionArgument } from "./postActions";
+import { ArtifactType, TrackerReader, TrackerVariables } from "./tracker/ArtifactTracker";
+import { SingleFileTracker } from "./tracker/SingleFileTracker";
+import { ExtractedArchiveTracker } from "./tracker/ExtractedArchiveTracker";
 
 let currentInstaller: Installer | null = null;
 
@@ -67,27 +68,32 @@ export class Installer {
         this.active = true;
         this.totalBytes = 0;
         this.downloadQueue.forEach(artifact => this.totalBytes += Math.max(0, artifact.size));
-        await this.downloadNext();
+        await this.downloadNextArtifact();
         await this.completePostActions();
         await this.cleanUp();
     }
 
-    protected async downloadNext() {
+    protected async downloadNextArtifact() {
         if (this.downloadQueue.length <= 0) return;
         const artifact = this.downloadQueue[0];
         this.downloadQueue.splice(0, 1);
 
         console.log(`Resolving artifact '${artifact.id}...'`);
 
+        const trackerVars = {
+            installationDir: this.installationDirectory,
+            tmpDir: this.tmpDir
+        };
+
         // TODO remove old unused artifacts
         // TODO when doing the progress display, filter artifacts before starting the downloads
-        if (!await this.doesArtifactNeedUpdate(artifact).catch((err: Error) => {
+        if (!await this.doesArtifactNeedUpdate(artifact, trackerVars).catch((err: Error) => {
             if(err.name === 'VersionError') console.error(err.message);
             else console.error(err);
             return true;
         })) {
             // download next artifact
-            await this.downloadNext();
+            await this.downloadNextArtifact();
             return;
         }
 
@@ -130,23 +136,25 @@ export class Installer {
         }
         if (artifact.post) postActionHandles.push(ActionFactory.createPostActionHandle(this, artifact.post));
 
+        // If there are any post actions, construct and enqueue them here
         if (postActionHandles.length > 0) {
             const firstAction = postActionHandles[0];
             postActionHandles.forEach((postAction, index) => {
                 if (index > 0) firstAction.doLast(postAction);
             });
 
-            firstAction.doLast(ActionFactory.createDefaultTrackerHandle())
+            firstAction.doLast(ActionFactory.createDefaultTrackerHandle());
 
             this.enqueuePostAction(firstAction, {
                 artifact: artifact,
                 result: downloadedPath,
-                tracker: new ArtifactTrackerWriter(this.app, artifact)
+                app: this.app,
+                trackerVars: trackerVars
             });
         }
 
         // download next artifact
-        await this.downloadNext();
+        await this.downloadNextArtifact();
     }
 
     protected enqueuePostAction(action: PostActionHandle, argument: PostActionArgument) {
@@ -194,103 +202,65 @@ export class Installer {
         console.log('Cleaned up.');
     }
 
-    protected async doesArtifactNeedUpdate(artifact: Artifact): Promise<boolean> {
+    protected async doesArtifactNeedUpdate(artifact: Artifact, trackerVars: TrackerVariables): Promise<boolean> {
         if(!artifact.md5) {
             console.info('Artifact does not provide a MD5 checksum; cannot check if the artifact is already up-to-date. Artifact will be updated.');
             return true;
         }
 
-        const reader = new ArtifactTrackerReader(this.app, artifact);
-        if(!await reader.doesFileExist()) return true; // first download, defenitely needs update
+        const reader = await createReader(this.app, artifact, trackerVars).catch(() => undefined); // in case of an error, return undefined
+        if(!reader) return true; // if there was an error, do the update, since up-to-date cannot be checked
 
-        await reader.openFile();
-
-        const [header, error] = reader.readHeader();
-        if(error) {
-            await reader.deleteFile();
-            return await Promise.reject(error);
-        }
-        if(!header) return true;
-
-        let needsUpdate = true;
-
-        console.log(`Checking if '${artifact.id}' is already up-to-date...`);
-
-        switch (header.type) {
-            case ArtifactType.SINGLE_FILE:
-                const oldPath = reader.readString();
-                if (this.hasArtifactPathChanged(artifact, oldPath)) {
-                    console.log('Artifact path has changed. Artifacts needs an update.');
-                    break;
-                }
-                // artifact will be at the same location
-                const calculatedMd5 = await checksumFile(oldPath, 'md5').catch(() => undefined); // on error, return undefined
-                if(calculatedMd5 === artifact.md5) needsUpdate = false;
-                else await fs.promises.unlink(oldPath);
-                break;
-            case ArtifactType.EXTRACTED_ARCHIVE:
-                const hasOldMd5 = reader.readBoolean();
-                if(!hasOldMd5) break; // if md5 matching can't be done, there is no point in further checking
-
-                const oldMd5 = reader.readString();
-                const oldExtractionRoot = reader.readString();
-
-                if (oldMd5 === artifact.md5 && this.isSameExtractionRoot(artifact, oldExtractionRoot) 
-                    && await ArtifactTrackerReader.doAllArchiveItemsExist(this.app, artifact)) {
-                    needsUpdate = false;
-                } else {
-                    // delete all old files
-                    ArtifactTrackerReader.deleteEntries(this.app, artifact);
-                }
-                break;
-            default:
-                console.warn('Artifact type not implemented for update check:', header.type, '(try updating the launcher)');
-                break;
-        }
-
-        if (needsUpdate) console.log(`Artifact '${artifact.id}' needs an update...`)
-        else console.log(`Artifact '${artifact.id}' is already up-to-date.`)
-
+        const needsUpdate = await reader.isArtifactUpToDate(artifact);
+        if(needsUpdate) await reader.deleteEntries();
         reader.closeFile();
+
         return needsUpdate;
     }
 
     public toActualPath(path: SegmentedPath) {
-        return Path.resolve(this.installationDirectory, ...path);
+        return resolveSegmentedPath(this.installationDirectory, path);
     }
+}
 
-    protected hasArtifactPathChanged(artifact: Artifact, oldPath: string): boolean {
-        const finalDir = this.guessFinalDirectory(artifact);
-        const finalName = this.guessFinalName(artifact);
-        if (finalName) { // set final name
-            const newPath = Path.resolve(finalDir, finalName);
-            return newPath !== oldPath;
-        } else { // unknown final name
-            // check if directory is matching
-            const oldDir = Path.dirname(oldPath);
-            return finalDir !== oldDir;
-        }
+type TrackerFactory = (artifact: Artifact, app: App, vars: TrackerVariables, reuseStream?: fs.ReadStream) => TrackerReader;
+
+const TRACKER_READERS = new Map<ArtifactType, TrackerFactory>([
+    [
+        ArtifactType.SINGLE_FILE,
+        (artifact, app, vars, reuseStream) => new SingleFileTracker.Reader(artifact, app, vars, reuseStream)
+    ],
+    [
+        ArtifactType.EXTRACTED_ARCHIVE,
+        (artifact, app, vars, reuseStream) => new ExtractedArchiveTracker.Reader(artifact, app, vars, reuseStream)
+    ]
+]);
+
+/** Tracker reader to determine tracker type */
+class DummyTrackerReader extends TrackerReader {
+    public async toActualReader<T extends TrackerReader>(): Promise<T> {
+        await this.openFile();
+        const [header, err] = this.readHeader();
+        if (err) throw err;
+        if (!header) throw new Error('Could not read header.');
+
+        const readerFactory = TRACKER_READERS.get(header.type);
+        if(!readerFactory) throw new TypeError(`No reader factory defined for artifact type '${header.type}'`);
+
+        return <T> readerFactory(this.artifact, this.app, this.vars, this.stream); // reuse this stream, therefore do not close the file here.
     }
-
-    protected guessFinalDirectory(artifact: Artifact) {
-        return artifact.destination ? this.toActualPath(artifact.destination) : this.tmpDir;
+    public isArtifactUpToDate(): Promise<boolean> {
+        throw new Error("Method not implemented.");
     }
-
-    protected guessFinalName(artifact: Artifact) {
-        return artifact.fileName ? artifact.fileName : undefined;
+    protected readUntilEntries(): Promise<void> {
+        throw new Error("Method not implemented.");
     }
-
-    protected isSameExtractionRoot(artifact: Artifact, oldExtractionRoot: string): boolean {
-        const recurse: (postAction: PostAction | undefined) => SegmentedPath | null = postAction => {
-            if(!postAction) return null;
-            if(postAction.type === 'extractZip') return postAction.destination;
-            if(postAction.post) return recurse(postAction.post);
-            return null;
-        };
-        const rootSegments = recurse(artifact.post);
-        if(!rootSegments) return false;
-
-        const path = this.toActualPath(rootSegments);
-        return path === oldExtractionRoot;
+    protected cloneThisReader(): TrackerReader {
+        throw new Error("Method not implemented.");
     }
+}
+
+async function createReader<T extends TrackerReader>(app: App, artifact: Artifact, vars: TrackerVariables): Promise<T> {
+    const dummyReader = new DummyTrackerReader(artifact, app, vars);
+    return await dummyReader.toActualReader<T>();
 }

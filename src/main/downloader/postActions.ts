@@ -1,16 +1,21 @@
 import { Artifact, PostAction } from "../types/Installation";
 import * as Path from 'path';
 import * as fs from 'fs';
-import { Installer } from "./downloader";
 import { checksumFile } from "../utils/checksums";
 import { rename } from "../utils/fshelper";
 import { unzip } from "../utils/zip";
-import ArtifactTrackerWriter from "./ArtifactTracker";
+import { SingleFileTracker } from "./tracker/SingleFileTracker";
+import { ExtractedArchiveTracker } from "./tracker/ExtractedArchiveTracker";
+import { Installer } from "./downloader";
+import { TrackerVariables, TrackerWriter } from "./tracker/ArtifactTracker";
+import App from "../../common/types/App";
 
 export type PostActionArgument = {
     artifact: Artifact;
     result: any;
-    tracker: ArtifactTrackerWriter;
+    app: App;
+    trackerVars: TrackerVariables;
+    tracker?: TrackerWriter;
 }
 
 export class PostActionWrapper {
@@ -95,8 +100,12 @@ export namespace ActionFactory {
     }
 
     export function createDefaultTrackerHandle() {
-        return new PostActionHandle(async ({ result: finalPath, tracker }) => {
-            if (!tracker.isFinished()) await tracker.trackSinglePath(finalPath);
+        return new PostActionHandle(async (arg) => {
+            if (!arg.tracker) {
+                arg.tracker = new SingleFileTracker.Writer(arg.artifact, arg.app, arg.trackerVars);
+                return arg;
+            }
+            return arg;
         }, null);
     }
 
@@ -128,8 +137,11 @@ export namespace ActionFactory {
 
     class ExtractZipAction extends PostActionHandle {
         constructor(targetDirectory: string, child: PostActionHandle | null) {
-            super(async ({result: zipFile, tracker}) => {
+            super(async (arg) => {
+                const zipFile = arg.result;
                 console.log(`Unzipping '${zipFile}'...`);
+
+                const tracker = new ExtractedArchiveTracker.Writer(arg.artifact, arg.app, arg.trackerVars);
                 await tracker.beginExtractedArchive(zipFile, targetDirectory);
                 // await unzip(zipFile, targetDirectory, progress => console.log(`${((progress.transferredBytes / progress.totalBytes) * 100).toFixed(2)}% - ${progress.transferredBytes} / ${progress.totalBytes}`));
                 await unzip(zipFile, targetDirectory, tracker);
