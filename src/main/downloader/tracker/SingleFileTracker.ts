@@ -3,7 +3,7 @@ import { checksumFile } from "../../utils/checksums";
 import { TrackerWriter, ArtifactType, TrackerReader } from "./ArtifactTracker";
 import * as fs from 'fs';
 import * as Path from 'path';
-import { resolveSegmentedPath } from "../../utils/fshelper";
+import { exists, resolveSegmentedPath } from "../../utils/fshelper";
 
 export namespace SingleFileTracker {
     export class Writer extends TrackerWriter {
@@ -23,6 +23,10 @@ export namespace SingleFileTracker {
                 return false;
             }
             // artifact will be at the same location
+
+            if(!await exists(oldPath)) return false; // file does not exist anymore
+
+            // compare checksums
             const calculatedMd5 = await checksumFile(oldPath, 'md5').catch(() => undefined); // on error, return undefined
             if (calculatedMd5 === artifact.md5) return true;
             else await fs.promises.unlink(oldPath);

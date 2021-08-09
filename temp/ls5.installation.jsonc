@@ -19,6 +19,41 @@
                 "type": "extractZip",
                 "destination": []
             }
+        },
+        {
+            "id": "furniture-mod",
+            "url": "https://github.com/LCLPYT/MrCrayfishFurnitureMod/releases/download/7.0.0/furniture-7.0.0-pre19-1.16.4.jar",
+            "size": 1878095,
+            "md5": "e3031a928c69db85cce40b38ea21adbc",
+            "destination": ["mods"]
+        },
+        {
+            "id": "goblin-traders",
+            "url": "https://github.com/MrCrayfish/GoblinTraders/releases/download/1.3.1-1.16.3/goblintraders-1.3.1-1.16.3.jar",
+            "size": 416380,
+            "md5": "1db3919d7038b4eb0e481e05646efa21",
+            "destination": ["mods"]
+        },
+        {
+            "id": "lclpupdater",
+            "url": "https://github.com/LCLPYT/LCLPUpdateChecker/releases/download/1.3/lclpupdater-1.3.2.jar",
+            "size": 56013,
+            "md5": "7ccd0ce612654957140f4a95bfcadad8",
+            "destination": ["mods"]
+        },
+        {
+            "id": "lclpmmo",
+            "url": "https://github.com/LCLPYT/LCLPMMO/releases/download/1.6/lclpmmo-1.6.17.jar",
+            "size": 8317913,
+            "md5": "752eae45d7cde788607302b5701a6b9e",
+            "destination": ["mods"]
+        },
+        {
+            "id": "corebase",
+            "url": "https://github.com/LCLPYT/CoreBase/releases/download/1.6/corebase-1.6.15.jar",
+            "size": 215539,
+            "md5": "9f882e5eff272b5b39a4f862f484524a",
+            "destination": ["mods"]
         }
     ]
 }

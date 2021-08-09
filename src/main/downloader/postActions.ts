@@ -102,7 +102,13 @@ export namespace ActionFactory {
     export function createDefaultTrackerHandle() {
         return new PostActionHandle(async (arg) => {
             if (!arg.tracker) {
-                arg.tracker = new SingleFileTracker.Writer(arg.artifact, arg.app, arg.trackerVars);
+                const tracker = new SingleFileTracker.Writer(arg.artifact, arg.app, arg.trackerVars);
+                arg.tracker = tracker;
+
+                const file = arg.result;
+                console.log('tracking', file, '...')
+                tracker.trackSinglePath(file);
+
                 return arg;
             }
             return arg;
@@ -142,13 +148,16 @@ export namespace ActionFactory {
                 console.log(`Unzipping '${zipFile}'...`);
 
                 const tracker = new ExtractedArchiveTracker.Writer(arg.artifact, arg.app, arg.trackerVars);
+                arg.tracker = tracker;
                 await tracker.beginExtractedArchive(zipFile, targetDirectory);
                 // await unzip(zipFile, targetDirectory, progress => console.log(`${((progress.transferredBytes / progress.totalBytes) * 100).toFixed(2)}% - ${progress.transferredBytes} / ${progress.totalBytes}`));
                 await unzip(zipFile, targetDirectory, tracker);
                 tracker.finishExtractedArchive();
                 console.log(`Unzipped '${zipFile}'. Deleting it...`);
-                // await unlink(zipFile);
+                await fs.promises.unlink(zipFile);
                 console.log(`Deleted '${zipFile}'.`);
+
+                return arg;
             }, child)
         }
     }

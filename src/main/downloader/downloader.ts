@@ -204,16 +204,17 @@ export class Installer {
     }
 
     protected async doesArtifactNeedUpdate(artifact: Artifact, trackerVars: TrackerVariables): Promise<boolean> {
-        if(!artifact.md5) {
-            console.info('Artifact does not provide a MD5 checksum; cannot check if the artifact is already up-to-date. Artifact will be updated.');
-            return true;
-        }
-
         const reader = await createReader(this.app, artifact, trackerVars).catch(() => undefined); // in case of an error, return undefined
         if(!reader) return true; // if there was an error, do the update, since up-to-date cannot be checked
 
-        const needsUpdate = !await reader.isArtifactUpToDate(artifact);
-        if(needsUpdate) await reader.deleteEntries();
+        let needsUpdate = true;
+        if(!artifact.md5) {
+            console.info('Artifact does not provide a MD5 checksum; cannot check if the artifact is already up-to-date. Artifact will be updated.');
+        } else {
+            needsUpdate = !await reader.isArtifactUpToDate(artifact);
+        }
+
+        if(needsUpdate) await reader.deleteEntries().catch(() => undefined);
         reader.closeFile();
 
         return needsUpdate;
@@ -242,8 +243,14 @@ class DummyTrackerReader extends TrackerReader {
     public async toActualReader<T extends TrackerReader>(): Promise<T> {
         await this.openFile();
         const [header, err] = this.readHeader();
-        if (err) throw err;
-        if (!header) throw new Error('Could not read header.');
+        if (err) {
+            await this.deleteFile();
+            throw err;
+        }
+        if (!header) {
+            await this.deleteFile();
+            throw new Error('Could not read header.');
+        }
 
         const readerFactory = TRACKER_READERS.get(header.type);
         if(!readerFactory) throw new TypeError(`No reader factory defined for artifact type '${header.type}'`);

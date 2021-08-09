@@ -151,7 +151,7 @@ export abstract class TrackerReader extends TrackerBase {
 
     public async deleteFile() {
         if (this.stream) this.closeFile();
-        await fs.promises.unlink(this.getTrackerFile());
+        if(await exists(this.getTrackerFile())) await fs.promises.unlink(this.getTrackerFile());
     }
 
     public readHeader(): [header: TrackerHeader | undefined, error: any] {
@@ -165,9 +165,9 @@ export abstract class TrackerReader extends TrackerBase {
         else if (version > TRACKER_VERSION) throw [undefined, new VersionError(`Artifact tracker version is to new: ${version}; current: ${TRACKER_VERSION}; Consider an upgrade.`)];
 
         // version specific deserialization; above code should never break
-        const lengthBuffer = <Buffer | null>this.stream.read(2); // 16 bits
+        const lengthBuffer = <Buffer | null> this.stream.read(2); // 16 bits
         if (!lengthBuffer) throw ERR_EOS;
-        const type = <ArtifactType>lengthBuffer.readInt16LE();
+        const type = <ArtifactType> lengthBuffer.readInt16LE();
 
         return [{
             version: version,
@@ -208,7 +208,7 @@ export abstract class TrackerReader extends TrackerBase {
         const deleteItems = async (trackerReader: TrackerReader) => {
             // delete all old files
             try {
-                while (true) await unlinkRemoveParentIfEmpty(trackerReader.readPath()).catch(() => { });
+                while (true) await unlinkRemoveParentIfEmpty(trackerReader.readPath()).catch(() => undefined);
             } catch (err) {
                 if (err !== ERR_EOS) throw err;
             }
