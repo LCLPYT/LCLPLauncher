@@ -35,15 +35,17 @@ export namespace SingleFileTracker {
         }
 
         protected cloneThisReader(): TrackerReader {
-            return new Reader(this.artifact, this.app, this.vars);
+            return new Reader(this.artifactId, this.appId, this.vars);
         }
 
-        public async readUntilEntries(): Promise<void> {
-            this.ensureFileNotOpen();
-            await this.openFile();
-            const [header, err] = this.readHeader(); // header
-            if (err) throw err;
-            if (!header) throw new Error('Header could not be read');
+        public async readUntilEntries(headerRead?: boolean): Promise<void> {
+            if(!headerRead) {
+                this.ensureFileNotOpen();
+                await this.openFile();
+                const [header, err] = this.readHeader(); // header
+                if (err) throw err;
+                if (!header) throw new Error('Header could not be read');
+            }
         }
 
         protected hasArtifactPathChanged(artifact: Artifact, oldPath: string): boolean {

@@ -37,8 +37,9 @@ export async function exists(file: string): Promise<boolean> {
     return await fs.promises.stat(file).catch(() => undefined) !== undefined;
 }
 
-export function getInstallerAppDir(app: App) {
-    return Path.resolve(electronApp.getPath('userData'), '.installer', 'apps', app.id.toString());
+export function getInstallerAppDir(app: App | number) {
+    if(typeof app === 'number') return Path.resolve(electronApp.getPath('userData'), '.installer', 'apps', app.toString());
+    else return Path.resolve(electronApp.getPath('userData'), '.installer', 'apps', app.id.toString());
 }
 
 export function resolveSegmentedPath(rootDir: string, path: SegmentedPath) {

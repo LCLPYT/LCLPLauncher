@@ -2,7 +2,6 @@ import { Artifact } from "../../types/Installation";
 import { exists, getInstallerAppDir, mkdirp, unlinkRemoveParentIfEmpty } from "../../utils/fshelper";
 import * as fs from 'fs';
 import * as Path from 'path';
-import App from "../../../common/types/App";
 
 // if a tracker file has a version older than this string, it will be deleted and an update of the artifact will be required
 export const TRACKER_VERSION = 4;
@@ -25,13 +24,13 @@ export type TrackerVariables = {
 }
 
 abstract class TrackerBase {
-    protected readonly artifact: Artifact;
-    protected readonly app: App;
+    protected readonly artifactId: string;
+    protected readonly appId: number;
     protected readonly vars: TrackerVariables;
 
-    constructor(artifact: Artifact, app: App, vars: TrackerVariables) {
-        this.artifact = artifact;
-        this.app = app;
+    constructor(artifactId: string, appId: number, vars: TrackerVariables) {
+        this.artifactId = artifactId;
+        this.appId = appId;
         this.vars = vars;
     }
 
@@ -42,7 +41,7 @@ abstract class TrackerBase {
     protected abstract ensureFileNotOpen(): void;
 
     public getTrackerFile() {
-        return Path.resolve(getInstallerAppDir(this.app), 'artifacts', this.artifact.id);
+        return Path.resolve(getInstallerAppDir(this.appId), 'artifacts', this.artifactId);
     }
 
     public doesFileExist() {
@@ -117,8 +116,8 @@ export abstract class TrackerReader extends TrackerBase {
     protected stream?: fs.ReadStream;
     protected type?: ArtifactType;
 
-    constructor(artifact: Artifact, app: App, vars: TrackerVariables, reuseStream?: fs.ReadStream) {
-        super(artifact, app, vars);
+    constructor(artifactId: string, appId: number, vars: TrackerVariables, reuseStream?: fs.ReadStream) {
+        super(artifactId, appId, vars);
         if(reuseStream) this.stream = reuseStream;
     }
 
@@ -198,13 +197,13 @@ export abstract class TrackerReader extends TrackerBase {
         return boolNumber === 1;
     }
 
-    public abstract readUntilEntries(): Promise<void>;
+    public abstract readUntilEntries(headerRead?: boolean): Promise<void>;
 
     protected abstract cloneThisReader(): TrackerReader;
 
     public abstract isArtifactUpToDate(artifact: Artifact): Promise<boolean>;
 
-    public async deleteEntries(reuseReader?: TrackerReader) {
+    public async deleteEntries(reuseReader?: TrackerReader, atBeginning?: boolean) {
         const deleteItems = async (trackerReader: TrackerReader) => {
             // delete all old files
             try {
@@ -214,14 +213,14 @@ export abstract class TrackerReader extends TrackerBase {
             }
         };
 
-        if (reuseReader) {
+        if (reuseReader && !atBeginning) {
             // assumes the stream is at the beginning of the entries
             await deleteItems(reuseReader);
             // leave the closing of the file to caller
         } else {
             // create a new reader and read it to the entries offset
-            const reader = this.cloneThisReader();
-            await reader.readUntilEntries();
+            const reader = reuseReader ? reuseReader : this.cloneThisReader();
+            await reader.readUntilEntries(reuseReader ? true : false);
             // actually delete the entries
             await deleteItems(reader);
             reader.closeFile();

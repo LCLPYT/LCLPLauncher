@@ -5,7 +5,7 @@ import * as Path from 'path';
 import * as fs from 'fs';
 import App from "../../common/types/App";
 import Installation, { Artifact, SegmentedPath } from "../types/Installation";
-import { resolveSegmentedPath, rmdirRecusive } from "../utils/fshelper";
+import { exists, getInstallerAppDir, resolveSegmentedPath, rmdirRecusive } from "../utils/fshelper";
 import { PostActionHandle, PostActionWrapper, ActionFactory, PostActionArgument } from "./postActions";
 import { ArtifactType, TrackerReader, TrackerVariables } from "./tracker/ArtifactTracker";
 import { SingleFileTracker } from "./tracker/SingleFileTracker";
@@ -68,7 +68,10 @@ export class Installer {
         this.active = true;
         this.totalBytes = 0;
 
-        console.log('Checking for updates...')
+        console.log('Scanning for old unused artifacts...');
+        await this.removeOldArtifacts();
+
+        console.log('Checking for updates...');
         await this.filterDownloadQueue();
 
         if(!this.isUpToDate()) {
@@ -79,7 +82,37 @@ export class Installer {
         } else {
             console.log('Everything is already up-to-date.');
         }
-        await this.cleanUp(); // TODO remove old unused artifacts
+        await this.cleanUp();
+    }
+
+    protected async removeOldArtifacts() {
+        const artifactDir = Path.resolve(getInstallerAppDir(this.app), 'artifacts');
+        if(!await exists(artifactDir)) return; // no artifacts downloaded
+
+        const trackerVars = this.getTrackerVars();
+
+        const artifactIds = await fs.promises.readdir(artifactDir); // file names are equal to the artifact ids
+        this.downloadQueue.forEach(artifact => {
+            const index = artifactIds.indexOf(artifact.id);
+            if(index >= 0) artifactIds.splice(index, 1); // remove artifact from list
+        });
+
+        // only artifacts which are now unused are inside artifactIds[], delete them
+        await Promise.all(artifactIds.map(async (artifactId) => {
+            const reader = await createReader(this.app.id, artifactId, trackerVars).catch(() => undefined); // in case of an error, return undefined
+            if(!reader) return; // if there was an error, do nothing
+
+            console.log(`Deleting old unused artifact '${artifactId}'...`);
+            await reader.deleteEntries(reader, true);
+            console.log(`Old Unused artifact '${artifactId}' deleted successfully.`);
+        }));
+    }
+
+    protected getTrackerVars(): TrackerVariables {
+        return {
+            installationDir: this.installationDirectory,
+            tmpDir: this.tmpDir
+        };
     }
 
     public isUpToDate() {
@@ -87,10 +120,7 @@ export class Installer {
     }
 
     protected async filterDownloadQueue() {
-        const trackerVars = {
-            installationDir: this.installationDirectory,
-            tmpDir: this.tmpDir
-        };
+        const trackerVars = this.getTrackerVars();
 
         const artifacts = [...this.downloadQueue]; // clone the array
 
@@ -116,11 +146,6 @@ export class Installer {
         this.downloadQueue.splice(0, 1);
 
         console.log(`Resolving artifact '${artifact.id}...'`);
-
-        const trackerVars = {
-            installationDir: this.installationDirectory,
-            tmpDir: this.tmpDir
-        };
 
         // determine directory to place the downloaded file into; if md5 validation should be done, the file will be put in the .tmp dir first
         const dir = artifact.md5 || !artifact.destination ? this.tmpDir : this.toActualPath(artifact.destination);
@@ -174,7 +199,7 @@ export class Installer {
                 artifact: artifact,
                 result: downloadedPath,
                 app: this.app,
-                trackerVars: trackerVars
+                trackerVars: this.getTrackerVars()
             });
         }
 
@@ -228,7 +253,7 @@ export class Installer {
     }
 
     protected async doesArtifactNeedUpdate(artifact: Artifact, trackerVars: TrackerVariables): Promise<boolean> {
-        const reader = await createReader(this.app, artifact, trackerVars).catch(() => undefined); // in case of an error, return undefined
+        const reader = await createReader(this.app.id, artifact.id, trackerVars).catch(() => undefined); // in case of an error, return undefined
         if(!reader) return true; // if there was an error, do the update, since up-to-date cannot be checked
 
         let needsUpdate = true;
@@ -249,7 +274,7 @@ export class Installer {
     }
 }
 
-type TrackerFactory = (artifact: Artifact, app: App, vars: TrackerVariables, reuseStream?: fs.ReadStream) => TrackerReader;
+type TrackerFactory = (artifactId: string, appId: number, vars: TrackerVariables, reuseStream?: fs.ReadStream) => TrackerReader;
 
 const TRACKER_READERS = new Map<ArtifactType, TrackerFactory>([
     [
@@ -279,7 +304,7 @@ class DummyTrackerReader extends TrackerReader {
         const readerFactory = TRACKER_READERS.get(header.type);
         if(!readerFactory) throw new TypeError(`No reader factory defined for artifact type '${header.type}'`);
 
-        return <T> readerFactory(this.artifact, this.app, this.vars, this.stream); // reuse this stream, therefore do not close the file here.
+        return <T> readerFactory(this.artifactId, this.appId, this.vars, this.stream); // reuse this stream, therefore do not close the file here.
     }
     public isArtifactUpToDate(): Promise<boolean> {
         throw new Error("Method not implemented.");
@@ -292,7 +317,7 @@ class DummyTrackerReader extends TrackerReader {
     }
 }
 
-async function createReader<T extends TrackerReader>(app: App, artifact: Artifact, vars: TrackerVariables): Promise<T> {
-    const dummyReader = new DummyTrackerReader(artifact, app, vars);
+async function createReader<T extends TrackerReader>(appId: number, artifactId: string, vars: TrackerVariables): Promise<T> {
+    const dummyReader = new DummyTrackerReader(artifactId, appId, vars);
     return await dummyReader.toActualReader<T>();
 }
