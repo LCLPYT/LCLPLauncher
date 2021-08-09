@@ -1,7 +1,7 @@
 import { Artifact, PostAction, SegmentedPath } from "../../types/Installation";
 import { checksumFile } from "../../utils/checksums";
-import { resolveSegmentedPath } from "../../utils/fshelper";
-import { ArtifactType, TrackerReader, TrackerWriter } from "./ArtifactTracker";
+import { exists, resolveSegmentedPath } from "../../utils/fshelper";
+import { ArtifactType, ERR_EOS, TrackerReader, TrackerWriter } from "./ArtifactTracker";
 
 export namespace ExtractedArchiveTracker {
     export class Writer extends TrackerWriter {
@@ -43,7 +43,7 @@ export namespace ExtractedArchiveTracker {
             return new Reader(this.artifact, this.app, this.vars);
         }
 
-        protected async readUntilEntries(): Promise<void> {
+        public async readUntilEntries(): Promise<void> {
             this.ensureFileNotOpen();
             await this.openFile();
             const [header, err] = this.readHeader(); // header
@@ -66,6 +66,34 @@ export namespace ExtractedArchiveTracker {
     
             const path = resolveSegmentedPath(this.vars.installationDir, rootSegments);
             return path === oldExtractionRoot;
+        }
+
+        protected async doAllArchiveItemsExist(reuseReader?: TrackerReader): Promise<boolean> {
+            async function checkItems(trackerReader: TrackerReader): Promise<boolean> {
+                try {
+                    // for each extracted entry, check if it exists
+                    while (true) {
+                        if (!await exists(trackerReader.readPath())) return false;
+                    }
+                } catch (err) {
+                    if (err !== ERR_EOS) throw err;
+                }
+                return true;
+            }
+
+            if (reuseReader) {
+                // assumes the stream is at the beginning of the entries
+                return await checkItems(reuseReader);
+                // leave the closing of the file to caller
+            } else {
+                // create a new reader and read it to the entries offset
+                const reader = this.cloneThisReader();
+                await reader.readUntilEntries();
+                // actually check the entries
+                const allExist = await checkItems(reader);
+                reader.closeFile();
+                return allExist;
+            }
         }
     }
 }

@@ -92,6 +92,7 @@ export class Installer {
             else console.error(err);
             return true;
         })) {
+            console.log(`Artifact '${artifact.id}' is up-to-date. Skipping it...`);
             // download next artifact
             await this.downloadNextArtifact();
             return;
@@ -211,7 +212,7 @@ export class Installer {
         const reader = await createReader(this.app, artifact, trackerVars).catch(() => undefined); // in case of an error, return undefined
         if(!reader) return true; // if there was an error, do the update, since up-to-date cannot be checked
 
-        const needsUpdate = await reader.isArtifactUpToDate(artifact);
+        const needsUpdate = !await reader.isArtifactUpToDate(artifact);
         if(needsUpdate) await reader.deleteEntries();
         reader.closeFile();
 
@@ -252,7 +253,7 @@ class DummyTrackerReader extends TrackerReader {
     public isArtifactUpToDate(): Promise<boolean> {
         throw new Error("Method not implemented.");
     }
-    protected readUntilEntries(): Promise<void> {
+    public readUntilEntries(): Promise<void> {
         throw new Error("Method not implemented.");
     }
     protected cloneThisReader(): TrackerReader {

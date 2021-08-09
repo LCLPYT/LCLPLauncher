@@ -7,7 +7,7 @@ import App from "../../../common/types/App";
 // if a tracker file has a version older than this string, it will be deleted and an update of the artifact will be required
 export const TRACKER_VERSION = 4;
 
-const ERR_EOS = new Error('End of stream');
+export const ERR_EOS = new Error('End of stream');
 
 export enum ArtifactType {
     SINGLE_FILE,
@@ -141,6 +141,10 @@ export abstract class TrackerReader extends TrackerBase {
         this.stream = undefined;
     }
 
+    public isFileOpen(): boolean {
+        return this.stream !== undefined;
+    }
+
     protected ensureFileNotOpen() {
         if (this.stream) throw new Error('File is already open (read)');
     }
@@ -194,7 +198,7 @@ export abstract class TrackerReader extends TrackerBase {
         return boolNumber === 1;
     }
 
-    protected abstract readUntilEntries(): Promise<void>;
+    public abstract readUntilEntries(): Promise<void>;
 
     protected abstract cloneThisReader(): TrackerReader;
 
@@ -217,38 +221,10 @@ export abstract class TrackerReader extends TrackerBase {
         } else {
             // create a new reader and read it to the entries offset
             const reader = this.cloneThisReader();
-            reader.readUntilEntries();
+            await reader.readUntilEntries();
             // actually delete the entries
             await deleteItems(reader);
             reader.closeFile();
-        }
-    }
-
-    public async doAllArchiveItemsExist(reuseReader?: TrackerReader): Promise<boolean> {
-        async function checkItems(trackerReader: TrackerReader): Promise<boolean> {
-            try {
-                // for each extracted entry, check if it exists
-                while (true) {
-                    if (!await exists(trackerReader.readPath())) return false;
-                }
-            } catch (err) {
-                if (err !== ERR_EOS) throw err;
-            }
-            return true;
-        }
-
-        if (reuseReader) {
-            // assumes the stream is at the beginning of the entries
-            return await checkItems(reuseReader);
-            // leave the closing of the file to caller
-        } else {
-            // create a new reader and read it to the entries offset
-            const reader = this.cloneThisReader();
-            reader.readUntilEntries();
-            // actually check the entries
-            const allExist = await checkItems(reader);
-            reader.closeFile();
-            return allExist;
         }
     }
 }

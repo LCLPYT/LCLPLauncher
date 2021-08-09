@@ -34,7 +34,7 @@ export namespace SingleFileTracker {
             return new Reader(this.artifact, this.app, this.vars);
         }
 
-        protected async readUntilEntries(): Promise<void> {
+        public async readUntilEntries(): Promise<void> {
             this.ensureFileNotOpen();
             await this.openFile();
             const [header, err] = this.readHeader(); // header
