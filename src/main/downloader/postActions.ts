@@ -106,7 +106,6 @@ export namespace ActionFactory {
                 arg.tracker = tracker;
 
                 const file = arg.result;
-                console.log('tracking', file, '...')
                 tracker.trackSinglePath(file);
 
                 return arg;

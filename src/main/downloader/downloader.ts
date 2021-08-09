@@ -67,10 +67,47 @@ export class Installer {
         if (this.active) return;
         this.active = true;
         this.totalBytes = 0;
-        this.downloadQueue.forEach(artifact => this.totalBytes += Math.max(0, artifact.size));
-        await this.downloadNextArtifact();
-        await this.completePostActions();
-        await this.cleanUp();
+
+        console.log('Checking for updates...')
+        await this.filterDownloadQueue();
+
+        if(!this.isUpToDate()) {
+            console.log('Updates found. Downloading...');
+            this.downloadQueue.forEach(artifact => this.totalBytes += Math.max(0, artifact.size));
+            await this.downloadNextArtifact();
+            await this.completePostActions();    
+        } else {
+            console.log('Everything is already up-to-date.');
+        }
+        await this.cleanUp(); // TODO remove old unused artifacts
+    }
+
+    public isUpToDate() {
+        return this.downloadQueue.length <= 0;
+    }
+
+    protected async filterDownloadQueue() {
+        const trackerVars = {
+            installationDir: this.installationDirectory,
+            tmpDir: this.tmpDir
+        };
+
+        const artifacts = [...this.downloadQueue]; // clone the array
+
+        await Promise.all(artifacts.map(async (artifact) => {
+            if(await this.doesArtifactNeedUpdate(artifact, trackerVars).catch((err: Error) => {
+                if(err.name === 'VersionError') console.error(err.message);
+                else console.error(err);
+                return true;
+            })) {
+                console.log(`Artifact '${artifact.id}' needs an update.`);
+            } else {
+                console.log(`Artifact '${artifact.id}' is up-to-date. Skipping it...`);
+
+                const index = this.downloadQueue.indexOf(artifact);
+                if(index >= 0) this.downloadQueue.splice(index, 1);
+            }
+        }));
     }
 
     protected async downloadNextArtifact() {
@@ -84,19 +121,6 @@ export class Installer {
             installationDir: this.installationDirectory,
             tmpDir: this.tmpDir
         };
-
-        // TODO remove old unused artifacts
-        // TODO when doing the progress display, filter artifacts before starting the downloads
-        if (!await this.doesArtifactNeedUpdate(artifact, trackerVars).catch((err: Error) => {
-            if(err.name === 'VersionError') console.error(err.message);
-            else console.error(err);
-            return true;
-        })) {
-            console.log(`Artifact '${artifact.id}' is up-to-date. Skipping it...`);
-            // download next artifact
-            await this.downloadNextArtifact();
-            return;
-        }
 
         // determine directory to place the downloaded file into; if md5 validation should be done, the file will be put in the .tmp dir first
         const dir = artifact.md5 || !artifact.destination ? this.tmpDir : this.toActualPath(artifact.destination);
