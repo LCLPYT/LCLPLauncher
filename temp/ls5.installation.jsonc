@@ -1,4 +1,6 @@
 {
+    "version": "0.2.6",
+    "versionInt": 27,
     "artifacts": [
         {
             "id": "ls5_client_mods",

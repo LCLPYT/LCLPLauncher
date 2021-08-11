@@ -1,4 +1,6 @@
 type Installation = {
+    version: string,
+    versionInt: number,
     artifacts: Artifact[]
 }
 
