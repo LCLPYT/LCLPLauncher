@@ -7,14 +7,14 @@ import { unzip } from "../utils/zip";
 import { SingleFileTracker } from "./tracker/SingleFileTracker";
 import { ExtractedArchiveTracker } from "./tracker/ExtractedArchiveTracker";
 import { Installer } from "./downloader";
-import { TrackerVariables, TrackerWriter } from "./tracker/ArtifactTracker";
+import { ArtifactTrackerVariables, TrackerWriter } from "./tracker/ArtifactTracker";
 import App from "../../common/types/App";
 
 export type PostActionArgument = {
     artifact: Artifact;
     result: any;
     app: App;
-    trackerVars: TrackerVariables;
+    trackerVars: ArtifactTrackerVariables;
     tracker?: TrackerWriter;
 }
 

@@ -7,7 +7,7 @@ import App from "../../common/types/App";
 import Installation, { Artifact, SegmentedPath } from "../types/Installation";
 import { exists, getInstallerAppDir, resolveSegmentedPath, rmdirRecusive } from "../utils/fshelper";
 import { PostActionHandle, PostActionWrapper, ActionFactory, PostActionArgument } from "./postActions";
-import { ArtifactType, TrackerReader, TrackerVariables } from "./tracker/ArtifactTracker";
+import { ArtifactType, TrackerReader, ArtifactTrackerVariables } from "./tracker/ArtifactTracker";
 import { SingleFileTracker } from "./tracker/SingleFileTracker";
 import { ExtractedArchiveTracker } from "./tracker/ExtractedArchiveTracker";
 import { withBufferReadMethods } from "../utils/buffer";
@@ -109,7 +109,7 @@ export class Installer {
         }));
     }
 
-    protected getTrackerVars(): TrackerVariables {
+    protected getTrackerVars(): ArtifactTrackerVariables {
         return {
             installationDir: this.installationDirectory,
             tmpDir: this.tmpDir
@@ -253,7 +253,7 @@ export class Installer {
         console.log('Cleaned up.');
     }
 
-    protected async doesArtifactNeedUpdate(artifact: Artifact, trackerVars: TrackerVariables): Promise<boolean> {
+    protected async doesArtifactNeedUpdate(artifact: Artifact, trackerVars: ArtifactTrackerVariables): Promise<boolean> {
         const reader = await createReader(this.app.id, artifact.id, trackerVars).catch(() => undefined); // in case of an error, return undefined
         if(!reader) return true; // if there was an error, do the update, since up-to-date cannot be checked
 
@@ -275,7 +275,7 @@ export class Installer {
     }
 }
 
-type TrackerFactory = (artifactId: string, appId: number, vars: TrackerVariables, reuseStream?: fs.ReadStream) => TrackerReader;
+type TrackerFactory = (artifactId: string, appId: number, vars: ArtifactTrackerVariables, reuseStream?: fs.ReadStream) => TrackerReader;
 
 const TRACKER_READERS = new Map<ArtifactType, TrackerFactory>([
     [
@@ -322,7 +322,7 @@ class DummyTrackerReader extends TrackerReader {
     }
 }
 
-async function createReader<T extends TrackerReader>(appId: number, artifactId: string, vars: TrackerVariables): Promise<T> {
+async function createReader<T extends TrackerReader>(appId: number, artifactId: string, vars: ArtifactTrackerVariables): Promise<T> {
     const constructor = DummyTrackerReader.getConstructor();
     const dummyReader = new constructor(artifactId, appId, vars);
     return await dummyReader.toActualReader<T>();

@@ -7,31 +7,23 @@ import { ERR_EOS } from "../../utils/constants";
 import { MixinBufferReader, MixinBufferWriter, withBufferWriteMethods } from "../../utils/buffer";
 
 // if a tracker file has a version older than this string, it will be deleted and an update of the artifact will be required
-export const TRACKER_VERSION = 4;
+const TRACKER_VERSION = 4;
 
-export enum ArtifactType {
-    SINGLE_FILE,
-    EXTRACTED_ARCHIVE
-}
-
-type TrackerHeader = {
-    version: number;
-    type: ArtifactType;
-}
-
-export type TrackerVariables = {
+export type ArtifactTrackerVariables = {
     installationDir: string;
     tmpDir: string;
 }
 
-abstract class TrackerBase {
-    protected readonly artifactId: string;
-    protected readonly appId: number;
-    protected readonly vars: TrackerVariables;
+export interface TrackerDescriptor {
+    getTrackerFile(): string;
+}
 
-    constructor(artifactId: string, appId: number, vars: TrackerVariables) {
-        this.artifactId = artifactId;
-        this.appId = appId;
+export abstract class AbstractTrackerBase<Vars> {
+    protected readonly vars: Vars;
+    protected readonly descriptor: TrackerDescriptor;
+
+    constructor(descriptor: TrackerDescriptor, vars: Vars) {
+        this.descriptor = descriptor;
         this.vars = vars;
     }
 
@@ -42,7 +34,7 @@ abstract class TrackerBase {
     protected abstract ensureFileNotOpen(): void;
 
     public getTrackerFile() {
-        return Path.resolve(getInstallerAppDir(this.appId), 'artifacts', this.artifactId);
+        return this.descriptor.getTrackerFile();
     }
 
     public doesFileExist() {
@@ -50,13 +42,13 @@ abstract class TrackerBase {
     }
 }
 
-export interface TrackerWriter extends MixinBufferWriter {} // make the compiler aware of the mixin with declaration merging
-export class TrackerWriter extends TrackerBase implements WriteStreamContainer {
+export interface AbstractTrackerWriter<Vars> extends MixinBufferWriter {} // make the compiler aware of the mixin with declaration merging
+export abstract class AbstractTrackerWriter<Vars> extends AbstractTrackerBase<Vars> implements WriteStreamContainer {
     public stream?: fs.WriteStream;
-    protected headerWritten = false;
 
-    public static getConstructor() {
-        return withBufferWriteMethods(TrackerWriter);
+    constructor(descriptor: TrackerDescriptor, vars: Vars, reuseStream?: fs.WriteStream) {
+        super(descriptor, vars)
+        if(reuseStream) this.stream = reuseStream;
     }
 
     protected async openFile() {
@@ -76,31 +68,14 @@ export class TrackerWriter extends TrackerBase implements WriteStreamContainer {
     protected ensureFileNotOpen() {
         if (this.stream) throw new Error('File is already open (write)');
     }
-
-    protected async writeHeader(type: ArtifactType) {
-        if (this.headerWritten) throw new Error('Trying to write a header while there was already one written.');
-
-        const buffer = Buffer.alloc(4); // 32 bits
-        buffer.writeInt16LE(TRACKER_VERSION); // the version must always be written first
-        buffer.writeInt16LE(type, 2); // offset 2 bytes, because write always inserts at the beginning
-
-        await this.writeBuffer(buffer);
-        this.headerWritten = true;
-    }
-
-    protected async writePath(path: string) {
-        if (!await exists(path)) throw new Error(`Trying to track a non-existing file: '${path}'`);
-        await this.writeString(path);
-    }
 }
 
-export interface TrackerReader extends MixinBufferReader {} // make the compiler aware of the mixin with declaration merging
-export abstract class TrackerReader extends TrackerBase implements ReadStreamContainer {
+export interface AbstractTrackerReader<Vars> extends MixinBufferReader {} // make the compiler aware of the mixin with declaration merging
+export abstract class AbstractTrackerReader<Vars> extends AbstractTrackerBase<Vars> implements ReadStreamContainer {
     public stream?: fs.ReadStream;
-    protected type?: ArtifactType;
 
-    constructor(artifactId: string, appId: number, vars: TrackerVariables, reuseStream?: fs.ReadStream) {
-        super(artifactId, appId, vars);
+    constructor(descriptor: TrackerDescriptor, vars: Vars, reuseStream?: fs.ReadStream) {
+        super(descriptor, vars);
         if(reuseStream) this.stream = reuseStream;
     }
 
@@ -134,6 +109,77 @@ export abstract class TrackerReader extends TrackerBase implements ReadStreamCon
     public async deleteFile() {
         if (this.stream) this.closeFile();
         if(await exists(this.getTrackerFile())) await fs.promises.unlink(this.getTrackerFile());
+    }
+}
+
+export enum ArtifactType {
+    SINGLE_FILE,
+    EXTRACTED_ARCHIVE
+}
+
+type TrackerHeader = {
+    version: number;
+    type: ArtifactType;
+}
+
+interface ArtifactTracker {
+    readonly appId: number;
+    readonly artifactId: string;
+}
+
+class ArtifactDescriptor implements TrackerDescriptor {
+    public readonly tracker: () => ArtifactTracker;
+
+    constructor(tracker: () => ArtifactTracker) {
+        this.tracker = tracker;
+    }
+
+    public getTrackerFile() {
+        return Path.resolve(getInstallerAppDir(this.tracker().appId), 'artifacts', this.tracker().artifactId);
+    }    
+}
+
+export class TrackerWriter extends AbstractTrackerWriter<ArtifactTrackerVariables> implements WriteStreamContainer, ArtifactTracker {
+    public readonly appId: number;
+    public readonly artifactId: string;
+    protected headerWritten = false;
+
+    constructor(artifactId: string, appId: number, vars: ArtifactTrackerVariables, reuseStream?: fs.WriteStream) {
+        super(new ArtifactDescriptor(() => this), vars, reuseStream);
+        this.artifactId = artifactId;
+        this.appId = appId;
+    }
+    
+    public static getConstructor() {
+        return withBufferWriteMethods(TrackerWriter);
+    }
+
+    protected async writeHeader(type: ArtifactType) {
+        if (this.headerWritten) throw new Error('Trying to write a header while there was already one written.');
+
+        const buffer = Buffer.alloc(4); // 32 bits
+        buffer.writeInt16LE(TRACKER_VERSION); // the version must always be written first
+        buffer.writeInt16LE(type, 2); // offset 2 bytes, because write always inserts at the beginning
+
+        await this.writeBuffer(buffer);
+        this.headerWritten = true;
+    }
+
+    protected async writePath(path: string) {
+        if (!await exists(path)) throw new Error(`Trying to track a non-existing file: '${path}'`);
+        await this.writeString(path);
+    }
+}
+
+export abstract class TrackerReader extends AbstractTrackerReader<ArtifactTrackerVariables> implements ReadStreamContainer, ArtifactTracker {
+    public readonly appId: number;
+    public readonly artifactId: string;
+    protected type?: ArtifactType;
+
+    constructor(artifactId: string, appId: number, vars: ArtifactTrackerVariables, reuseStream?: fs.ReadStream) {
+        super(new ArtifactDescriptor(() => this), vars, reuseStream);
+        this.artifactId = artifactId;
+        this.appId = appId;
     }
 
     public readHeader(): [header: TrackerHeader | undefined, error: any] {
