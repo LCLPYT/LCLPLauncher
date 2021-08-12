@@ -2,11 +2,12 @@ import { Artifact } from "../../types/Installation";
 import { exists, getInstallerAppDir, mkdirp, unlinkRemoveParentIfEmpty } from "../../utils/fshelper";
 import * as fs from 'fs';
 import * as Path from 'path';
+import { ReadStreamContainer, WriteStreamContainer } from "../../utils/streams";
+import { ERR_EOS } from "../../utils/constants";
+import { MixinBufferReader, MixinBufferWriter, withBufferWriteMethods } from "../../utils/buffer";
 
 // if a tracker file has a version older than this string, it will be deleted and an update of the artifact will be required
 export const TRACKER_VERSION = 4;
-
-export const ERR_EOS = new Error('End of stream');
 
 export enum ArtifactType {
     SINGLE_FILE,
@@ -49,9 +50,14 @@ abstract class TrackerBase {
     }
 }
 
-export class TrackerWriter extends TrackerBase {
-    protected stream?: fs.WriteStream;
+export interface TrackerWriter extends MixinBufferWriter {} // make the compiler aware of the mixin with declaration merging
+export class TrackerWriter extends TrackerBase implements WriteStreamContainer {
+    public stream?: fs.WriteStream;
     protected headerWritten = false;
+
+    public static getConstructor() {
+        return withBufferWriteMethods(TrackerWriter);
+    }
 
     protected async openFile() {
         if (this.stream) throw new Error('Trying to open an artifact tracker file twice (write)');
@@ -86,34 +92,11 @@ export class TrackerWriter extends TrackerBase {
         if (!await exists(path)) throw new Error(`Trying to track a non-existing file: '${path}'`);
         await this.writeString(path);
     }
-
-    protected async writeString(str: string) {
-        const pathBuffer = Buffer.from(str, 'utf8');
-        const lengthBuffer = Buffer.alloc(2); // 16 bits
-        lengthBuffer.writeInt16LE(pathBuffer.length);
-
-        await this.writeBuffer(Buffer.concat([lengthBuffer, pathBuffer]));
-    }
-
-    protected async writeBoolean(bool: boolean) {
-        const buffer = Buffer.alloc(1); // 8 bits
-        buffer.writeInt8(bool ? 1 : 0);
-        await this.writeBuffer(buffer);
-    }
-
-    protected async writeBuffer(buffer: Buffer): Promise<void> {
-        return new Promise<void>((resolve, reject) => {
-            if (!this.stream) throw new Error('File is not opened (write)');
-            this.stream.write(buffer, error => {
-                if (error) reject(error);
-                else resolve();
-            });
-        });
-    }
 }
 
-export abstract class TrackerReader extends TrackerBase {
-    protected stream?: fs.ReadStream;
+export interface TrackerReader extends MixinBufferReader {} // make the compiler aware of the mixin with declaration merging
+export abstract class TrackerReader extends TrackerBase implements ReadStreamContainer {
+    public stream?: fs.ReadStream;
     protected type?: ArtifactType;
 
     constructor(artifactId: string, appId: number, vars: TrackerVariables, reuseStream?: fs.ReadStream) {
@@ -176,25 +159,6 @@ export abstract class TrackerReader extends TrackerBase {
 
     public readPath() {
         return this.readString();
-    }
-
-    public readString() {
-        if (!this.stream) throw new Error('File is not opened (read)');
-
-        const lengthBuffer = <Buffer | null>this.stream.read(2); // 16 bits
-        if (!lengthBuffer) throw ERR_EOS;
-        const length = lengthBuffer.readInt16LE();
-        const buffer = <Buffer | null>this.stream.read(length);
-        if (!buffer) throw ERR_EOS;
-        return buffer.toString('utf8');
-    }
-
-    public readBoolean() {
-        if (!this.stream) throw new Error('File is not opened (read)');
-        const buffer = <Buffer | null>this.stream.read(1); // 16 bits
-        if (!buffer) throw ERR_EOS;
-        const boolNumber = buffer.readInt8();
-        return boolNumber === 1;
     }
 
     public abstract readUntilEntries(headerRead?: boolean): Promise<void>;

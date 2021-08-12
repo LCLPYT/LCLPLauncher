@@ -1,10 +1,16 @@
 import { Artifact, PostAction, SegmentedPath } from "../../types/Installation";
+import { withBufferReadMethods, withBufferWriteMethods } from "../../utils/buffer";
 import { checksumFile } from "../../utils/checksums";
+import { ERR_EOS } from "../../utils/constants";
 import { exists, resolveSegmentedPath } from "../../utils/fshelper";
-import { ArtifactType, ERR_EOS, TrackerReader, TrackerWriter } from "./ArtifactTracker";
+import { ArtifactType, TrackerReader, TrackerWriter } from "./ArtifactTracker";
 
 export namespace ExtractedArchiveTracker {
     export class Writer extends TrackerWriter {
+        public static getConstructor() {
+            return withBufferWriteMethods(Writer);
+        }
+
         public async beginExtractedArchive(archiveFile: string, extractedRoot: string) {
             this.ensureFileNotOpen();
             await this.openFile();
@@ -26,6 +32,10 @@ export namespace ExtractedArchiveTracker {
     }
 
     export class Reader extends TrackerReader {
+        public static getConstructor() {
+            return withBufferReadMethods(Reader);
+        }
+
         public async isArtifactUpToDate(artifact: Artifact): Promise<boolean> {
             const hasOldMd5 = this.readBoolean();
             if (!hasOldMd5) return false; // if md5 matching can't be done, there is no point in further checking

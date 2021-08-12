@@ -4,9 +4,14 @@ import { TrackerWriter, ArtifactType, TrackerReader } from "./ArtifactTracker";
 import * as fs from 'fs';
 import * as Path from 'path';
 import { exists, resolveSegmentedPath } from "../../utils/fshelper";
+import { withBufferReadMethods, withBufferWriteMethods } from "../../utils/buffer";
 
 export namespace SingleFileTracker {
     export class Writer extends TrackerWriter {
+        public static getConstructor() {
+            return withBufferWriteMethods(Writer);
+        }
+
         public async trackSinglePath(finalLocation: string) {
             await this.openFile();
             await this.writeHeader(ArtifactType.SINGLE_FILE);
@@ -16,6 +21,10 @@ export namespace SingleFileTracker {
     }
 
     export class Reader extends TrackerReader {
+        public static getConstructor() {
+            return withBufferReadMethods(Reader);
+        }
+
         public async isArtifactUpToDate(artifact: Artifact): Promise<boolean> {
             const oldPath = this.readString();
             if (this.hasArtifactPathChanged(artifact, oldPath)) {

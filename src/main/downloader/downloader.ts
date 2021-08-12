@@ -10,6 +10,7 @@ import { PostActionHandle, PostActionWrapper, ActionFactory, PostActionArgument 
 import { ArtifactType, TrackerReader, TrackerVariables } from "./tracker/ArtifactTracker";
 import { SingleFileTracker } from "./tracker/SingleFileTracker";
 import { ExtractedArchiveTracker } from "./tracker/ExtractedArchiveTracker";
+import { withBufferReadMethods } from "../utils/buffer";
 
 let currentInstaller: Installer | null = null;
 
@@ -279,16 +280,20 @@ type TrackerFactory = (artifactId: string, appId: number, vars: TrackerVariables
 const TRACKER_READERS = new Map<ArtifactType, TrackerFactory>([
     [
         ArtifactType.SINGLE_FILE,
-        (artifact, app, vars, reuseStream) => new SingleFileTracker.Reader(artifact, app, vars, reuseStream)
+        (artifact, app, vars, reuseStream) => new (SingleFileTracker.Reader.getConstructor())(artifact, app, vars, reuseStream)
     ],
     [
         ArtifactType.EXTRACTED_ARCHIVE,
-        (artifact, app, vars, reuseStream) => new ExtractedArchiveTracker.Reader(artifact, app, vars, reuseStream)
+        (artifact, app, vars, reuseStream) => new (ExtractedArchiveTracker.Reader.getConstructor())(artifact, app, vars, reuseStream)
     ]
 ]);
 
 /** Tracker reader to determine tracker type */
 class DummyTrackerReader extends TrackerReader {
+    public static getConstructor() {
+        return withBufferReadMethods(DummyTrackerReader);
+    }
+
     public async toActualReader<T extends TrackerReader>(): Promise<T> {
         await this.openFile();
         const [header, err] = this.readHeader();
@@ -318,6 +323,7 @@ class DummyTrackerReader extends TrackerReader {
 }
 
 async function createReader<T extends TrackerReader>(appId: number, artifactId: string, vars: TrackerVariables): Promise<T> {
-    const dummyReader = new DummyTrackerReader(artifactId, appId, vars);
+    const constructor = DummyTrackerReader.getConstructor();
+    const dummyReader = new constructor(artifactId, appId, vars);
     return await dummyReader.toActualReader<T>();
 }

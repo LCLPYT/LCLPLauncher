@@ -102,7 +102,7 @@ export namespace ActionFactory {
     export function createDefaultTrackerHandle() {
         return new PostActionHandle(async (arg) => {
             if (!arg.tracker) {
-                const tracker = new SingleFileTracker.Writer(arg.artifact.id, arg.app.id, arg.trackerVars);
+                const tracker = new (SingleFileTracker.Writer.getConstructor())(arg.artifact.id, arg.app.id, arg.trackerVars);
                 arg.tracker = tracker;
 
                 const file = arg.result;
@@ -146,7 +146,7 @@ export namespace ActionFactory {
                 const zipFile = arg.result;
                 console.log(`Unzipping '${zipFile}'...`);
 
-                const tracker = new ExtractedArchiveTracker.Writer(arg.artifact.id, arg.app.id, arg.trackerVars);
+                const tracker = new (ExtractedArchiveTracker.Writer.getConstructor())(arg.artifact.id, arg.app.id, arg.trackerVars);
                 arg.tracker = tracker;
                 await tracker.beginExtractedArchive(zipFile, targetDirectory);
                 // await unzip(zipFile, targetDirectory, progress => console.log(`${((progress.transferredBytes / progress.totalBytes) * 100).toFixed(2)}% - ${progress.transferredBytes} / ${progress.totalBytes}`));
