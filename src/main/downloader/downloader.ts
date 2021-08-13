@@ -7,10 +7,11 @@ import App from "../../common/types/App";
 import Installation, { Artifact, SegmentedPath } from "../types/Installation";
 import { exists, getInstallerAppDir, resolveSegmentedPath, rmdirRecusive } from "../utils/fshelper";
 import { PostActionHandle, PostActionWrapper, ActionFactory, PostActionArgument } from "./postActions";
-import { ArtifactType, TrackerReader, ArtifactTrackerVariables } from "./tracker/ArtifactTracker";
+import { ArtifactType, TrackerReader, ArtifactTrackerVariables, TrackerHeader } from "./tracker/ArtifactTracker";
 import { SingleFileTracker } from "./tracker/SingleFileTracker";
 import { ExtractedArchiveTracker } from "./tracker/ExtractedArchiveTracker";
 import { withBufferReadMethods } from "../utils/buffer";
+import { AppTracker } from "./tracker/AppTracker";
 
 let currentInstaller: Installer | null = null;
 
@@ -29,68 +30,105 @@ export async function startInstallationProcess(app: App) {
 
     if (err) throw err;
 
-    const installation = <Installation>result;
+    const installation = <Installation> result;
     const installationDir = Path.join('C:', 'Users', 'lukas', 'Documents', 'projects', 'misc', 'LCLPLauncher', '.temp', 'test');
     console.log('Installing to:', installationDir);
 
-    const installer = new Installer(app, installationDir);
+    const installer = await createAndPrepareInstaller(app, installationDir, installation);
     currentInstaller = installer;
-    installation.artifacts.forEach(artifact => installer.addToQueue(artifact));
-
     await installer.startDownloading();
 
     currentInstaller = null;
     console.log(`Installation of '${app.title}' finished successfully.`);
 }
 
+async function createAndPrepareInstaller(app: App, installationDir: string, installation: Installation): Promise<Installer> {
+    const installer = new Installer(app, installationDir, installation);
+    await installer.init();
+    installation.artifacts.forEach(artifact => installer.addToQueue(artifact));
+    await installer.prepare();
+    return installer;
+}
+
 export class Installer {
     public readonly installationDirectory: string;
     public readonly tmpDir: string;
     public readonly app: App;
+    public readonly installation: Installation;
     protected downloadQueue: Artifact[] = [];
     protected actionQueue: PostActionWrapper[] = [];
     protected totalBytes: number = 0;
     protected active = false;
     protected actionWorkerActive = false;
     protected currentPostAction: PostActionHandle | null = null;
+    protected installedVersion?: AppTracker.Header;
+    protected downloadReady = false;
 
-    constructor(app: App, installationDirectory: string) {
+    constructor(app: App, installationDirectory: string, installer: Installation) {
         this.app = app;
         this.installationDirectory = installationDirectory;
         this.tmpDir = Path.resolve(this.installationDirectory, '.tmp');
+        this.installation = installer;
+    }
+
+    public async init() {
+        const reader = new (AppTracker.Reader.getConstructor())(this.app.id, this.getAppTrackerVars());
+        if(!await reader.doesFileExist()) return;
+
+        await reader.openFile();
+        let header: AppTracker.Header | undefined;
+        try {
+            header = reader.readHeader();
+            this.installedVersion = header;
+        } catch(err) {
+            console.error('Could not read app tracker header.');
+        }
+
+        reader.closeFile();
     }
 
     public addToQueue(artifact: Artifact) {
         this.downloadQueue.push(artifact);
     }
 
-    public async startDownloading() {
-        if (this.active) return;
-        this.active = true;
-        this.totalBytes = 0;
-
+    public async prepare() {
         console.log('Scanning for old unused artifacts...');
         await this.removeOldArtifacts();
 
         console.log('Checking for updates...');
         await this.filterDownloadQueue();
 
+        this.downloadReady = true;
+    }
+
+    public async startDownloading() {
+        if (!this.downloadReady) throw new Error('Download is not yet ready');
+        if (this.active) return;
+        this.active = true;
+        this.totalBytes = 0;
+
         if(!this.isUpToDate()) {
             console.log('Updates found. Downloading...');
             this.downloadQueue.forEach(artifact => this.totalBytes += Math.max(0, artifact.size));
             await this.downloadNextArtifact();
-            await this.completePostActions();    
+            await this.completePostActions();   
+            await this.writeTracker(); 
         } else {
             console.log('Everything is already up-to-date.');
         }
         await this.cleanUp();
     }
 
+    protected async writeTracker() {
+        const tracker = new (AppTracker.Writer.getConstructor())(this.app.id, this.getAppTrackerVars());
+        await tracker.writeAppTracker();
+    }
+
     protected async removeOldArtifacts() {
         const artifactDir = Path.resolve(getInstallerAppDir(this.app), 'artifacts');
         if(!await exists(artifactDir)) return; // no artifacts downloaded
 
-        const trackerVars = this.getTrackerVars();
+        const trackerVars = this.getArtifactTrackerVars();
 
         const artifactIds = await fs.promises.readdir(artifactDir); // file names are equal to the artifact ids
         this.downloadQueue.forEach(artifact => {
@@ -109,20 +147,26 @@ export class Installer {
         }));
     }
 
-    protected getTrackerVars(): ArtifactTrackerVariables {
+    protected getArtifactTrackerVars(): ArtifactTrackerVariables {
         return {
             installationDir: this.installationDirectory,
             tmpDir: this.tmpDir
         };
     }
 
+    protected getAppTrackerVars(): AppTracker.Variables {
+        return {
+            version: this.installation.version,
+            versionInt: this.installation.versionInt
+        };
+    }
+
     public isUpToDate() {
-        return this.downloadQueue.length <= 0;
+        return this.installedVersion && this.installedVersion.versionInt >= this.installation.versionInt && this.downloadQueue.length <= 0;
     }
 
     protected async filterDownloadQueue() {
-        const trackerVars = this.getTrackerVars();
-
+        const trackerVars = this.getArtifactTrackerVars();
         const artifacts = [...this.downloadQueue]; // clone the array
 
         await Promise.all(artifacts.map(async (artifact) => {
@@ -200,7 +244,7 @@ export class Installer {
                 artifact: artifact,
                 result: downloadedPath,
                 app: this.app,
-                trackerVars: this.getTrackerVars()
+                trackerVars: this.getArtifactTrackerVars()
             });
         }
 
@@ -296,11 +340,14 @@ class DummyTrackerReader extends TrackerReader {
 
     public async toActualReader<T extends TrackerReader>(): Promise<T> {
         await this.openFile();
-        const [header, err] = this.readHeader();
-        if (err) {
+        let header: TrackerHeader | undefined;
+        try {
+            header = this.readHeader();
+        } catch(err) {
             await this.deleteFile();
             throw err;
         }
+        
         if (!header) {
             await this.deleteFile();
             throw new Error('Could not read header.');

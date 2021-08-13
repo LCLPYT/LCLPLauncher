@@ -78,16 +78,16 @@ export namespace BufferUnwrapper {
 
     export function unwrapString(bufferSupplier: BufferSupplier) {
         const lengthBuffer = <Buffer | null> bufferSupplier(2); // 16 bits
-        if (!lengthBuffer) throw ERR_EOS;
+        if (lengthBuffer === null) throw ERR_EOS;
         const length = lengthBuffer.readInt16LE();
         const buffer = <Buffer | null> bufferSupplier(length);
-        if (!buffer) throw ERR_EOS;
+        if (buffer === null) throw ERR_EOS;
         return buffer.toString('utf8');
     }
 
     export function unwrapBoolean(bufferSupplier: BufferSupplier) {
         const buffer = <Buffer | null> bufferSupplier(1); // 16 bits
-        if (!buffer) throw ERR_EOS;
+        if (buffer === null) throw ERR_EOS;
         const boolNumber = buffer.readInt8();
         return boolNumber === 1;
     }
