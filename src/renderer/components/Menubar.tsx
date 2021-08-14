@@ -22,10 +22,12 @@ class Menubar extends Component {
                 </header>
                 <div className="offcanvas offcanvas-start" tabIndex={-1} id="sideMenu" aria-labelledby="sideMenuLabel">
                     <div className="offcanvas-header separator-border-dark-bottom">
-                        <img src={logo} alt="Logo" className="me-2" width="40px" height="40px" />
-                        <h5 className="offcanvas-title" id="sideMenuLabel">LCLPLauncher</h5>
-                        <span className="badge bg-secondary px-1 ms-1 mt-1">v{getAppVersion()}</span>
-                        {isDevelopment ? (<span className="badge bg-warning px-1 ms-1 mt-1">dev</span>) : ''}
+                        <div className="d-flex align-items-center">
+                            <img src={logo} alt="Logo" className="me-2" width="40px" height="40px" />
+                            <h5 className="offcanvas-title" id="sideMenuLabel">LCLPLauncher</h5>
+                            <span className="badge bg-secondary px-1 ms-1 mt-1">v{getAppVersion()}</span>
+                            {isDevelopment ? (<span className="badge bg-warning px-1 ms-1 mt-1">dev</span>) : ''}
+                        </div>
                         <button type="button" className="btn-close text-reset" data-bs-dismiss="offcanvas" aria-label="Close"></button>
                     </div>
                     <div className="offcanvas-body p-0">

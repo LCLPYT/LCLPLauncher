@@ -51,8 +51,7 @@ export namespace SingleFileTracker {
             if(!headerRead) {
                 this.ensureFileNotOpen();
                 await this.openFile();
-                const [header, err] = this.readHeader(); // header
-                if (err) throw err;
+                const header = this.readHeader();
                 if (!header) throw new Error('Header could not be read');
             }
         }

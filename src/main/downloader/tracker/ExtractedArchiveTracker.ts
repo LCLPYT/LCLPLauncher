@@ -57,8 +57,7 @@ export namespace ExtractedArchiveTracker {
             if(!headerRead) {
                 this.ensureFileNotOpen();
                 await this.openFile();
-                const [header, err] = this.readHeader(); // header
-                if (err) throw err;
+                const header = this.readHeader(); // header
                 if (!header) throw new Error('Header could not be read');
             }
             const md5Exists = this.readBoolean(); // md5 exists
