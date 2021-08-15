@@ -36,16 +36,16 @@ export type ZipCheckCondition = AbstractCheckCondition & {
 }
 
 /* Post Actions */
-export type PostAction = ExtractZipPostAction | AddMCProfilePostAction;
-export type AbstractPostAction = {
-    type: 'extractZip' | 'addMinecraftProfile',
+export type PostAction = GeneralPostAction | ExtractZipPostAction | AddMCProfilePostAction;
+export type GeneralPostAction = {
+    type: 'extractZip' | 'addMinecraftProfile' | 'installMinecraftForge',
     /** Action to execute after this action */
     post?: PostAction
 }
-export type ExtractZipPostAction = AbstractPostAction & {
+export type ExtractZipPostAction = GeneralPostAction & {
     destination: SegmentedPath
 }
-export type AddMCProfilePostAction = AbstractPostAction & {
+export type AddMCProfilePostAction = GeneralPostAction & {
     /** The id of the profile */
     id: string,
     /** The name of the profile */

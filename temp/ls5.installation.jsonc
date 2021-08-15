@@ -56,6 +56,15 @@
             "size": 215539,
             "md5": "9f882e5eff272b5b39a4f862f484524a",
             "destination": ["mods"]
+        },
+        {
+            "id": "forge",
+            "url": "https://files.minecraftforge.net/maven/net/minecraftforge/forge/1.16.5-36.1.4/forge-1.16.5-36.1.4-installer.jar",
+            "size": 7241792,
+            "md5": "75deb2e68b4afaebd996b4761f62a9d4",
+            "post": {
+                "type": "installMinecraftForge"
+            }
         }
     ],
     "finalize": [

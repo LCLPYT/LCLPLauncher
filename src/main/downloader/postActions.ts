@@ -97,12 +97,14 @@ export namespace ActionFactory {
     export function createPostActionHandle(installer: Installer, action: PostAction): PostActionHandle<any> {
         switch (action.type) {
             case 'extractZip':
-                action = <ExtractZipPostAction> <unknown> action;
-                const child: PostActionHandle<any> | null = action.post ? createPostActionHandle(installer, action.post) : null;
-                const target = Path.resolve(installer.installationDirectory, ...action.destination);
+                const typedAction = <ExtractZipPostAction> <unknown> action;
+                const child: PostActionHandle<any> | null = typedAction.post ? createPostActionHandle(installer, typedAction.post) : null;
+                const target = Path.resolve(installer.installationDirectory, ...typedAction.destination);
                 return new ExtractZipAction(target, child);
             case 'addMinecraftProfile':
                 return new AddMCProfileAction(<AddMCProfilePostAction> <unknown> action, null);
+            case 'installMinecraftForge':
+                return new InstallMCForgeAction(null);
             default:
                 throw new Error(`Unimplemented action: '${action.type}'`);
         }
@@ -195,6 +197,14 @@ export namespace ActionFactory {
 
                 await backupFile(profilesFile);
                 await fs.promises.writeFile(profilesFile, JSON.stringify(launcherProfiles, undefined, 2));
+            }, child);
+        }
+    }
+
+    class InstallMCForgeAction extends PostActionHandle<ArtifactActionArgument> {
+        constructor(child: PostActionHandle<GeneralActionArgument> | null) {
+            super(async (arg) => {
+                console.log('Installing MC Forge...');
             }, child);
         }
     }
