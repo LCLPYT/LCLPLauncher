@@ -1,7 +1,8 @@
 type Installation = {
     version: string,
     versionInt: number,
-    artifacts: Artifact[]
+    artifacts?: Artifact[],
+    finalize?: PostAction[]
 }
 
 export type Artifact = {
@@ -35,14 +36,28 @@ export type ZipCheckCondition = AbstractCheckCondition & {
 }
 
 /* Post Actions */
-export type PostAction = ExtractZipPostAction;
+export type PostAction = ExtractZipPostAction | AddMCProfilePostAction;
 export type AbstractPostAction = {
-    type: 'extractZip',
+    type: 'extractZip' | 'addMinecraftProfile',
     /** Action to execute after this action */
     post?: PostAction
 }
 export type ExtractZipPostAction = AbstractPostAction & {
     destination: SegmentedPath
+}
+export type AddMCProfilePostAction = AbstractPostAction & {
+    /** The name of the profile */
+    name: string,
+    /** An optional URL to the profile icon image */
+    icon?: string,
+    /** The path to the game directory; if omitted, the installation directory will be used */
+    gameDir?: SegmentedPath,
+    /** Arguments to be passed to the Java Runtime Environment */
+    javaArgs?: string,
+    /** The id of the Minecraft Version to use for the profile */
+    lastVersionId: string,
+    /** The directory of the JRE to use, e.g. '/usr/lib/jvm/java-8-openjdk-amd64/bin/java' */
+    javaDir?: SegmentedPath
 }
 
 export type SegmentedPath = string[];

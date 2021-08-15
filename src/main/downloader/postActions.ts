@@ -1,4 +1,4 @@
-import { Artifact, PostAction } from "../types/Installation";
+import { AddMCProfilePostAction, Artifact, ExtractZipPostAction, PostAction } from "../types/Installation";
 import * as Path from 'path';
 import * as fs from 'fs';
 import { checksumFile } from "../utils/checksums";
@@ -10,27 +10,30 @@ import { Installer } from "./downloader";
 import { ArtifactTrackerVariables, TrackerWriter } from "./tracker/ArtifactTracker";
 import App from "../../common/types/App";
 
-export type PostActionArgument = {
-    artifact: Artifact;
-    result: any;
+export type GeneralActionArgument = {
     app: App;
+    result: any;
+}
+
+export type ArtifactActionArgument = GeneralActionArgument & {
+    artifact: Artifact;
     trackerVars: ArtifactTrackerVariables;
     tracker?: TrackerWriter;
 }
 
-export class PostActionWrapper {
-    public readonly handle: PostActionHandle;
-    public readonly argument: PostActionArgument;
+export class PostActionWrapper<T extends GeneralActionArgument> {
+    public readonly handle: PostActionHandle<T>;
+    public readonly argument: T;
 
-    constructor(handle: PostActionHandle, argument: PostActionArgument) {
+    constructor(handle: PostActionHandle<T>, argument: T) {
         this.handle = handle;
         this.argument = argument;
     }
 }
 
-export class PostActionHandle {
-    protected readonly action: (arg: PostActionArgument) => Promise<any>;
-    protected child: PostActionHandle | null;
+export class PostActionHandle<T extends GeneralActionArgument> {
+    protected readonly action: (arg: T) => Promise<any>;
+    protected child: PostActionHandle<T> | null;
     public onCompleted?: () => void;
 
     /**
@@ -38,12 +41,12 @@ export class PostActionHandle {
      * @param action The action function. This function will receive the return result of it's parent's action in action.result (or their argument if nothing is returned).
      * @param child The action to be executed after this action.
      */
-    constructor(action: (arg: PostActionArgument) => Promise<any>, child: PostActionHandle | null) {
+    constructor(action: (arg: T) => Promise<any>, child: PostActionHandle<T> | null) {
         this.action = action;
         this.child = child;
     }
 
-    public async call(arg: PostActionArgument): Promise<void> {
+    public async call(arg: T): Promise<void> {
         const result = await this.action(arg);
         if(this.onCompleted) this.onCompleted();
         if(this.child) {
@@ -55,7 +58,7 @@ export class PostActionHandle {
     /**
      * @returns The last action in this action chain.
      */
-    public lastChild(): PostActionHandle {
+    public lastChild(): PostActionHandle<T> {
         return this.child ? this.child.lastChild() : this;
     }
 
@@ -64,7 +67,7 @@ export class PostActionHandle {
      * If this action already has a successor, the new action will be executed between them.
      * @param action The action to execute after this action.
      */
-    public doAfter(action: PostActionHandle) {
+    public doAfter(action: PostActionHandle<T>) {
         const oldChild = this.child;
         if(oldChild) action.doLast(oldChild);
         this.child = action;
@@ -74,7 +77,7 @@ export class PostActionHandle {
      * Enqueues an action to be run, after this action chain is done.
      * @param action The action to execute at the end of this action chain.
      */
-    public doLast(action: PostActionHandle) {
+    public doLast(action: PostActionHandle<T>) {
         this.lastChild().child = action; // safe, because the last action has no child
     }
 }
@@ -88,19 +91,22 @@ export namespace ActionFactory {
         return new MoveAction(targetFile, null);
     }
     
-    export function createPostActionHandle(installer: Installer, action: PostAction): PostActionHandle {
+    export function createPostActionHandle(installer: Installer, action: PostAction): PostActionHandle<any> {
         switch (action.type) {
             case 'extractZip':
-                const child: PostActionHandle | null = action.post ? createPostActionHandle(installer, action.post) : null;
+                action = <ExtractZipPostAction> <unknown> action;
+                const child: PostActionHandle<any> | null = action.post ? createPostActionHandle(installer, action.post) : null;
                 const target = Path.resolve(installer.installationDirectory, ...action.destination);
                 return new ExtractZipAction(target, child);
+            case 'addMinecraftProfile':
+                return new AddMCProfileAction(<AddMCProfilePostAction> <unknown> action, null);
             default:
                 throw new Error(`Unimplemented action: '${action.type}'`);
         }
     }
 
     export function createDefaultTrackerHandle() {
-        return new PostActionHandle(async (arg) => {
+        return new PostActionHandle<ArtifactActionArgument>(async (arg) => {
             if (!arg.tracker) {
                 const tracker = new (SingleFileTracker.Writer.getConstructor())(arg.artifact.id, arg.app.id, arg.trackerVars);
                 arg.tracker = tracker;
@@ -114,8 +120,8 @@ export namespace ActionFactory {
         }, null);
     }
 
-    class ValidateMD5Action extends PostActionHandle {
-        constructor(child: PostActionHandle | null) {
+    class ValidateMD5Action extends PostActionHandle<ArtifactActionArgument> {
+        constructor(child: PostActionHandle<GeneralActionArgument> | null) {
             super(async ({result: file, artifact: { md5 }}) => {
                 if(!md5) return;
                 console.log(`Checking integrity of '${file}'...`);
@@ -129,8 +135,8 @@ export namespace ActionFactory {
         }
     }
 
-    class MoveAction extends PostActionHandle {
-        constructor(targetFile: string, child: PostActionHandle | null) {
+    class MoveAction extends PostActionHandle<GeneralActionArgument> {
+        constructor(targetFile: string, child: PostActionHandle<GeneralActionArgument> | null) {
             super(async ({result: file}) => {
                 console.log(`Moving '${file}' to '${targetFile}'`);
                 await rename(file, targetFile);
@@ -140,8 +146,8 @@ export namespace ActionFactory {
         }
     }
 
-    class ExtractZipAction extends PostActionHandle {
-        constructor(targetDirectory: string, child: PostActionHandle | null) {
+    class ExtractZipAction extends PostActionHandle<ArtifactActionArgument> {
+        constructor(targetDirectory: string, child: PostActionHandle<GeneralActionArgument> | null) {
             super(async (arg) => {
                 const zipFile = arg.result;
                 console.log(`Unzipping '${zipFile}'...`);
@@ -158,6 +164,14 @@ export namespace ActionFactory {
 
                 return arg;
             }, child)
+        }
+    }
+
+    class AddMCProfileAction extends PostActionHandle<GeneralActionArgument> {
+        constructor(options: AddMCProfilePostAction, child: PostActionHandle<GeneralActionArgument> | null) {
+            super(async (arg) => {
+                console.log('adding profile');
+            }, child);
         }
     }
 }

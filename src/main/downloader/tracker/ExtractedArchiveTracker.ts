@@ -1,4 +1,4 @@
-import { Artifact, PostAction, SegmentedPath } from "../../types/Installation";
+import { Artifact, ExtractZipPostAction, PostAction, SegmentedPath } from "../../types/Installation";
 import { withBufferReadMethods, withBufferWriteMethods } from "../../utils/buffer";
 import { checksumFile } from "../../utils/checksums";
 import { ERR_EOS } from "../../utils/constants";
@@ -68,7 +68,7 @@ export namespace ExtractedArchiveTracker {
         protected isSameExtractionRoot(artifact: Artifact, oldExtractionRoot: string): boolean {
             const recurse: (postAction: PostAction | undefined) => SegmentedPath | null = postAction => {
                 if(!postAction) return null;
-                if(postAction.type === 'extractZip') return postAction.destination;
+                if(postAction.type === 'extractZip') return (<ExtractZipPostAction> postAction).destination;
                 if(postAction.post) return recurse(postAction.post);
                 return null;
             };

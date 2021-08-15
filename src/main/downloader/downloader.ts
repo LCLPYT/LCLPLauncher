@@ -6,7 +6,7 @@ import * as fs from 'fs';
 import App from "../../common/types/App";
 import Installation, { Artifact, SegmentedPath } from "../types/Installation";
 import { exists, getInstallerAppDir, resolveSegmentedPath, rmdirRecusive } from "../utils/fshelper";
-import { PostActionHandle, PostActionWrapper, ActionFactory, PostActionArgument } from "./postActions";
+import { PostActionHandle, PostActionWrapper, ActionFactory, ArtifactActionArgument, GeneralActionArgument } from "./postActions";
 import { ArtifactType, TrackerReader, ArtifactTrackerVariables, TrackerHeader } from "./tracker/ArtifactTracker";
 import { SingleFileTracker } from "./tracker/SingleFileTracker";
 import { ExtractedArchiveTracker } from "./tracker/ExtractedArchiveTracker";
@@ -45,7 +45,7 @@ export async function startInstallationProcess(app: App) {
 async function createAndPrepareInstaller(app: App, installationDir: string, installation: Installation): Promise<Installer> {
     const installer = new Installer(app, installationDir, installation);
     await installer.init();
-    installation.artifacts.forEach(artifact => installer.addToQueue(artifact));
+    if(installation.artifacts) installation.artifacts.forEach(artifact => installer.addToQueue(artifact));
     await installer.prepare();
     return installer;
 }
@@ -56,11 +56,11 @@ export class Installer {
     public readonly app: App;
     public readonly installation: Installation;
     protected downloadQueue: Artifact[] = [];
-    protected actionQueue: PostActionWrapper[] = [];
+    protected actionQueue: PostActionWrapper<any>[] = [];
     protected totalBytes: number = 0;
     protected active = false;
     protected actionWorkerActive = false;
-    protected currentPostAction: PostActionHandle | null = null;
+    protected currentPostAction: PostActionHandle<any> | null = null;
     protected installedVersion?: AppTracker.Header;
     protected downloadReady = false;
 
@@ -111,10 +111,20 @@ export class Installer {
             console.log('Updates found. Downloading...');
             this.downloadQueue.forEach(artifact => this.totalBytes += Math.max(0, artifact.size));
             await this.downloadNextArtifact();
-            await this.completePostActions();   
+
+            console.log('Finalizing...');
+            this.enqueueFinalization();
+            await this.completePostActions();
+            console.log('Finalization complete.');
+
             await this.writeTracker(); 
         } else {
             console.log('Everything is already up-to-date.');
+
+            console.log('Finalizing...');
+            this.enqueueFinalization();
+            await this.completePostActions();
+            console.log('Finalization complete.');
         }
         await this.cleanUp();
     }
@@ -219,9 +229,10 @@ export class Installer {
 
         const downloadedPath = downloadedName ? Path.resolve(dir, downloadedName) : null;
 
-        let postActionHandles = [];
+        let postActionHandles: PostActionHandle<ArtifactActionArgument>[] = [];
         if (artifact.md5) {
-            postActionHandles.push(ActionFactory.createMD5ActionHandle());
+            const ac = ActionFactory.createMD5ActionHandle();
+            postActionHandles.push(ac);
 
             // if md5 validation is done, the file is in the .tmp directory. The file needs to be moved to it's destination afterwards.
             if (artifact.destination && downloadedName) {
@@ -252,7 +263,17 @@ export class Installer {
         await this.downloadNextArtifact();
     }
 
-    protected enqueuePostAction(action: PostActionHandle, argument: PostActionArgument) {
+    protected enqueueFinalization() {
+        this.installation.finalize?.forEach(action => {
+            const handle = ActionFactory.createPostActionHandle(this, action);
+            this.enqueuePostAction(handle, {
+                app: this.app,
+                result: this.installationDirectory
+            });
+        });
+    }
+
+    protected enqueuePostAction<T extends GeneralActionArgument>(action: PostActionHandle<T>, argument: T) {
         this.actionQueue.push(new PostActionWrapper(action, argument));
         this.doNextPostAction();
     }
