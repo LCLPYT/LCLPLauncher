@@ -53,3 +53,7 @@ export function getAppTrackerFile(appId: number) {
 export function resolveSegmentedPath(rootDir: string, path: SegmentedPath) {
     return Path.resolve(rootDir, ...path);
 }
+
+export async function backupFile(file: string) {
+    await fs.promises.copyFile(file, file + '.bak');
+}

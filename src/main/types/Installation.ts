@@ -46,18 +46,16 @@ export type ExtractZipPostAction = AbstractPostAction & {
     destination: SegmentedPath
 }
 export type AddMCProfilePostAction = AbstractPostAction & {
+    /** The id of the profile */
+    id: string,
     /** The name of the profile */
     name: string,
     /** An optional URL to the profile icon image */
     icon?: string,
-    /** The path to the game directory; if omitted, the installation directory will be used */
-    gameDir?: SegmentedPath,
     /** Arguments to be passed to the Java Runtime Environment */
     javaArgs?: string,
     /** The id of the Minecraft Version to use for the profile */
     lastVersionId: string,
-    /** The directory of the JRE to use, e.g. '/usr/lib/jvm/java-8-openjdk-amd64/bin/java' */
-    javaDir?: SegmentedPath
 }
 
 export type SegmentedPath = string[];

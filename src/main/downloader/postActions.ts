@@ -2,13 +2,16 @@ import { AddMCProfilePostAction, Artifact, ExtractZipPostAction, PostAction } fr
 import * as Path from 'path';
 import * as fs from 'fs';
 import { checksumFile } from "../utils/checksums";
-import { rename } from "../utils/fshelper";
+import { backupFile, rename } from "../utils/fshelper";
 import { unzip } from "../utils/zip";
 import { SingleFileTracker } from "./tracker/SingleFileTracker";
 import { ExtractedArchiveTracker } from "./tracker/ExtractedArchiveTracker";
 import { Installer } from "./downloader";
 import { ArtifactTrackerVariables, TrackerWriter } from "./tracker/ArtifactTracker";
 import App from "../../common/types/App";
+import { osHandler } from "../utils/oshooks";
+import { parseProfilesFromJson, Profile } from "../types/MCLauncherProfiles";
+import { getBase64DataURL } from "../utils/resources";
 
 export type GeneralActionArgument = {
     app: App;
@@ -170,7 +173,28 @@ export namespace ActionFactory {
     class AddMCProfileAction extends PostActionHandle<GeneralActionArgument> {
         constructor(options: AddMCProfilePostAction, child: PostActionHandle<GeneralActionArgument> | null) {
             super(async (arg) => {
-                console.log('adding profile');
+                const profilesFile = Path.resolve(osHandler.getMinecraftDir(), 'launcher_profiles.json');
+                const jsonContent = await fs.promises.readFile(profilesFile, 'utf8');
+                const launcherProfiles = parseProfilesFromJson(jsonContent);
+
+                let icon: string | undefined;
+                if(options.icon) icon = await getBase64DataURL(options.icon).catch(() => undefined);
+
+                const profile: Profile = {
+                    created: new Date(),
+                    gameDir: arg.result,
+                    icon: icon ? icon : 'Furnace',
+                    lastUsed: new Date(),
+                    lastVersionId: options.lastVersionId,
+                    name: options.name,
+                    type: 'custom',
+                    javaArgs: options.javaArgs
+                    // TODO: on linux, add java dir
+                };
+                launcherProfiles.profiles[options.id] = profile;
+
+                await backupFile(profilesFile);
+                await fs.promises.writeFile(profilesFile, JSON.stringify(launcherProfiles, undefined, 2));
             }, child);
         }
     }
