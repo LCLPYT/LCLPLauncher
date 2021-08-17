@@ -1,6 +1,6 @@
 import fetch from "electron-fetch";
 import { getBackendHost } from "../../common/utils/settings";
-import { DependencyDescriptor, DependencyInfo, SpecificInfo } from "../types/Dependency";
+import { DependencyDescriptor, DependencyFragment, DependencyInfo, SpecificInfo } from "../types/Dependency";
 import * as os from 'os';
 import * as Path from 'path';
 import * as fs from 'fs';
@@ -13,7 +13,42 @@ import { extractTar } from "../utils/tar";
 export async function downloadDependencies(dependencies: DependencyDescriptor[]) {
     const installer = new DependencyInstaller();
     await installer.prepare(dependencies);
-    await installer.start();
+    return await installer.start();
+}
+
+export class DepedencyAccessor {
+    public readonly structure?: DependencyFragment[];
+
+    constructor(structure: DependencyFragment[] | undefined) {
+        this.structure = structure;
+    }
+
+    public getDependency(id: string): DependencyFragment | undefined {
+        if (!this.structure) return undefined;
+
+        const structure = this.structure;
+
+        const recurse: (dependencies: DependencyFragment[] | undefined) => DependencyFragment | undefined = dependencies => {
+            if (!dependencies) return undefined;
+
+            for (const dependency of dependencies) {
+                if (dependency.id === id) return dependency;
+
+                const nestedDependency = recurse(dependency.dependencies);
+                if (nestedDependency) return nestedDependency;
+            }
+
+            return undefined;
+        };
+
+        return recurse(structure);
+    }
+
+    public getMandatoryDependency(id: string): DependencyDescriptor {
+        const dependency = this.getDependency(id);
+        if (!dependency) throw new Error(`Missing dependency '${id}'`);
+        return dependency;
+    }
 }
 
 class DependencyInstaller {
@@ -25,6 +60,7 @@ class DependencyInstaller {
     protected actionQueue: PostActionWrapper<any>[] = [];
     protected currentPostAction: PostActionHandle<any> | null = null;
     protected actionWorkerActive = false;
+    protected structure: DependencyFragment[] = [];
 
     public async prepare(descriptors: DependencyDescriptor[]) {
         const filterDeps = async (descriptors: DependencyDescriptor[]) => {
@@ -40,7 +76,27 @@ class DependencyInstaller {
             }
         }
         await filterDeps(descriptors);
+        this.structure = await this.buildStructure(descriptors);
         this.downloadReady = true;
+    }
+
+    protected async buildStructure(descriptors: DependencyDescriptor[]) {
+        const fragments: DependencyFragment[] = [];
+
+        for (const descriptor of descriptors) {
+            const info = await this.getDependencyInfo(descriptor);
+            if (!info) continue;
+
+            const children = info.dependencies ? await this.buildStructure(info.dependencies) : undefined;
+
+            fragments.push({
+                id: info.id,
+                version: info.version,
+                dependencies: children
+            });
+        }
+
+        return fragments;
     }
 
     protected addToDownloadQueue(dependency: DependencyInfo) {
@@ -64,12 +120,15 @@ class DependencyInstaller {
         return info;
     }
 
-    public async start() {
+    public async start(): Promise<DependencyFragment[] | undefined> {
         if (!this.downloadReady) throw new Error('Download is not yet ready.');
-        if (this.active) return;
+        if (this.active) return undefined;
+
         this.active = true;
         await this.downloadNext();
         await this.completePostActions();
+
+        return this.structure;
     }
 
     protected async downloadNext() {

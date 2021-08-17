@@ -14,7 +14,8 @@ import { withBufferReadMethods } from "../utils/buffer";
 import { AppTracker } from "./tracker/AppTracker";
 import * as semver from 'semver';
 import { getAppVersion } from "../../common/utils/env";
-import { downloadDependencies } from "./dependencies";
+import { DepedencyAccessor, downloadDependencies } from "./dependencies";
+import { DependencyFragment } from "../types/Dependency";
 
 let currentInstaller: Installer | null = null;
 
@@ -36,9 +37,10 @@ export async function startInstallationProcess(app: App) {
 
     const installation = <Installation> result;
 
+    let dependencyStructure: DependencyFragment[] | undefined;
     if (installation.dependencies) {
         console.log('Checking dependencies...');
-        await downloadDependencies(installation.dependencies);
+        dependencyStructure = await downloadDependencies(installation.dependencies);
         console.log('Dependencies are now up-to-date.');
     }
 
@@ -46,6 +48,7 @@ export async function startInstallationProcess(app: App) {
     console.log('Installing to:', installationDir);
 
     const installer = await createAndPrepareInstaller(app, installationDir, installation);
+    installer.dependencyStructure = dependencyStructure;
     currentInstaller = installer;
     await installer.startDownloading();
 
@@ -74,6 +77,7 @@ export class Installer {
     protected currentPostAction: PostActionHandle<any> | null = null;
     protected installedVersion?: AppTracker.Header;
     protected downloadReady = false;
+    public dependencyStructure?: DependencyFragment[];
 
     constructor(app: App, installationDirectory: string, installer: Installation) {
         this.app = app;
@@ -273,7 +277,8 @@ export class Installer {
                 artifact: artifact,
                 result: downloadedPath,
                 app: this.app,
-                trackerVars: this.getArtifactTrackerVars()
+                trackerVars: this.getArtifactTrackerVars(),
+                dependencyAccessor: new DepedencyAccessor(this.dependencyStructure)
             });
         }
 

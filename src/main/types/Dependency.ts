@@ -8,6 +8,10 @@ export type DependencyInfo = DependencyDescriptor & SpecificInfo & {
     dependencies?: DependencyDescriptor[]
 }
 
+export type DependencyFragment = DependencyDescriptor & {
+    dependencies?: DependencyFragment[];
+}
+
 export type SpecificInfo = {
     url?: string,
     size?: number,

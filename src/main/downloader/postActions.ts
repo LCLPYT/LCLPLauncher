@@ -2,16 +2,19 @@ import { AddMCProfilePostAction, Artifact, ExtractZipPostAction, PostAction } fr
 import * as Path from 'path';
 import * as fs from 'fs';
 import { checksumFile } from "../utils/checksums";
-import { backupFile, rename } from "../utils/fshelper";
+import { backupFile, exists, getDependencyDir, rename } from "../utils/fshelper";
 import { unzip } from "../utils/zip";
 import { SingleFileTracker } from "./tracker/SingleFileTracker";
 import { ExtractedArchiveTracker } from "./tracker/ExtractedArchiveTracker";
 import { Installer } from "./downloader";
 import { ArtifactTrackerVariables, TrackerWriter } from "./tracker/ArtifactTracker";
 import App from "../../common/types/App";
-import { osHandler } from "../utils/oshooks";
+import { chooseForPlatform, forPlatform, osHandler } from "../utils/oshooks";
 import { parseProfilesFromJson, Profile } from "../types/MCLauncherProfiles";
 import { getBase64DataURL } from "../utils/resources";
+import { DepedencyAccessor } from "./dependencies";
+import execa from "execa";
+import { DummyTracker } from "./tracker/DummyTracker";
 
 export type GeneralActionArgument = {
     app: App;
@@ -22,6 +25,7 @@ export type ArtifactActionArgument = GeneralActionArgument & {
     artifact: Artifact;
     trackerVars: ArtifactTrackerVariables;
     tracker?: TrackerWriter;
+    dependencyAccessor: DepedencyAccessor;
 }
 
 export class PostActionWrapper<T extends GeneralActionArgument> {
@@ -175,6 +179,7 @@ export namespace ActionFactory {
     class AddMCProfileAction extends PostActionHandle<GeneralActionArgument> {
         constructor(options: AddMCProfilePostAction, child: PostActionHandle<GeneralActionArgument> | null) {
             super(async (arg) => {
+                console.log(`Adding launcher profile '${options.name}'...`);
                 const profilesFile = Path.resolve(osHandler.getMinecraftDir(), 'launcher_profiles.json');
                 const jsonContent = await fs.promises.readFile(profilesFile, 'utf8');
                 const launcherProfiles = parseProfilesFromJson(jsonContent);
@@ -197,6 +202,8 @@ export namespace ActionFactory {
 
                 await backupFile(profilesFile);
                 await fs.promises.writeFile(profilesFile, JSON.stringify(launcherProfiles, undefined, 2));
+
+                console.log(`Launcher profile '${options.name}' added.`);
             }, child);
         }
     }
@@ -204,7 +211,42 @@ export namespace ActionFactory {
     class InstallMCForgeAction extends PostActionHandle<ArtifactActionArgument> {
         constructor(child: PostActionHandle<GeneralActionArgument> | null) {
             super(async (arg) => {
-                console.log('Installing MC Forge...');
+                const forgeInstallerDep = arg.dependencyAccessor.getMandatoryDependency('forge-installer');
+                const javaDep = arg.dependencyAccessor.getMandatoryDependency('java');
+
+                const forgeInstaller = Path.join(getDependencyDir(forgeInstallerDep), 'forge-installer.jar');
+                if (!await exists(forgeInstaller)) throw new Error(`Cannot find forge installer at: '${forgeInstaller}'`);
+
+                const javaDepDir = getDependencyDir(javaDep);
+                const files = await fs.promises.readdir(javaDepDir);
+                if (files.length !== 1) throw new Error(`There are more than one file inside of '${javaDepDir}'`);
+
+                const javaExecutableName = chooseForPlatform({
+                    'win32': 'java.exe',
+                    'linux': 'java'
+                });
+
+                const javaExecutable = Path.join(javaDepDir, files[0], 'bin', javaExecutableName);
+                if (!await exists(javaExecutable)) throw new Error(`Cannot find Java executable at: '${javaExecutable}'`);
+
+                const classPath = forPlatform<string[], string>({
+                    'win32': segments => segments.join(';'),
+                    'linux': segements => segements.join(':')
+                })([forgeInstaller, arg.result]);
+
+                console.log('Installing Minecraft Forge...');
+                const childProcess = execa(javaExecutable, ['-Xms1G', '-Xmx2G', '-cp', classPath, 'work.lclpnet.forgeinstaller.ForgeInstaller', 'none', '0']);
+                if(childProcess.stdout) childProcess.stdout.pipe(process.stdout);
+
+                await childProcess;
+                console.log('Minecraft Forge installed successfully.');
+
+                console.log(`Deleting '${arg.result}'...`);
+                await fs.promises.unlink(arg.result);
+                console.log(`Deleted '${arg.result}'`);
+
+                arg.tracker = new DummyTracker.Writer();
+                return arg;
             }, child);
         }
     }
