@@ -4,6 +4,7 @@ import rimraf from 'rimraf';
 import App from '../../common/types/App';
 import { app as electronApp } from 'electron';
 import { SegmentedPath } from '../types/Installation';
+import { DependencyDescriptor } from '../types/Dependency';
 
 export function rmdirRecusive(directory: string) {
     return new Promise<void>((resolve, reject) => rimraf(directory, {}, error => {
@@ -56,4 +57,12 @@ export function resolveSegmentedPath(rootDir: string, path: SegmentedPath) {
 
 export async function backupFile(file: string) {
     await fs.promises.copyFile(file, file + '.bak');
+}
+
+export function getDependencyDir(dependency: DependencyDescriptor) {
+    return Path.resolve(electronApp.getPath('userData'), '.dependencies', dependency.id, dependency.version);
+}
+
+export function getDependencyTemporaryDir() {
+    return Path.resolve(electronApp.getPath('userData'), '.dependencies', '.tmp');
 }

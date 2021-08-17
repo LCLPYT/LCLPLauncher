@@ -12,11 +12,15 @@ import { SingleFileTracker } from "./tracker/SingleFileTracker";
 import { ExtractedArchiveTracker } from "./tracker/ExtractedArchiveTracker";
 import { withBufferReadMethods } from "../utils/buffer";
 import { AppTracker } from "./tracker/AppTracker";
+import * as semver from 'semver';
+import { getAppVersion } from "../../common/utils/env";
+import { downloadDependencies } from "./dependencies";
 
 let currentInstaller: Installer | null = null;
 
 export async function startInstallationProcess(app: App) {
     if (currentInstaller) throw new Error('Multiple installation processes are currently not supported.');
+
     console.log(`Starting installation process of '${app.title}'...`);
 
     const headers = new Headers();
@@ -31,6 +35,13 @@ export async function startInstallationProcess(app: App) {
     if (err) throw err;
 
     const installation = <Installation> result;
+
+    if (installation.dependencies) {
+        console.log('Checking dependencies...');
+        await downloadDependencies(installation.dependencies);
+        console.log('Dependencies are now up-to-date.');
+    }
+
     const installationDir = Path.join('C:', 'Users', 'lukas', 'Documents', 'projects', 'misc', 'LCLPLauncher', '.temp', 'test');
     console.log('Installing to:', installationDir);
 
@@ -45,7 +56,7 @@ export async function startInstallationProcess(app: App) {
 async function createAndPrepareInstaller(app: App, installationDir: string, installation: Installation): Promise<Installer> {
     const installer = new Installer(app, installationDir, installation);
     await installer.init();
-    if(installation.artifacts) installation.artifacts.forEach(artifact => installer.addToQueue(artifact));
+    if (installation.artifacts) installation.artifacts.forEach(artifact => installer.addToQueue(artifact));
     await installer.prepare();
     return installer;
 }
@@ -69,18 +80,25 @@ export class Installer {
         this.installationDirectory = installationDirectory;
         this.tmpDir = Path.resolve(this.installationDirectory, '.tmp');
         this.installation = installer;
+
+        if (this.installation.launcherVersion) {
+            const currentVersion = getAppVersion();
+            if(!currentVersion) throw new Error(`Could not determine current launcher version. This is needed because app '${this.app.id}' required launcher version '${this.installation.launcherVersion}'`);
+            if(!semver.satisfies(currentVersion, this.installation.launcherVersion))
+                throw new Error(`Current launcher version '${currentVersion}' does not satisfy app requirement of '${this.installation.launcherVersion}'`);
+        }
     }
 
     public async init() {
         const reader = new (AppTracker.Reader.getConstructor())(this.app.id, this.getAppTrackerVars());
-        if(!await reader.doesFileExist()) return;
+        if (!await reader.doesFileExist()) return;
 
         await reader.openFile();
         let header: AppTracker.Header | undefined;
         try {
             header = reader.readHeader();
             this.installedVersion = header;
-        } catch(err) {
+        } catch (err) {
             console.error('Could not read app tracker header.');
         }
 
@@ -107,7 +125,7 @@ export class Installer {
         this.active = true;
         this.totalBytes = 0;
 
-        if(!this.isUpToDate()) {
+        if (!this.isUpToDate()) {
             console.log('Updates found. Downloading...');
             this.downloadQueue.forEach(artifact => this.totalBytes += Math.max(0, artifact.size));
             await this.downloadNextArtifact();
@@ -117,7 +135,7 @@ export class Installer {
             await this.completePostActions();
             console.log('Finalization complete.');
 
-            await this.writeTracker(); 
+            await this.writeTracker();
         } else {
             console.log('Everything is already up-to-date.');
 
@@ -136,20 +154,20 @@ export class Installer {
 
     protected async removeOldArtifacts() {
         const artifactDir = Path.resolve(getInstallerAppDir(this.app), 'artifacts');
-        if(!await exists(artifactDir)) return; // no artifacts downloaded
+        if (!await exists(artifactDir)) return; // no artifacts downloaded
 
         const trackerVars = this.getArtifactTrackerVars();
 
         const artifactIds = await fs.promises.readdir(artifactDir); // file names are equal to the artifact ids
         this.downloadQueue.forEach(artifact => {
             const index = artifactIds.indexOf(artifact.id);
-            if(index >= 0) artifactIds.splice(index, 1); // remove artifact from list
+            if (index >= 0) artifactIds.splice(index, 1); // remove artifact from list
         });
 
         // only artifacts which are now unused are inside artifactIds[], delete them
         await Promise.all(artifactIds.map(async (artifactId) => {
             const reader = await createReader(this.app.id, artifactId, trackerVars).catch(() => undefined); // in case of an error, return undefined
-            if(!reader) return; // if there was an error, do nothing
+            if (!reader) return; // if there was an error, do nothing
 
             console.log(`Deleting old unused artifact '${artifactId}'...`);
             await reader.deleteEntries(reader, true);
@@ -180,8 +198,8 @@ export class Installer {
         const artifacts = [...this.downloadQueue]; // clone the array
 
         await Promise.all(artifacts.map(async (artifact) => {
-            if(await this.doesArtifactNeedUpdate(artifact, trackerVars).catch((err: Error) => {
-                if(err.name === 'VersionError') console.error(err.message);
+            if (await this.doesArtifactNeedUpdate(artifact, trackerVars).catch((err: Error) => {
+                if (err.name === 'VersionError') console.error(err.message);
                 else console.error(err);
                 return true;
             })) {
@@ -190,7 +208,7 @@ export class Installer {
                 console.log(`Artifact '${artifact.id}' is up-to-date. Skipping it...`);
 
                 const index = this.downloadQueue.indexOf(artifact);
-                if(index >= 0) this.downloadQueue.splice(index, 1);
+                if (index >= 0) this.downloadQueue.splice(index, 1);
             }
         }));
     }
@@ -320,16 +338,16 @@ export class Installer {
 
     protected async doesArtifactNeedUpdate(artifact: Artifact, trackerVars: ArtifactTrackerVariables): Promise<boolean> {
         const reader = await createReader(this.app.id, artifact.id, trackerVars).catch(() => undefined); // in case of an error, return undefined
-        if(!reader) return true; // if there was an error, do the update, since up-to-date cannot be checked
+        if (!reader) return true; // if there was an error, do the update, since up-to-date cannot be checked
 
         let needsUpdate = true;
-        if(!artifact.md5) {
+        if (!artifact.md5) {
             console.info('Artifact does not provide a MD5 checksum; cannot check if the artifact is already up-to-date. Artifact will be updated.');
         } else {
             needsUpdate = !await reader.isArtifactUpToDate(artifact);
         }
 
-        if(needsUpdate) await reader.deleteEntries().catch(() => undefined);
+        if (needsUpdate) await reader.deleteEntries().catch(() => undefined);
         reader.closeFile();
 
         return needsUpdate;
@@ -364,20 +382,20 @@ class DummyTrackerReader extends TrackerReader {
         let header: TrackerHeader | undefined;
         try {
             header = this.readHeader();
-        } catch(err) {
+        } catch (err) {
             await this.deleteFile();
             throw err;
         }
-        
+
         if (!header) {
             await this.deleteFile();
             throw new Error('Could not read header.');
         }
 
         const readerFactory = TRACKER_READERS.get(header.type);
-        if(!readerFactory) throw new TypeError(`No reader factory defined for artifact type '${header.type}'`);
+        if (!readerFactory) throw new TypeError(`No reader factory defined for artifact type '${header.type}'`);
 
-        return <T> readerFactory(this.artifactId, this.appId, this.vars, this.stream); // reuse this stream, therefore do not close the file here.
+        return <T>readerFactory(this.artifactId, this.appId, this.vars, this.stream); // reuse this stream, therefore do not close the file here.
     }
     public isArtifactUpToDate(): Promise<boolean> {
         throw new Error("Method not implemented.");

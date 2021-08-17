@@ -1,6 +1,10 @@
+import { DependencyDescriptor } from "./Dependency";
+
 type Installation = {
     version: string,
     versionInt: number,
+    launcherVersion: string,
+    dependencies?: DependencyDescriptor[],
     artifacts?: Artifact[],
     finalize?: PostAction[]
 }
