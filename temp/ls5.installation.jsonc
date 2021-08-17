@@ -81,7 +81,8 @@
             "name": "LCLPServer 5.0",
             "icon": "https://lclpnet.work/lclplauncher/installations/ls5/profile-icon",
             "javaArgs": "-Xmx2G -XX:+UseConcMarkSweepGC -XX:+CMSIncrementalMode -XX:-UseAdaptiveSizePolicy -Xmn128M",
-            "lastVersionId": "1.16.5-forge-36.1.4"
+            "lastVersionId": "1.16.5-forge-36.1.4",
+            "ensureLatest": true
         }
     ]
 }

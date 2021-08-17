@@ -187,11 +187,22 @@ export namespace ActionFactory {
                 let icon: string | undefined;
                 if(options.icon) icon = await getBase64DataURL(options.icon).catch(() => undefined);
 
+                const now = new Date();
+                const diff = 1000 * 60;
+                const beforeNow = new Date(now.getTime() - diff);
+
+                if (options.ensureLatest) {
+                    console.log('Ensuring that the newly created profile will be the most recent...');
+                    Object.entries(launcherProfiles.profiles).forEach(([_id, profile]) => {
+                        if (!profile.lastUsed || profile.lastUsed.getTime() > beforeNow.getTime()) profile.lastUsed = beforeNow;
+                    });
+                }
+
                 const profile: Profile = {
-                    created: new Date(),
+                    created: now,
                     gameDir: arg.result,
                     icon: icon ? icon : 'Furnace',
-                    lastUsed: new Date(),
+                    lastUsed: now,
                     lastVersionId: options.lastVersionId,
                     name: options.name,
                     type: 'custom',

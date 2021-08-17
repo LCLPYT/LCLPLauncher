@@ -60,6 +60,8 @@ export type AddMCProfilePostAction = GeneralPostAction & {
     javaArgs?: string,
     /** The id of the Minecraft Version to use for the profile */
     lastVersionId: string,
+    /** If true, the installer will ensure that the created profile will be the latest (and thereby the first to show to the user in the launcher) */
+    ensureLatest?: boolean
 }
 
 export type SegmentedPath = string[];
