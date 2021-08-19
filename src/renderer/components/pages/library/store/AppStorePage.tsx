@@ -93,7 +93,7 @@ class Content extends Component<ContentProps, ContentState> {
                     <div className="play-title flex-grow-1">
                         {isAppFree ? `Play ${this.props.app.title}` : `Buy ${this.props.app.title}`}
                     </div>
-                    <BuyButton app={this.props.app} onClick={() => this.setState({ redirectTo: '/library' })} />
+                    <BuyButton app={this.props.app} onClick={() => this.setState({ redirectTo: `/library/app/${this.props.app.key}` })} />
                     <div className="price">{isAppFree ? 'Free' : this.props.app.cost?.toLocaleString('de-DE', {
                         minimumFractionDigits: 2,
                         maximumFractionDigits: 2,

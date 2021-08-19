@@ -72,7 +72,7 @@ class AppEntry extends Component<{ app: App }> {
                         <div className="card-banner-wrapper rounded">
                             <img className="card-banner" src={`${getBackendHost()}/api/lclplauncher/apps/assets/card-banner/${this.props.app.key}`} alt="App banner" />
                         </div>
-                        <div className="card-overlay-bottom p-2 text-lighter d-flex align-items-center">
+                        <div className="card-overlay-bottom p-2 d-flex align-items-center">
                             <div className="flex-fill text-start ps-2">{this.props.app.title}</div>
                             <span className="material-icons overlay-arrow">chevron_right</span>
                         </div>
@@ -86,9 +86,16 @@ class AppEntry extends Component<{ app: App }> {
         const wrapper = document.getElementById(`card${this.props.app.id}`);
         if (wrapper) {
             const overlay = wrapper.querySelector('.card-overlay-bottom');
+            const img = wrapper.querySelector('.card-banner');
             if (overlay) {
-                wrapper.addEventListener('mouseenter', () => overlay.classList.add('wrapper-hover'));
-                wrapper.addEventListener('mouseleave', () => overlay.classList.remove('wrapper-hover'));
+                wrapper.addEventListener('mouseenter', () => {
+                    overlay.classList.add('wrapper-hover');
+                    img?.classList.add('active');
+                });
+                wrapper.addEventListener('mouseleave', () => {
+                    overlay.classList.remove('wrapper-hover');
+                    img?.classList.remove('active');
+                });
 
                 const arrow = overlay.querySelector('.overlay-arrow');
                 if (arrow) tippy(arrow, {
