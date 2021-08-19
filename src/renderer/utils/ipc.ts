@@ -110,14 +110,14 @@ export const DOWNLOADER = registerHandler(new class extends IPCActionHandler {
         }
     }
 
-    public startInstallationProcess(app: App): Promise<boolean | null> {
+    public startInstallationProcess(app: App, installationDir: string): Promise<boolean | null> {
         if(this.startInstallationProcessCB) return Promise.resolve(null);
         return new Promise((resolve, reject) => {
             this.startInstallationProcessCB = {
                 resolve: success => resolve(success),
                 reject: error => reject(error)
             };
-            this.sendAction(ACTIONS.downloader.startInstallationProcess, app);
+            this.sendAction(ACTIONS.downloader.startInstallationProcess, app, installationDir);
         });
     }
 }('downloader'))

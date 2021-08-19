@@ -3,6 +3,8 @@ import { Link, RouteComponentProps } from 'react-router-dom';
 import App from '../../../../common/types/App';
 import { getBackendHost } from '../../../../common/utils/settings';
 import LoadingSpinner from '../../utility/LoadingSpinner';
+import * as os from 'os';
+import * as Path from 'path';
 
 import '../../../style/pages/library/app_page.scss';
 import tippy from 'tippy.js';
@@ -124,13 +126,12 @@ class Content extends Component<ContentProps, ContentState> {
         const playBtn = document.getElementById('playBtn');
         playBtn?.addEventListener('click', () => {
             console.info(`Starting installation process of '${this.props.app.title}'...`);
-            DOWNLOADER.startInstallationProcess(this.props.app)
-                .then(success => {
-                    if(success === null) return; // Button clicked while installation process is running
-                    if(success) console.info(`Installation of '${this.props.app.title}' has finished successfully.`);
-                    else console.error(`Could not complete installation process of '${this.props.app.title}'.`);
-                })
-                .catch(error => console.error('Could not finish the installation process:', error));
+            const installationDir = Path.resolve(os.homedir(), 'lclpserver5'); // TODO input custom dir
+            DOWNLOADER.startInstallationProcess(this.props.app, installationDir).then(success => {
+                if(success === null) return; // Button clicked while installation process is running
+                if(success) console.info(`Installation of '${this.props.app.title}' has finished successfully.`);
+                else console.error(`Could not complete installation process of '${this.props.app.title}'.`);
+            }).catch(error => console.error('Could not finish the installation process:', error));
         });
     }
 

@@ -77,8 +77,8 @@ export const DOWNLOADER = registerHandler(new class extends IPCActionHandler {
     protected onAction(action: string, event: IpcActionEvent, args: any[]): void {
         switch(action) {
             case ACTIONS.downloader.startInstallationProcess:
-                if(args.length < 1) throw new Error('App argument is missing');
-                startInstallationProcess(<App> args[0])
+                if(args.length < 2) throw new Error('App, installation directory arguments are missing');
+                startInstallationProcess(<App> args[0], <string> args[1])
                     .then(() => event.reply(true))
                     .catch(err => {
                         console.error('Error in installation process:', err);

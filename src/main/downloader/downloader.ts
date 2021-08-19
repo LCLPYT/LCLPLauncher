@@ -18,10 +18,11 @@ import { DepedencyAccessor, downloadDependencies } from "./dependencies";
 import { DependencyFragment } from "../types/Dependency";
 import { ExistingFileTracker } from "./tracker/ExistingFileTracker";
 import { resolveUrl } from "./urlResolver";
+import { getBackendHost } from "../../common/utils/settings";
 
 let currentInstaller: Installer | null = null;
 
-export async function startInstallationProcess(app: App) {
+export async function startInstallationProcess(app: App, installationDir: string) {
     if (currentInstaller) throw new Error('Multiple installation processes are currently not supported.');
 
     console.log(`Starting installation process of '${app.title}'...`);
@@ -30,7 +31,7 @@ export async function startInstallationProcess(app: App) {
     headers.append('pragma', 'no-cache');
     headers.append('cache-control', 'no-cache');
 
-    const [err, result] = await fetch('http://localhost:8080/ls5.installation.jsonc', {
+    const [err, result] = await fetch(`${getBackendHost()}/api/lclplauncher/app-installer/ls5`, {
         headers: headers
     }).then(response => response.text())
         .then(text => jsoncSafe.parse(text));
@@ -46,7 +47,6 @@ export async function startInstallationProcess(app: App) {
         console.log('Dependencies are now up-to-date.');
     }
 
-    const installationDir = Path.join('C:', 'Users', 'lukas', 'Documents', 'projects', 'misc', 'LCLPLauncher', '.temp', 'test');
     console.log('Installing to:', installationDir);
 
     const installer = await createAndPrepareInstaller(app, installationDir, installation);
