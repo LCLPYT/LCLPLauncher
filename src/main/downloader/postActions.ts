@@ -1,4 +1,4 @@
-import { AddMCProfilePostAction, Artifact, ExtractZipPostAction, PostAction } from "../types/Installation";
+import { AddMCProfilePostAction, Artifact, ExtractZipPostAction, InstallMCForgePostAction, PostAction } from "../types/Installation";
 import * as Path from 'path';
 import * as fs from 'fs';
 import { checksumFile } from "../utils/checksums";
@@ -14,7 +14,7 @@ import { parseProfilesFromJson, Profile } from "../types/MCLauncherProfiles";
 import { getBase64DataURL } from "../utils/resources";
 import { DepedencyAccessor } from "./dependencies";
 import execa from "execa";
-import { DummyTracker } from "./tracker/DummyTracker";
+import { ExistingFileTracker } from "./tracker/ExistingFileTracker";
 
 export type GeneralActionArgument = {
     app: App;
@@ -101,14 +101,15 @@ export namespace ActionFactory {
     export function createPostActionHandle(installer: Installer, action: PostAction): PostActionHandle<any> {
         switch (action.type) {
             case 'extractZip':
-                const typedAction = <ExtractZipPostAction> <unknown> action;
-                const child: PostActionHandle<any> | null = typedAction.post ? createPostActionHandle(installer, typedAction.post) : null;
-                const target = Path.resolve(installer.installationDirectory, ...typedAction.destination);
+                const extractZipAction = <ExtractZipPostAction> <unknown> action;
+                const child: PostActionHandle<any> | null = extractZipAction.post ? createPostActionHandle(installer, extractZipAction.post) : null;
+                const target = Path.resolve(installer.installationDirectory, ...extractZipAction.destination);
                 return new ExtractZipAction(target, child);
             case 'addMinecraftProfile':
                 return new AddMCProfileAction(<AddMCProfilePostAction> <unknown> action, null);
             case 'installMinecraftForge':
-                return new InstallMCForgeAction(null);
+                const installForgeAction = <InstallMCForgePostAction> <unknown> action;
+                return new InstallMCForgeAction(installForgeAction.versionId, null);
             default:
                 throw new Error(`Unimplemented action: '${action.type}'`);
         }
@@ -220,7 +221,7 @@ export namespace ActionFactory {
     }
 
     class InstallMCForgeAction extends PostActionHandle<ArtifactActionArgument> {
-        constructor(child: PostActionHandle<GeneralActionArgument> | null) {
+        constructor(versionId: string, child: PostActionHandle<GeneralActionArgument> | null) {
             super(async (arg) => {
                 const forgeInstallerDep = arg.dependencyAccessor.getMandatoryDependency('forge-installer');
                 const javaDep = arg.dependencyAccessor.getMandatoryDependency('java');
@@ -252,11 +253,16 @@ export namespace ActionFactory {
                 await childProcess;
                 console.log('Minecraft Forge installed successfully.');
 
+                const versionDir = Path.join(osHandler.getMinecraftDir(), 'versions', versionId);
+
+                const tracker = new (ExistingFileTracker.Writer.getConstructor())(arg.artifact.id, arg.app.id, arg.trackerVars)
+                tracker.trackSinglePath(versionDir);
+                arg.tracker = tracker;
+
                 console.log(`Deleting '${arg.result}'...`);
                 await fs.promises.unlink(arg.result);
                 console.log(`Deleted '${arg.result}'`);
 
-                arg.tracker = new DummyTracker.Writer();
                 return arg;
             }, child);
         }

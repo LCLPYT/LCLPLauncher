@@ -16,6 +16,7 @@ import * as semver from 'semver';
 import { getAppVersion } from "../../common/utils/env";
 import { DepedencyAccessor, downloadDependencies } from "./dependencies";
 import { DependencyFragment } from "../types/Dependency";
+import { ExistingFileTracker } from "./tracker/ExistingFileTracker";
 
 let currentInstaller: Installer | null = null;
 
@@ -373,6 +374,10 @@ const TRACKER_READERS = new Map<ArtifactType, TrackerFactory>([
     [
         ArtifactType.EXTRACTED_ARCHIVE,
         (artifact, app, vars, reuseStream) => new (ExtractedArchiveTracker.Reader.getConstructor())(artifact, app, vars, reuseStream)
+    ],
+    [
+        ArtifactType.EXISTING_FILE,
+        (artifact, app, vars, reuseStream) => new (ExistingFileTracker.Reader.getConstructor())(artifact, app, vars, reuseStream)
     ]
 ]);
 

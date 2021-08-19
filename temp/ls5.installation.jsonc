@@ -70,7 +70,8 @@
             "size": 7241792,
             "md5": "75deb2e68b4afaebd996b4761f62a9d4",
             "post": {
-                "type": "installMinecraftForge"
+                "type": "installMinecraftForge",
+                "versionId": "1.16.5-forge-36.1.4"
             }
         }
     ],

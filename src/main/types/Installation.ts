@@ -40,7 +40,7 @@ export type ZipCheckCondition = AbstractCheckCondition & {
 }
 
 /* Post Actions */
-export type PostAction = GeneralPostAction | ExtractZipPostAction | AddMCProfilePostAction;
+export type PostAction = GeneralPostAction | ExtractZipPostAction | AddMCProfilePostAction | InstallMCForgePostAction;
 export type GeneralPostAction = {
     type: 'extractZip' | 'addMinecraftProfile' | 'installMinecraftForge',
     /** Action to execute after this action */
@@ -62,6 +62,10 @@ export type AddMCProfilePostAction = GeneralPostAction & {
     lastVersionId: string,
     /** If true, the installer will ensure that the created profile will be the latest (and thereby the first to show to the user in the launcher) */
     ensureLatest?: boolean
+}
+export type InstallMCForgePostAction = GeneralPostAction & {
+    /** The version id of the minecraft profile */
+    versionId: string
 }
 
 export type SegmentedPath = string[];

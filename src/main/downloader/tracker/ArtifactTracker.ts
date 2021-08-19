@@ -15,7 +15,8 @@ export type ArtifactTrackerVariables = {
 
 export enum ArtifactType {
     SINGLE_FILE,
-    EXTRACTED_ARCHIVE
+    EXTRACTED_ARCHIVE,
+    EXISTING_FILE
 }
 
 export type TrackerHeader = {
