@@ -22,7 +22,7 @@ class BuyButton extends Component<Props, State> {
 
         let btnContent: JSX.Element | undefined = undefined;
         if (!this.state.btnState) btnContent = (
-        <span id="buyBtnText">{isAppFree ? 'Add to library' : 'Add to cart'}</span>
+        <span id="buyBtnText" className="animated-underline">{isAppFree ? 'Add to library' : 'Add to cart'}</span>
         );
         else if (this.state.btnState === 'loading') btnContent = (
             <div id="buyBtnLoading" className="d-flex align-items-center">
@@ -35,7 +35,7 @@ class BuyButton extends Component<Props, State> {
         else if (this.state.btnState === 'added') btnContent = (
             <div id="buyBtnChecked" className="d-flex align-items-center">
                 <span className="text-success big-emoji">✔</span>
-                <div className="ms-2">Show in library</div>
+                <div className="ms-2 animated-underline">Show in library</div>
             </div>
         );
 
@@ -44,6 +44,9 @@ class BuyButton extends Component<Props, State> {
 
     componentDidMount() {
         const buyBtn = document.getElementById('buyBtn');
+
+        buyBtn?.addEventListener('mouseenter', () => buyBtn.querySelector('.animated-underline')?.classList.add('active'));
+        buyBtn?.addEventListener('mouseleave', () => buyBtn.querySelector('.animated-underline')?.classList.remove('active'));
         buyBtn?.addEventListener('click', () => {
             if (this.state.btnState && this.state.btnState === 'added') {
                 this.props.onClick();

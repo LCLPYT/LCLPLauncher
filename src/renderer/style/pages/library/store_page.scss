@@ -46,16 +46,38 @@ $descLines: $descSize * 1.5 * 4;
     background: none;
     background-color: white;
     position: relative;
-    transition: transform .2s, box-shadow .2s, color .15s;
+    transition: transform .2s, box-shadow .2s;
 
     &:hover {
         transform: translateY(-3px);
         box-shadow: 0 10px 20px rgba(0, 0, 0, 0.2);
-        color: rgba(0, 0, 0, 0.6);
     }
 
     &:active {
-        color: rgba(0, 0, 0, 0.75);
+        transform: scale(1.025);
+    }
+}
+
+.animated-underline {
+    overflow: hidden;
+    position: relative;
+
+    &::after {
+        content: '';
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        width: 100%;
+        height: 2px;
+        border-radius: 1px;
+        background-color: rgba(#d033ff, 0.6);
+        transform: translate3d(-100%, 0, 0);
+        transition: transform .35s ease-in-out;
+    }
+
+    &.active::after,
+    &.active::after {
+        transform: translate3d(0, 0, 0);
     }
 }
 

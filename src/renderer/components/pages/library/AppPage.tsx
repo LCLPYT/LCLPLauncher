@@ -95,7 +95,7 @@ class Content extends Component<ContentProps, ContentState> {
                                 <h4 className="text-lighter">Feed</h4>
                                 <YouTube videoId="q_KytDRIODU" className="shadow feed-yt" />
                             </div>
-                            <div id="appDetails" className="py-2 px-3 shadow">
+                            <div id="appDetails" className="px-3">
                                 <h4 className="text-lighter mb-1">{this.props.app.title}</h4>
                                 {this.props.app.description ? <CollapsableDescription content={this.props.app.description} /> : undefined}
                                 <GenresDisplay values={this.props.app.genres} theme="dark" />

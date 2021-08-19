@@ -45,8 +45,11 @@
 
 
 #appDetails {
-    background-color: rgba(white, 0.05);
+    background-color: rgba(white, 0.02);
     width: 30%;
+    border-bottom-left-radius: 0.25rem;
+    padding-top: 0.75rem;
+    padding-bottom: 0.75rem;
 }
 
 .feed-yt {
