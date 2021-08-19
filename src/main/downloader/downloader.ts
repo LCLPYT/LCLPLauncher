@@ -17,6 +17,7 @@ import { getAppVersion } from "../../common/utils/env";
 import { DepedencyAccessor, downloadDependencies } from "./dependencies";
 import { DependencyFragment } from "../types/Dependency";
 import { ExistingFileTracker } from "./tracker/ExistingFileTracker";
+import { resolveUrl } from "./urlResolver";
 
 let currentInstaller: Installer | null = null;
 
@@ -229,8 +230,10 @@ export class Installer {
         const dir = artifact.md5 || !artifact.destination ? this.tmpDir : this.toActualPath(artifact.destination);
         let downloadedName: string | null = null;
 
+        const url = await resolveUrl(artifact.url);
+
         const downloader = new Downloader({
-            url: artifact.url,
+            url: url,
             directory: dir,
             cloneFiles: false,
             onResponse: response => {
@@ -246,9 +249,9 @@ export class Installer {
             }
         });
 
-        console.log(`Downloading '${artifact.url}'...`);
+        console.log(`Downloading '${url}'...`);
         await downloader.download();
-        console.log(`Downloaded '${artifact.url}'.`);
+        console.log(`Downloaded '${url}'.`);
 
         const downloadedPath = downloadedName ? Path.resolve(dir, downloadedName) : null;
 

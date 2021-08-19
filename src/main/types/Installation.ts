@@ -13,7 +13,7 @@ export type Artifact = {
     /** The identifier of the artifact, used to determine which artifacts need to be updated between versions */
     id: string;
     /** Url of the artifact to download */
-    url: string;
+    url: string | UrlResolverArgs;
     /** Size of the artifact in bytes; used to calculate the download progress */
     size: number;
     /** MD5 checksum of the downloaded file, if there is a mismatch, the installation will fail */
@@ -26,17 +26,12 @@ export type Artifact = {
     post?: PostAction;
 }
 
-/* Check Conditions */
-export type CheckCondition = ZipCheckCondition;
-export type AbstractCheckCondition = {
-    type: 'zip'
+export type UrlResolverArgs = OptifineUrlResolverArgs;
+export type AbstractUrlResolverArgs = {
+    type: 'optifine'
 }
-/**
- * This condition will be fulfilled, if all entries in a zip file have their valid extracted counter-parts.
- */
-export type ZipCheckCondition = AbstractCheckCondition & {
-    /** Root directory to which the zip was extracted */
-    rootDir: string[]
+export type OptifineUrlResolverArgs = AbstractUrlResolverArgs & {
+    id: string
 }
 
 /* Post Actions */

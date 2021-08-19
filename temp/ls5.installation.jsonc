@@ -73,6 +73,16 @@
                 "type": "installMinecraftForge",
                 "versionId": "1.16.5-forge-36.1.4"
             }
+        },
+        {
+            "id": "optifine",
+            "url": {
+                "type": "optifine",
+                "id": "OptiFine_1.16.5_HD_U_G7.jar"
+            },
+            "size": 5924305,
+            "md5": "9d323219bdebf4e22a1d90f99f839cc0",
+            "destination": ["mods"]
         }
     ],
     "finalize": [
