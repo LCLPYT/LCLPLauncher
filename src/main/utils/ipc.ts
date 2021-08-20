@@ -1,8 +1,9 @@
-import { ipcMain } from "electron";
+import { BrowserWindow, dialog, ipcMain } from "electron";
 import { IpcMainEvent } from "electron/main";
 import App from "../../common/types/App";
 import { ACTIONS, GenericIPCActionHandler, GenericIPCHandler } from "../../common/utils/ipc";
-import { startInstallationProcess } from "../downloader/downloader";
+import { getAppState, getInstallationDirectory, validateInstallationDir, startInstallationProcess } from "../downloader/downloader";
+import { getOrCreateDefaultInstallationDir } from "./fshelper";
 import { addToLibary, getLibraryApps, isInLibrary } from "./library";
 
 class IpcActionEvent {
@@ -38,7 +39,7 @@ function registerHandler<T extends GenericIPCHandler<IpcMainEvent>>(handler: T) 
     return handler;
 }
 
-export const LIBRARY = registerHandler(new class extends IPCActionHandler {
+registerHandler(new class extends IPCActionHandler {
     protected onAction(action: string, event: IpcActionEvent, args: any[]): void {
         switch(action) {
             case ACTIONS.library.addAppToLibrary:
@@ -73,7 +74,7 @@ export const LIBRARY = registerHandler(new class extends IPCActionHandler {
     }
 }('library'));
 
-export const DOWNLOADER = registerHandler(new class extends IPCActionHandler {
+registerHandler(new class extends IPCActionHandler {
     protected onAction(action: string, event: IpcActionEvent, args: any[]): void {
         switch(action) {
             case ACTIONS.downloader.startInstallationProcess:
@@ -85,8 +86,57 @@ export const DOWNLOADER = registerHandler(new class extends IPCActionHandler {
                         event.reply(false, err);
                     });
                 break;
+            case ACTIONS.downloader.getAppState:
+                if(args.length < 1) throw new Error('App argument is missing');
+                getAppState(<App> args[0])
+                    .then(state => event.reply(state))
+                    .catch(err => {
+                        console.error('Error checking app state:', err);
+                        event.reply(null, err);
+                    });
+                break;
+            case ACTIONS.downloader.getInstallationDir:
+                if (args.length < 1) throw new Error('App argument is missing');
+                getInstallationDirectory(args[0])
+                    .then(path => event.reply(path))
+                    .catch(err => event.reply(null, err));
+                break;
+            case ACTIONS.downloader.isValidInstallationDir:
+                if (args.length < 1) throw new Error('Installation directory argument is missing');
+                validateInstallationDir(args[0])
+                    .then(() => event.reply(null))
+                    .catch(err => event.reply(err));
+                break;
+            case ACTIONS.downloader.getDefaultInstallationDir:
+                if (args.length < 1) throw new Error('App argument is missing');
+                getOrCreateDefaultInstallationDir(args[0])
+                    .then(dir => event.reply(dir))
+                    .catch(err => event.reply(null, err));
+                break;
             default:
                 throw new Error(`Action '${action}' not implemented.`);
         }
     }
 }('downloader'));
+
+registerHandler(new class extends IPCActionHandler {
+    protected onAction(action: string, event: IpcActionEvent, args: any[]): void {
+        switch(action) {
+            case ACTIONS.utilities.chooseFile:
+                if (args.length < 1) throw new Error('Options argument is missing');
+                const options = <Electron.OpenDialogOptions> args[0];
+
+                const focusedWindow = BrowserWindow.getFocusedWindow();
+                if (!focusedWindow) {
+                    event.reply(null, new Error('Focused window not found'));
+                } else {
+                    dialog.showOpenDialog(focusedWindow, options)
+                        .then(result => event.reply(result))
+                        .catch(err => event.reply(null, err));
+                }
+                break;
+            default:
+                throw new Error(`Action '${action}' not implemented.`);
+        }
+    }
+}('utilities'));

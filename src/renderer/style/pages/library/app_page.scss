@@ -43,6 +43,10 @@
     background-color: rgba(black, 0.1);
 }
 
+.spinner-border.app-btn-spinner {
+    width: 30px;
+    height: 30px;
+}
 
 #appDetails {
     background-color: rgba(white, 0.02);
@@ -56,4 +60,41 @@
     aspect-ratio: 16 / 9;
     height: auto;
     width: 60%;
+}
+
+.custom-input-wrapper {
+    background-color: $gray-700;
+    border-radius: 0.25rem;
+    transition: border-color 0.15s ease-in-out,
+                box-shadow 0.1s ease-in-out,
+                border-radius 0.2s ease-in-out;
+
+    &:focus-within {
+        background-color: $gray-700;
+        outline: none;
+        border-color: rgba($secondary, 0.85);
+        box-shadow: 0 0 0 0.2rem rgba($primary, 0.85);
+    }
+}
+
+.input-group-text.custom-input {
+    border: none;
+    background-color: darken($gray-600, 10%);
+    transition: background-color .15s ease-in-out;
+
+    &:hover {
+        background-color: darken($gray-600, 13.5%);
+    }
+}
+
+.form-control.custom-input {
+    background: none;
+    border: none;
+
+    &:focus {
+        background: none;
+        outline: none;
+        border: none;
+        box-shadow: none;
+    }
 }

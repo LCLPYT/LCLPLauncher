@@ -30,6 +30,13 @@ export const ACTIONS = {
         getLibraryApps: 'get-library-apps'
     },
     downloader: {
-        startInstallationProcess: 'start-installation-process'
+        startInstallationProcess: 'start-installation-process',
+        getAppState: 'get-app-state',
+        getInstallationDir: 'get-installation-dir',
+        isValidInstallationDir: 'is-valid-installation-dir',
+        getDefaultInstallationDir: 'get-default-installation-dir'
+    },
+    utilities: {
+        chooseFile: 'choose-file'
     }
 }

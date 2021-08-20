@@ -1,5 +1,6 @@
 import * as fs from 'fs';
 import * as Path from 'path';
+import * as os from 'os';
 import rimraf from 'rimraf';
 import App from '../../common/types/App';
 import { app as electronApp } from 'electron';
@@ -65,4 +66,10 @@ export function getDependencyDir(dependency: DependencyDescriptor) {
 
 export function getDependencyTemporaryDir() {
     return Path.resolve(electronApp.getPath('userData'), '.dependencies', '.tmp');
+}
+
+export async function getOrCreateDefaultInstallationDir(app: App) {
+    const path = Path.join(os.homedir(), 'LCLPLauncher', 'apps', app.key);
+    await mkdirp(path);
+    return path;
 }

@@ -1,6 +1,7 @@
 import { ipcRenderer } from "electron";
 import { IpcRendererEvent } from "electron/renderer";
 import App from "../../common/types/App";
+import AppState from "../../common/types/AppState";
 import { ACTIONS, GenericIPCActionHandler, GenericIPCHandler } from "../../common/utils/ipc";
 
 abstract class IPCActionHandler extends GenericIPCActionHandler<IpcRendererEvent, IpcRendererEvent> {
@@ -94,6 +95,23 @@ export const DOWNLOADER = registerHandler(new class extends IPCActionHandler {
         resolve: (finishedWithSuccess: boolean) => void,
         reject: (error: any) => void
     };
+    protected getAppStateCB?: {
+        resolve: (state: AppState) => void,
+        reject: (error: any) => void
+    }
+    protected getInstallationDirCB?: {
+        resolve: (dir: string | undefined) => void,
+        reject: (error: any) => void
+    }
+    protected isValidInstallationDirCB?: {
+        resolve: () => void,
+        reject: (error: any) => void
+    };
+    protected getDefaultInstallationDirCB?: {
+        resolve: (dir: string) => void,
+        reject: (error: any) => void
+    }
+
     protected onAction(action: string, _event: Electron.IpcRendererEvent, args: any[]): void {
         switch (action) {
             case ACTIONS.downloader.startInstallationProcess:
@@ -104,6 +122,44 @@ export const DOWNLOADER = registerHandler(new class extends IPCActionHandler {
                     else this.startInstallationProcessCB.reject(args[1]);
                     this.startInstallationProcessCB = undefined;
                 } else console.warn('No callback defined for', ACTIONS.downloader.startInstallationProcess);
+                break;
+            case ACTIONS.downloader.getAppState:
+                if (args.length < 1) throw new Error('State result argument does not exist.');
+                if (this.getAppStateCB) {
+                    const state: AppState | null = args[0];
+                    if (state) this.getAppStateCB.resolve(state);
+                    else this.getAppStateCB.reject(args.length >= 2 ? args[1] : new Error('No error argument provided'));
+                    this.getAppStateCB = undefined;
+                } else console.warn('No callback defined for', ACTIONS.downloader.getAppState);
+                break;
+            case ACTIONS.downloader.getInstallationDir:
+                if (args.length < 1) throw new Error('Installation dir argument does not exist.');
+                if (this.getInstallationDirCB) {
+                    const dir: string | undefined | null = args[0];
+                    if (dir) this.getInstallationDirCB.resolve(dir);
+                    else if(args.length >= 2) this.getInstallationDirCB.reject(args[1]);
+                    else this.getInstallationDirCB.resolve(undefined);
+                    this.getInstallationDirCB = undefined;
+                } else console.warn('No callback defined for', ACTIONS.downloader.getInstallationDir);
+                break;
+            case ACTIONS.downloader.isValidInstallationDir:
+                if (args.length < 1) throw new Error('Validity argument does not exist.');
+                if (this.isValidInstallationDirCB) {
+                    const err = args[0];
+                    if (!err) this.isValidInstallationDirCB.resolve()
+                    else this.isValidInstallationDirCB.reject(err);
+                    this.isValidInstallationDirCB = undefined;
+                } else console.warn('No callback defined for', ACTIONS.downloader.isValidInstallationDir);
+                break;
+            case ACTIONS.downloader.getDefaultInstallationDir:
+                if (args.length < 1) throw new Error('Default Installation dir argument does not exist.');
+                if (this.getDefaultInstallationDirCB) {
+                    const dir: string | null = args[0];
+                    if (dir) this.getDefaultInstallationDirCB.resolve(dir);
+                    else if(args.length >= 2) this.getDefaultInstallationDirCB.reject(args[1]);
+                    else this.getDefaultInstallationDirCB.reject(new Error('No further information provided'));
+                    this.getInstallationDirCB = undefined;
+                } else console.warn('No callback defined for', ACTIONS.downloader.getDefaultInstallationDir);
                 break;
             default:
                 throw new Error(`Action '${action}' not implemented.`);
@@ -120,4 +176,85 @@ export const DOWNLOADER = registerHandler(new class extends IPCActionHandler {
             this.sendAction(ACTIONS.downloader.startInstallationProcess, app, installationDir);
         });
     }
-}('downloader'))
+
+    public getAppStatus(app: App): Promise<AppState | null> {
+        if (this.getAppStateCB) return Promise.resolve(null);
+        return new Promise((resolve, reject) => {
+            this.getAppStateCB = {
+                resolve: state => resolve(state),
+                reject: err => reject(err)
+            };
+            this.sendAction(ACTIONS.downloader.getAppState, app);
+        });
+    }
+
+    public getInstallationDir(app: App): Promise<string | undefined | null> {
+        if (this.getInstallationDirCB) return Promise.resolve(null);
+        return new Promise((resolve, reject) => {
+            this.getInstallationDirCB = {
+                resolve: dir => resolve(dir),
+                reject: err => reject(err)
+            };
+            this.sendAction(ACTIONS.downloader.getInstallationDir, app);
+        });
+    }
+
+    public isValidInstallationDir(dir: string): Promise<void | null> {
+        if (this.isValidInstallationDirCB) return Promise.resolve(null);
+        return new Promise((resolve, reject) => {
+            this.isValidInstallationDirCB = {
+                resolve: () => resolve(),
+                reject: err => reject(err)
+            };
+            this.sendAction(ACTIONS.downloader.isValidInstallationDir, dir);
+        });
+    }
+
+    public getDefaultInstallationDir(app: App): Promise<string | null> {
+        if (this.getDefaultInstallationDirCB) return Promise.resolve(null);
+        return new Promise((resolve, reject) => {
+            this.getDefaultInstallationDirCB = {
+                resolve: dir => resolve(dir),
+                reject: err => reject(err)
+            };
+            this.sendAction(ACTIONS.downloader.getDefaultInstallationDir, app);
+        });
+    }
+    
+}('downloader'));
+
+export const UTILITIES = registerHandler(new class extends IPCActionHandler {
+    protected chooseFileCB?: {
+        resolve: (dir: Electron.OpenDialogReturnValue | null) => void,
+        reject: (error: any) => void
+    }
+
+    protected onAction(action: string, _event: Electron.IpcRendererEvent, args: any[]): void {
+        switch (action) {
+            case ACTIONS.utilities.chooseFile:
+                if (args.length < 1) throw new Error('Chosen files argument does not exist.');
+                if (this.chooseFileCB) {
+                    const dir: Electron.OpenDialogReturnValue | null = args[0];
+                    if (dir) this.chooseFileCB.resolve(dir);
+                    else if(args.length >= 2) this.chooseFileCB.reject(args[1]);
+                    else this.chooseFileCB.resolve(null)
+                    this.chooseFileCB = undefined;
+                } else console.warn('No callback defined for', ACTIONS.utilities.chooseFile);
+                break;
+            default:
+                throw new Error(`Action '${action}' not implemented.`);
+        }
+    }
+
+    public chooseFiles(options: Electron.OpenDialogOptions): Promise<Electron.OpenDialogReturnValue | null> {
+        if (this.chooseFileCB) return Promise.resolve(null);
+        return new Promise((resolve, reject) => {
+            this.chooseFileCB = {
+                resolve: dir => resolve(dir),
+                reject: err => reject(err)
+            };
+            this.sendAction(ACTIONS.utilities.chooseFile, options);
+        });
+    }
+    
+}('utilities'));

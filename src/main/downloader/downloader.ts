@@ -19,14 +19,59 @@ import { DependencyFragment } from "../types/Dependency";
 import { ExistingFileTracker } from "./tracker/ExistingFileTracker";
 import { resolveUrl } from "./urlResolver";
 import { getBackendHost } from "../../common/utils/settings";
+import AppState from "../../common/types/AppState";
+import { InstalledApplication } from "../database/models/InstalledApplication";
+import { BrowserWindow, dialog } from "electron";
 
 let currentInstaller: Installer | null = null;
 
-export async function startInstallationProcess(app: App, installationDir: string) {
-    if (currentInstaller) throw new Error('Multiple installation processes are currently not supported.');
+export async function getAppState(app: App): Promise<AppState> {
+    const installedApp = await InstalledApplication.query().where('app_id', app.id).first();
+    if (!installedApp) return 'not-installed';
 
-    console.log(`Starting installation process of '${app.title}'...`);
+    if (!await exists(installedApp.path)) {
+        await uninstallApp(app); // remove database references
+        return 'not-installed';
+    }
 
+    const installation = await fetchInstallation();
+    const installer = await createAndPrepareInstaller(app, installedApp.path, installation)
+    
+    return installer.isUpToDate() ? 'ready-to-play' : 'needs-update';
+}
+
+export async function getInstallationDirectory(app: App) {
+    const installedApp = await InstalledApplication.query().where('app_id', app.id).first();
+    if (!installedApp || !await exists(installedApp.path)) return undefined;
+
+    return installedApp.path;
+}
+
+export async function validateInstallationDir(dir: string) {
+    if (!await exists(dir)) return;
+
+    const files = await fs.promises.readdir(dir);
+    if (files.length > 0) {
+        const focusedWindow = BrowserWindow.getFocusedWindow();
+        if (focusedWindow) {
+            const result = await dialog.showMessageBox(focusedWindow, {
+                type: 'question',
+                buttons: ['Cancel', 'Choose anyway'],
+                title: 'Installation directory is not empty',
+                message: 'The chosen installation directory already contains files. Any conflicting files will be overwritten. Are you sure that you want to continue?',
+                noLink: true
+            });
+            const btnIndex = result.response;
+            if (btnIndex === 0) throw new Error('Operation cancelled.'); // cancel button
+        }
+    }
+}
+
+export async function uninstallApp(app: App) {
+    await InstalledApplication.query().where('app_id', app.id).delete();
+}
+
+async function fetchInstallation(): Promise<Installation> {
     const headers = new Headers();
     headers.append('pragma', 'no-cache');
     headers.append('cache-control', 'no-cache');
@@ -38,7 +83,15 @@ export async function startInstallationProcess(app: App, installationDir: string
 
     if (err) throw err;
 
-    const installation = <Installation> result;
+    return result;
+}
+
+export async function startInstallationProcess(app: App, installationDir: string) {
+    if (currentInstaller) throw new Error('Multiple installation processes are currently not supported.');
+
+    console.log(`Starting installation process of '${app.title}'...`);
+
+    const installation = await fetchInstallation();
 
     let dependencyStructure: DependencyFragment[] | undefined;
     if (installation.dependencies) {
@@ -48,6 +101,13 @@ export async function startInstallationProcess(app: App, installationDir: string
     }
 
     console.log('Installing to:', installationDir);
+
+    // Add to database
+    const installedApp = await InstalledApplication.query().where('app_id', app.id).first();
+    if (!installedApp) await InstalledApplication.query().insert({
+        app_id: app.id,
+        path: installationDir
+    });
 
     const installer = await createAndPrepareInstaller(app, installationDir, installation);
     installer.dependencyStructure = dependencyStructure;
