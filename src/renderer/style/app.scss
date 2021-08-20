@@ -34,6 +34,21 @@ body {
     overflow-y: auto;
 }
 
+#toastContainer {
+    position: fixed;
+    right: 16px;
+    bottom: 8px;
+    z-index: 99;
+}
+
+.toast-icon {
+    font-size: 18px;
+}
+
+.toast-progress {
+    background-color: darken($gray-700, 5%);
+}
+
 // general classes
 .dragarea {
     -webkit-app-region: drag;

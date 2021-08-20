@@ -1,7 +1,7 @@
 import React, { Component } from 'react';
 import ReactDOM from 'react-dom';
 import { Link } from 'react-router-dom';
-import '../../style/pages/home.css';
+import '../../style/pages/home.scss';
 import FeaturedItems, { fetchFeaturedItems } from './home/FeaturedItems';
 
 class Home extends Component {

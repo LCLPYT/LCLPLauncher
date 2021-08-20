@@ -6,6 +6,15 @@
     transition: opacity 0.3s ease-in-out;
 }
 
+.no-border {
+    &.card-footer {
+        border-top: 0;
+    }
+    &.card-header {
+        border-bottom: 0;
+    }
+}
+
 .pointer-click {
     cursor: pointer;
 }
