@@ -25,6 +25,7 @@
     "electron-builder": "^22.10.5",
     "electron-webpack": "^2.8.2",
     "electron-webpack-ts": "^4.0.1",
+    "file-loader": "^6.2.0",
     "postcss": "^8.3.0",
     "postcss-loader": "4.3.0",
     "sass": "1.32.13",
