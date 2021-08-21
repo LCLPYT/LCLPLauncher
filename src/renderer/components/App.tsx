@@ -61,14 +61,36 @@ class ToastStack extends Component<{}, ToastState> {
 
     componentDidMount() {
         toastManager.addEventListener('add-toast', this.toastListeners['add-toast'] = (event: ToastEvent) => {
+            if (!event.detail.toast) throw new Error('Add toast: Toast is null');
+
             this.setState({
                 toasts: [...this.state.toasts, {
                     toast: event.detail.toast,
                     createdAt: new Date().getTime()
                 }]
             });
+
             new Audio(toastSound).play();
         });
+
+        toastManager.addEventListener('remove-toast', this.toastListeners['remove-toast'] = (event: ToastEvent) => {
+            const toastElement = document.getElementById(`toast${event.detail.toastId}`);
+
+            let hidden = false;
+            if (toastElement) {
+                const instance = Toast.getInstance(toastElement);
+                if (instance) {
+                    instance.hide();
+                    hidden = true;
+                }
+            }
+
+            // force hide (without a transition)
+            if (!hidden) this.setState({
+                toasts: this.state.toasts.filter(memory => memory.toast.id !== event.detail.toastId)
+            });
+        });
+
         this.showToasts();
     }
 
@@ -96,20 +118,20 @@ class ToastStack extends Component<{}, ToastState> {
         });
 
         switch (memory.toast.type) {
-            case ToastType.DOWNLOAD_STATUS: return <DownloadToast key={key} memory={memory} index={key} onDestroy={() => onDestroy()} />
+            case ToastType.DOWNLOAD_STATUS: return <DownloadToast key={key} memory={memory} onDestroy={() => onDestroy()} />
             default:
                 throw new Error(`Unimplemented toast type: '${memory.toast.type}'`);
         }
     }
 }
 
-abstract class AbstractToastComponent extends Component<{ memory: ToastMemory, index: React.Key, onDestroy: () => void }> {
+abstract class AbstractToastComponent extends Component<{ memory: ToastMemory, onDestroy: () => void }> {
     render() {
         const remainingDelay = this.props.memory.toast.autoHideDelay ? this.props.memory.toast.autoHideDelay - new Date().getTime() + this.props.memory.createdAt : undefined;
         const alreadyShown = this.props.memory.alreadyShown ? true : false;
         this.props.memory.alreadyShown = true;
         return (
-            <div id={`toast${this.props.index}`} className={`toast${alreadyShown ? ' show fade' : ''}`} role="alert" aria-live="assertive" aria-atomic="true" 
+            <div id={`toast${this.props.memory.toast.id}`} className={`toast${alreadyShown ? ' show fade' : ''}`} role="alert" aria-live="assertive" aria-atomic="true" 
                 data-bs-autohide={this.props.memory.toast.noAutoHide ? 'false' : 'true'}
                 data-bs-delay={remainingDelay}>
                 <div className="toast-header">
@@ -126,13 +148,13 @@ abstract class AbstractToastComponent extends Component<{ memory: ToastMemory, i
     hiddenListener?: () => void;
 
     componentDidMount() {
-        const toast = document.getElementById(`toast${this.props.index}`);
+        const toast = document.getElementById(`toast${this.props.memory.toast.id}`);
         toast?.addEventListener('hidden.bs.toast', this.hiddenListener = () => this.props.onDestroy());
     }
 
     componentWillUnmount() {
         if (this.hiddenListener) {
-            const toast = document.getElementById(`toast${this.props.index}`);
+            const toast = document.getElementById(`toast${this.props.memory.toast.id}`);
             toast?.removeEventListener('hidden.bs.toast', this.hiddenListener);
         }
     }

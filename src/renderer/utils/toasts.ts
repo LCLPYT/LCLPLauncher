@@ -1,9 +1,10 @@
-import Toast, { ToastType } from "../../common/types/Toast";
+import Toast from "../../common/types/Toast";
 
-export type ToastEvents = 'add-toast';
+export type ToastEvents = 'add-toast' | 'remove-toast';
 
 export type ToastDetails = {
-    toast: Toast
+    toast?: Toast,
+    toastId: string
 }
 
 export class ToastEvent extends CustomEvent<ToastDetails> {}
@@ -62,28 +63,19 @@ function isEventListener(listener: ToastEventListenerOrObject): listener is Toas
 
 export const toastManager = new ToastManager();
 
-setTimeout(() => {
+export function addToast(toast: Toast) {
     toastManager.dispatchEvent(new CustomEvent('add-toast', {
         detail: {
-            toast: {
-                title: 'Downloads active',
-                icon: 'file_download',
-                type: ToastType.DOWNLOAD_STATUS,
-                noAutoHide: true
-            }
+            toast: toast,
+            toastId: toast.id
         }
     }));
-}, 2000);
+}
 
-setTimeout(() => {
-    toastManager.dispatchEvent(new CustomEvent('add-toast', {
+export function removeToast(toastId: string) {
+    toastManager.dispatchEvent(new CustomEvent('remove-toast', {
         detail: {
-            toast: {
-                title: 'Test Toast',
-                icon: 'shopping_bag',
-                type: ToastType.DOWNLOAD_STATUS,
-                autoHideDelay: 4000
-            }
+            toastId: toastId
         }
     }));
-}, 4000);
+}
