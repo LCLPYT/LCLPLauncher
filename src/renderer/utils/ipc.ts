@@ -3,6 +3,7 @@ import { IpcRendererEvent } from "electron/renderer";
 import App from "../../common/types/App";
 import AppState from "../../common/types/AppState";
 import { ACTIONS, GenericIPCActionHandler, GenericIPCHandler } from "../../common/utils/ipc";
+import { addToast, removeToast } from "./toasts";
 
 abstract class IPCActionHandler extends GenericIPCActionHandler<IpcRendererEvent, IpcRendererEvent> {
     protected getIpcEvent(event: IpcRendererEvent): IpcRendererEvent {
@@ -258,3 +259,20 @@ export const UTILITIES = registerHandler(new class extends IPCActionHandler {
     }
     
 }('utilities'));
+
+export const TOASTS = registerHandler(new class extends IPCActionHandler {
+    protected onAction(action: string, _event: Electron.IpcRendererEvent, args: any[]): void {
+        switch (action) {
+            case ACTIONS.toasts.addToast:
+                if (args.length < 1) throw new Error('Toast argument does not exist.');
+                addToast(args[0]);
+                break;
+            case ACTIONS.toasts.removeToast:
+                if (args.length < 1) throw new Error('Toast id argument does not exist.');
+                removeToast(args[0]);
+                break;
+            default:
+                throw new Error(`Action '${action}' not implemented.`);
+        }
+    }
+}('toasts'));

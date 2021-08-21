@@ -1,6 +1,7 @@
 import { BrowserWindow, dialog, ipcMain } from "electron";
 import { IpcMainEvent } from "electron/main";
 import App from "../../common/types/App";
+import Toast from "../../common/types/Toast";
 import { ACTIONS, GenericIPCActionHandler, GenericIPCHandler } from "../../common/utils/ipc";
 import { getAppState, getInstallationDirectory, validateInstallationDir, startInstallationProcess } from "../downloader/downloader";
 import { getOrCreateDefaultInstallationDir } from "./fshelper";
@@ -25,6 +26,16 @@ class IpcActionEvent {
 abstract class IPCActionHandler extends GenericIPCActionHandler<IpcMainEvent, IpcActionEvent> {
     protected getIpcEvent(event: IpcMainEvent, action: string): IpcActionEvent {
         return new IpcActionEvent(event, this.channel, action);
+    }
+
+    public sendRawMessage(...args: any[]) {
+        const window = BrowserWindow.getFocusedWindow();
+        if (!window) throw new Error('Could not find focused window');
+        window.webContents.send(this.channel, args);
+    }
+
+    public sendAction(action: string, ...args: any[]) {
+        this.sendRawMessage(action, ...args);
     }
 }
 
@@ -140,3 +151,22 @@ registerHandler(new class extends IPCActionHandler {
         }
     }
 }('utilities'));
+
+export const TOASTS = registerHandler(new class extends IPCActionHandler {
+    protected nextToastId = 0;
+
+    protected onAction(): void {}
+
+    public getNextToastId() {
+        return this.nextToastId++;
+    }
+
+    public addToast(toast: Toast) {
+        this.sendAction(ACTIONS.toasts.addToast, toast);
+    }
+
+    public removeToast(toastId: number) {
+        this.sendAction(ACTIONS.toasts.removeToast, toastId);
+    }
+
+}('toasts'));

@@ -38,5 +38,9 @@ export const ACTIONS = {
     },
     utilities: {
         chooseFile: 'choose-file'
+    },
+    toasts: {
+        addToast: 'add-toast',
+        removeToast: 'remove-toast'
     }
 }

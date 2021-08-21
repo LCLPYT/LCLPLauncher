@@ -4,7 +4,7 @@ export type ToastEvents = 'add-toast' | 'remove-toast';
 
 export type ToastDetails = {
     toast?: Toast,
-    toastId: string
+    toastId: number
 }
 
 export class ToastEvent extends CustomEvent<ToastDetails> {}
@@ -72,7 +72,7 @@ export function addToast(toast: Toast) {
     }));
 }
 
-export function removeToast(toastId: string) {
+export function removeToast(toastId: number) {
     toastManager.dispatchEvent(new CustomEvent('remove-toast', {
         detail: {
             toastId: toastId

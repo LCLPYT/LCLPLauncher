@@ -1,5 +1,5 @@
 type Toast = {
-    id: string,
+    id: number,
     icon?: string,
     title: string,
     type: ToastType,

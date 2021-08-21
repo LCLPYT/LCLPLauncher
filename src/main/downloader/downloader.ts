@@ -22,6 +22,8 @@ import { getBackendHost } from "../../common/utils/settings";
 import AppState from "../../common/types/AppState";
 import { InstalledApplication } from "../database/models/InstalledApplication";
 import { BrowserWindow, dialog } from "electron";
+import { TOASTS } from "../utils/ipc";
+import { ToastType } from "../../common/types/Toast";
 
 let currentInstaller: Installer | null = null;
 
@@ -101,6 +103,14 @@ export async function startInstallationProcess(app: App, installationDir: string
     }
 
     console.log('Installing to:', installationDir);
+    const toastId = TOASTS.getNextToastId();
+    TOASTS.addToast({
+        id: toastId,
+        icon: 'file_download',
+        title: 'Downloads active',
+        type: ToastType.DOWNLOAD_STATUS,
+        noAutoHide: true
+    });
 
     // Add to database
     const installedApp = await InstalledApplication.query().where('app_id', app.id).first();
@@ -116,6 +126,8 @@ export async function startInstallationProcess(app: App, installationDir: string
 
     currentInstaller = null;
     console.log(`Installation of '${app.title}' finished successfully.`);
+
+    TOASTS.removeToast(toastId);
 }
 
 async function createAndPrepareInstaller(app: App, installationDir: string, installation: Installation): Promise<Installer> {
