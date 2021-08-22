@@ -28,6 +28,8 @@ import { ToastType } from "../../common/types/Toast";
 const queue: [app: App, dir: string, callback: (err: any) => void][] = [];
 let currentInstaller: Installer | null = null;
 let currentIsUpdating = false;
+let queueBatchLength = 0;
+let queueBatchPosition = 0;
 
 export async function getAppState(app: App): Promise<AppState> {
     const installedApp = await InstalledApplication.query().where('app_id', app.id).first();
@@ -95,7 +97,9 @@ async function fetchInstallation(): Promise<Installation> {
 }
 
 export async function startInstallationProcess(app: App, installationDir: string) {
-    if (currentInstaller || queue.length > 0) {
+    queueBatchLength++;
+
+    if (currentInstaller) {
         await new Promise<void>((resolve, reject) => {
             queue.push([app, installationDir, err => {
                 if (err) reject(err);
@@ -153,12 +157,16 @@ export async function startInstallationProcess(app: App, installationDir: string
         if (next.length !== 1) throw new Error('Next item could not be determined');
 
         const [nextApp, nextInstallDir, callback] = next[0];
+        queueBatchPosition++;
 
         // start next installation process, and notify the queued promise on completion.
         // do not wait in this installation's promise, since this installation process is done.
         startInstallationProcess(nextApp, nextInstallDir)
             .then(() => callback(undefined)) // no error
             .catch(err => callback(err));
+    } else {
+        queueBatchLength = 0;
+        queueBatchPosition = 0;
     }
 }
 
@@ -178,6 +186,7 @@ export class Installer {
     protected downloadQueue: Artifact[] = [];
     protected actionQueue: PostActionWrapper<any>[] = [];
     protected totalBytes: number = 0;
+    protected downloadedBytes: number = 0;
     protected active = false;
     protected actionWorkerActive = false;
     protected currentPostAction: PostActionHandle<any> | null = null;
@@ -351,6 +360,15 @@ export class Installer {
             },
             onBeforeSave: deducedName => {
                 return downloadedName = artifact.fileName ? artifact.fileName : deducedName;
+            },
+            onProgress: (_progress, chunk) => {
+                this.downloadedBytes += (chunk as Buffer).length;
+                DOWNLOADER.updateInstallationProgress({
+                    currentDownload: this.app,
+                    queueSize: queueBatchLength, // include self in count
+                    currentQueuePosition: queueBatchPosition + 1, // include self
+                    currentProgress: this.downloadedBytes / this.totalBytes
+                })
             }
         });
 

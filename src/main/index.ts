@@ -9,6 +9,7 @@ import * as Database from './database/database';
 import * as Ipc from './utils/ipc';
 import { isExternalResource } from '../common/utils/urls';
 import { customWords } from './utils/dictionary';
+import { setMainWindow } from './utils/window';
 
 // init settings
 Settings.init();
@@ -90,6 +91,7 @@ function createMainWindow(): BrowserWindow {
 app.on('ready', () => {
     nativeTheme.themeSource = 'dark';
     mainWindow = createMainWindow();
+    setMainWindow(mainWindow);
 });
 
 // quit application when all windows are closed
@@ -100,5 +102,8 @@ app.on('window-all-closed', () => {
 
 app.on('activate', () => {
     // on macOS it is common to re-create a window even after all windows have been closed
-    if (mainWindow === null) mainWindow = createMainWindow();
+    if (mainWindow === null) {
+        mainWindow = createMainWindow();
+        setMainWindow(mainWindow);
+    }
 });

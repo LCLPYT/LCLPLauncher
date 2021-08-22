@@ -73,7 +73,7 @@ export function updateInstallationState(state: AppState) {
 }
 
 export function updateInstallationProgress(progress: DownloadProgress) {
-    installationProgressManager.dispatchEvent(new CustomEvent('update-state', {
+    installationProgressManager.dispatchEvent(new CustomEvent('update-progress', {
         detail: {
             progress: progress
         }

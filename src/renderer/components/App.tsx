@@ -6,9 +6,11 @@ import Menubar from './Menubar';
 import Home from './pages/Home';
 import Library from './pages/Library';
 import Settings from './pages/Settings';
-import ToastProps, { ToastType } from '../../common/types/Toast';
+import ToastOptions, { ToastType } from '../../common/types/Toast';
 
 import toastSound from '../sound/toast.ogg';
+import { installationProgressManager, InstallerEvent } from '../utils/downloads';
+import DownloadProgress from '../../common/types/DownloadProgress';
 
 class App extends Component {
     render() {
@@ -30,7 +32,7 @@ class App extends Component {
 }
 
 type ToastMemory = {
-    toast: ToastProps,
+    toast: ToastOptions,
     alreadyShown?: boolean,
     createdAt: number
 }
@@ -125,13 +127,18 @@ class ToastStack extends Component<{}, ToastState> {
     }
 }
 
-abstract class AbstractToastComponent extends Component<{ memory: ToastMemory, onDestroy: () => void }> {
+interface ToastProps {
+    memory: ToastMemory,
+    onDestroy: () => void
+}
+
+abstract class AbstractToastComponent<State = {}> extends Component<ToastProps, State> {
     render() {
         const remainingDelay = this.props.memory.toast.autoHideDelay ? this.props.memory.toast.autoHideDelay - new Date().getTime() + this.props.memory.createdAt : undefined;
         const alreadyShown = this.props.memory.alreadyShown ? true : false;
         this.props.memory.alreadyShown = true;
         return (
-            <div id={`toast${this.props.memory.toast.id}`} className={`toast${alreadyShown ? ' show fade' : ''}`} role="alert" aria-live="assertive" aria-atomic="true" 
+            <div id={`toast${this.props.memory.toast.id}`} className={`toast${alreadyShown ? ' show fade' : ''}`} role="alert" aria-live="assertive" aria-atomic="true"
                 data-bs-autohide={this.props.memory.toast.noAutoHide ? 'false' : 'true'}
                 data-bs-delay={remainingDelay}>
                 <div className="toast-header">
@@ -162,19 +169,55 @@ abstract class AbstractToastComponent extends Component<{ memory: ToastMemory, o
     abstract getBody(): JSX.Element;
 }
 
-class DownloadToast extends AbstractToastComponent {
+interface DownloadToastState {
+    progress?: DownloadProgress
+}
+
+class DownloadToast extends AbstractToastComponent<DownloadToastState> {
+    constructor(props: ToastProps) {
+        super(props);
+        this.state = {} as DownloadToastState;
+    }
+
     getBody(): JSX.Element {
+        const percent = this.state.progress ? Number((this.state.progress.currentProgress * 100).toFixed(0)) : undefined;
         return (
             <>
                 <div className="d-flex align-items-center text-lighter">
-                    <div className="fw-bold flex-fill">(1/1) LCLPServer 5.0</div>
-                    <div>75%</div>
+                    <div className="fw-bold flex-fill">
+                        {
+                            this.state.progress ? (
+                                <span className="me-1">
+                                    {`(${this.state.progress.currentQueuePosition}/${this.state.progress.queueSize})`}
+                                </span>
+                            ) : undefined
+                        }
+                        {this.state.progress ? this.state.progress.currentDownload.title : undefined}
+                    </div>
+                    <div>{percent ? `${percent}%` : undefined}</div>
                 </div>
                 <div className="progress toast-progress">
-                    <div className="progress-bar progress-bar-striped progress-bar-animated" role="progressbar" aria-valuenow={75} aria-valuemin={0} aria-valuemax={100} style={{ width: '75%' }}></div>
+                    <div className="progress-bar progress-bar-striped progress-bar-animated" role="progressbar" aria-valuenow={percent !== undefined ? percent : 0} aria-valuemin={0} aria-valuemax={100} style={{ width: `${percent !== undefined ? percent : 0}%`}} />
                 </div>
             </>
         );
+    }
+
+    protected progressListener?: (event: InstallerEvent) => void;
+
+    componentDidMount() {
+        super.componentDidMount();
+        installationProgressManager.addEventListener('update-progress', this.progressListener = event => {
+            if (!event.detail.progress) throw new Error('On update-progress: Progress is null');
+            this.setState({
+                progress: event.detail.progress
+            });
+        });
+    }
+
+    componentWillUnmount() {
+        super.componentWillUnmount();
+        if (this.progressListener) installationProgressManager.removeEventListener('update-progress', this.progressListener);
     }
 }
 

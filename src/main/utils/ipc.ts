@@ -1,4 +1,4 @@
-import { BrowserWindow, dialog, ipcMain } from "electron";
+import { dialog, ipcMain } from "electron";
 import { IpcMainEvent } from "electron/main";
 import App from "../../common/types/App";
 import AppState from "../../common/types/AppState";
@@ -8,6 +8,7 @@ import { ACTIONS, GenericIPCActionHandler, GenericIPCHandler } from "../../commo
 import { getAppState, getInstallationDirectory, validateInstallationDir, startInstallationProcess } from "../downloader/downloader";
 import { getOrCreateDefaultInstallationDir } from "./fshelper";
 import { addToLibary, getLibraryApps, isInLibrary } from "./library";
+import { getMainWindow } from "./window";
 
 class IpcActionEvent {
     public readonly event: IpcMainEvent;
@@ -31,8 +32,8 @@ abstract class IPCActionHandler extends GenericIPCActionHandler<IpcMainEvent, Ip
     }
 
     public sendRawMessage(...args: any[]) {
-        const window = BrowserWindow.getFocusedWindow();
-        if (!window) throw new Error('Could not find focused window');
+        const window = getMainWindow();
+        if (!window) throw new Error('Could not find main window');
         window.webContents.send(this.channel, args);
     }
 
@@ -147,9 +148,9 @@ registerHandler(new class extends IPCActionHandler {
                 if (args.length < 1) throw new Error('Options argument is missing');
                 const options = <Electron.OpenDialogOptions> args[0];
 
-                const focusedWindow = BrowserWindow.getFocusedWindow();
+                const focusedWindow = getMainWindow();
                 if (!focusedWindow) {
-                    event.reply(null, new Error('Focused window not found'));
+                    event.reply(null, new Error('Main window not found'));
                 } else {
                     dialog.showOpenDialog(focusedWindow, options)
                         .then(result => event.reply(result))

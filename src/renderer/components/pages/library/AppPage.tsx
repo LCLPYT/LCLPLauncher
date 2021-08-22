@@ -13,6 +13,7 @@ import { DOWNLOADER, UTILITIES } from '../../../utils/ipc';
 import AppState from '../../../../common/types/AppState';
 import { Modal } from 'bootstrap';
 import { installationProgressManager, InstallerEvent } from '../../../utils/downloads';
+import DownloadProgress from '../../../../common/types/DownloadProgress';
 
 interface Props extends RouteComponentProps<{ app: string }> { }
 
@@ -247,7 +248,8 @@ class Content extends Component<ContentProps, ContentState> {
 }
 
 interface PlayState {
-    state?: AppState
+    state?: AppState,
+    progress?: DownloadProgress
 }
 
 class PlayStateControl extends Component<ContentProps, PlayState> {
@@ -290,6 +292,9 @@ class PlayStateControl extends Component<ContentProps, PlayState> {
                     <button id="playBtn" className="px-4 btn btn-lg btn-primary d-flex align-items-center" disabled>
                         <LoadingSpinner className="spinner-border-sm progress-spinner" />
                         <span className="ms-2">Installing</span>
+                        {this.state.progress ? (
+                            <span className="ms-1">{(this.state.progress.currentProgress * 100).toFixed(0)}%</span>
+                        ) : undefined}
                     </button>
                     <div id="playDesc" className="ms-3 flex-fill">Currently installing...</div>
                 </>
@@ -299,6 +304,9 @@ class PlayStateControl extends Component<ContentProps, PlayState> {
                     <button id="playBtn" className="px-4 btn btn-lg btn-info d-flex align-items-center" disabled>
                         <LoadingSpinner className="spinner-border-sm progress-spinner" />
                         <span className="ms-2">Updating</span>
+                        {this.state.progress ? (
+                            <span className="ms-1">{(this.state.progress.currentProgress * 100).toFixed(0)}%</span>
+                        ) : undefined}
                     </button>
                     <div id="playDesc" className="ms-3 flex-fill">Currently updating...</div>
                 </>
@@ -369,6 +377,10 @@ class PlayStateControl extends Component<ContentProps, PlayState> {
         installationProgressManager.addEventListener('update-state', this.progressListeners['update-state'] = event => {
             if (!event.detail.currentState) throw new Error('On update-state: Current state is null');
             this.setState({ state: event.detail.currentState });
+        });
+        installationProgressManager.addEventListener('update-progress', this.progressListeners['update-progress'] = event => {
+            if (!event.detail.progress) throw new Error('On update-progress: Progress is null');
+            this.setState({ progress: event.detail.progress });
         });
     }
 
