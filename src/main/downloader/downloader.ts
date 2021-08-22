@@ -36,6 +36,10 @@ export async function getAppState(app: App): Promise<AppState> {
         return 'not-installed';
     }
 
+    // TODO missing: in queue
+
+    if (currentInstaller) return currentInstaller.isUpdating() ? 'updating' : 'installing';
+
     const installation = await fetchInstallation();
     const installer = await createAndPrepareInstaller(app, installedApp.path, installation)
     
@@ -152,6 +156,7 @@ export class Installer {
     protected installedVersion?: AppTracker.Header;
     protected downloadReady = false;
     public dependencyStructure?: DependencyFragment[];
+    protected updating = false;
 
     constructor(app: App, installationDirectory: string, installer: Installation) {
         this.app = app;
@@ -205,6 +210,9 @@ export class Installer {
 
         if (!this.isUpToDate()) {
             console.log('Updates found. Downloading...');
+
+            if(this.installation.artifacts) this.updating = this.downloadQueue.length !== this.installation.artifacts.length;
+
             this.downloadQueue.forEach(artifact => this.totalBytes += Math.max(0, artifact.size));
             await this.downloadNextArtifact();
 
@@ -214,6 +222,7 @@ export class Installer {
             console.log('Finalization complete.');
 
             await this.writeTracker();
+            this.updating = false;
         } else {
             console.log('Everything is already up-to-date.');
 
@@ -269,6 +278,10 @@ export class Installer {
 
     public isUpToDate() {
         return this.installedVersion && this.installedVersion.versionInt >= this.installation.versionInt && this.downloadQueue.length <= 0;
+    }
+
+    public isUpdating() {
+        return this.updating;
     }
 
     protected async filterDownloadQueue() {

@@ -278,6 +278,33 @@ class PlayStateControl extends Component<ContentProps, PlayState> {
                     <div id="playDesc" className="ms-3 flex-fill">Needs to be updated</div>
                 </>
             );
+            case 'installing': return (
+                <>
+                    <button id="playBtn" className="px-4 btn btn-lg btn-primary d-flex align-items-center" disabled>
+                        <LoadingSpinner className="spinner-border-sm progress-spinner" />
+                        <span className="ms-2">Installing</span>
+                    </button>
+                    <div id="playDesc" className="ms-3 flex-fill">Currently installing...</div>
+                </>
+            );
+            case 'updating': return (
+                <>
+                    <button id="playBtn" className="px-4 btn btn-lg btn-info d-flex align-items-center" disabled>
+                        <LoadingSpinner className="spinner-border-sm progress-spinner" />
+                        <span className="ms-2">Updating</span>
+                    </button>
+                    <div id="playDesc" className="ms-3 flex-fill">Currently updating...</div>
+                </>
+            );
+            case 'in-queue': return (
+                <>
+                    <button id="playBtn" className="px-4 btn btn-lg btn-info d-flex align-items-center" disabled>
+                        <LoadingSpinner className="spinner-border-sm progress-spinner" />
+                        <span className="ms-2">In queue</span>
+                    </button>
+                    <div id="playDesc" className="ms-3 flex-fill">Download pending...</div>
+                </>
+            );
             default:
                 throw new Error(`Unimplemented state: '${this.state.state}'`);
         }
@@ -359,6 +386,7 @@ class PlayStateControl extends Component<ContentProps, PlayState> {
                 console.error(`Could not complete installation process of '${this.props.app.title}'.`);
             }
         }).catch(error => console.error('Could not finish the installation process:', error));
+        // TODO updateStatus() when installation state change: DownloadProgressManager
     }
 }
 

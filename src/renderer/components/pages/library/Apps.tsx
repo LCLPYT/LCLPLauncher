@@ -49,17 +49,56 @@ interface ContentProps {
 class Content extends Component<ContentProps> {
     render() {
         return (
-            <div className="container p-3">
-                <div className="d-flex align-items-center">
-                    <h3 className="text-lighter mb-0 me-2">All Apps</h3>
-                    <div className="section-seperator border-top border-lighter flex-fill mt-1" />
-                </div>
-                <div className="text-light section-desc">Every app you added to your library is shown here.</div>
-                <div className="row row-cols-auto mt-3">
-                    {this.props.apps.map(app => <AppEntry key={app.id} app={app} />)}
+            <div id="appsContainer" className="container hmin-100">
+                <div id="appsFlexContainer" className="pt-3 d-flex flex-column">
+                    <div className="d-flex align-items-center">
+                        <h3 className="text-lighter mb-0 me-2">All Apps</h3>
+                        <div className="section-seperator border-top border-light flex-fill mt-1" />
+                    </div>
+                    <div className="text-light section-desc">Every app you added to your library is shown here.</div>
+                    {this.props.apps.length <= 0 ? (
+                        <div className="d-flex flex-grow-1">
+                            <div className="w-100 align-self-center mb-5">
+                                <div className="text-center text-muted centered-info">Looks like you haven't added any apps yet.</div>
+                                <div className="text-center mt-2">
+                                    <Link to="/library/search" className="btn btn-secondary text-light cursor-pointer shadow-sm" role="button">
+                                        <div className="d-flex align-items-center">
+                                            <span className="material-icons me-2">search</span>
+                                            <span>Search apps</span>
+                                        </div>
+                                    </Link>
+                                </div>
+                            </div>
+                        </div>
+                    ) : (
+                        <div className="row row-cols-auto mt-3">
+                            {this.props.apps.map(app => <AppEntry key={app.id} app={app} />)}
+                        </div>
+                    )}
                 </div>
             </div>
         );
+    }
+
+    protected resizeListener?: () => void;
+
+    componentDidMount() {
+        window.addEventListener('resize', this.resizeListener = () => this.onResize());
+        this.onResize();
+    }
+
+    componentWillUnmount() {
+        if (this.resizeListener) window.removeEventListener('resize', this.resizeListener);
+    }
+
+    onResize() {
+        const appsContainer = document.getElementById('appsContainer');
+        const appsFlexContainer = document.getElementById('appsFlexContainer');
+
+        if (appsContainer && appsFlexContainer) {
+            appsFlexContainer.style.minHeight = '';
+            appsFlexContainer.style.minHeight = `${appsContainer.getBoundingClientRect().height}px`;
+        }
     }
 }
 

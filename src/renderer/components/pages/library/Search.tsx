@@ -35,7 +35,7 @@ class Search extends Component<IProps, IState> {
                         </button>
                     </div>
                     <div className="ac-wrapper">
-                        <input type="text" id="searchInput" className="ac-input" placeholder="Search for apps" />
+                        <input type="text" id="searchInput" className="ac-input" placeholder="Search for apps" autoFocus />
                     </div>
                     <div className="ac-wrapper-suffix">
                         <button className="ac-clear h-100" id="clearBtn" hidden>
