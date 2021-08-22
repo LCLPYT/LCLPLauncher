@@ -34,7 +34,8 @@ export const ACTIONS = {
         getAppState: 'get-app-state',
         getInstallationDir: 'get-installation-dir',
         isValidInstallationDir: 'is-valid-installation-dir',
-        getDefaultInstallationDir: 'get-default-installation-dir'
+        getDefaultInstallationDir: 'get-default-installation-dir',
+        updateInstallationState: 'update-installation-state'
     },
     utilities: {
         chooseFile: 'choose-file'

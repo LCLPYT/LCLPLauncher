@@ -3,6 +3,7 @@ import { IpcRendererEvent } from "electron/renderer";
 import App from "../../common/types/App";
 import AppState from "../../common/types/AppState";
 import { ACTIONS, GenericIPCActionHandler, GenericIPCHandler } from "../../common/utils/ipc";
+import { updateInstallationState } from "./downloads";
 import { addToast, removeToast } from "./toasts";
 
 abstract class IPCActionHandler extends GenericIPCActionHandler<IpcRendererEvent, IpcRendererEvent> {
@@ -161,6 +162,10 @@ export const DOWNLOADER = registerHandler(new class extends IPCActionHandler {
                     else this.getDefaultInstallationDirCB.reject(new Error('No further information provided'));
                     this.getInstallationDirCB = undefined;
                 } else console.warn('No callback defined for', ACTIONS.downloader.getDefaultInstallationDir);
+                break;
+            case ACTIONS.downloader.updateInstallationState:
+                if (args.length < 1) throw new Error('State argument does not exist.');
+                updateInstallationState(args[0]);
                 break;
             default:
                 throw new Error(`Action '${action}' not implemented.`);

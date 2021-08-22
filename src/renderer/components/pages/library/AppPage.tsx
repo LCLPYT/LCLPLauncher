@@ -12,6 +12,7 @@ import YouTube from 'react-youtube';
 import { DOWNLOADER, UTILITIES } from '../../../utils/ipc';
 import AppState from '../../../../common/types/AppState';
 import { Modal } from 'bootstrap';
+import { installationProgressManager, InstallerEvent } from '../../../utils/downloads';
 
 interface Props extends RouteComponentProps<{ app: string }> { }
 
@@ -317,6 +318,10 @@ class PlayStateControl extends Component<ContentProps, PlayState> {
         }).catch(err => console.error('Could not fetch app status:', err));
     }
 
+    protected progressListeners: {
+        [type: string]: (event: InstallerEvent) => void
+    } = {};
+
     componentDidMount() {
         const playBtn = document.getElementById('playBtn');
         playBtn?.addEventListener('click', () => {
@@ -354,6 +359,17 @@ class PlayStateControl extends Component<ContentProps, PlayState> {
                 console.error(err);
             });
         });
+
+        installationProgressManager.addEventListener('update-state', this.progressListeners['update-state'] = event => {
+            if (!event.detail.currentState) throw new Error('On update-state: Current state is null');
+            this.setState({ state: event.detail.currentState });
+        });
+    }
+
+    componentWillUnmount() {
+        Object.entries(this.progressListeners).forEach(([type, listener]) => {
+            installationProgressManager.removeEventListener(type, listener)
+        });
     }
 
     getInstallationOptionsModal() {
@@ -377,6 +393,7 @@ class PlayStateControl extends Component<ContentProps, PlayState> {
 
     startInstallation(installationDir: string) {
         console.info(`Starting installation process of '${this.props.app.title}'...`);
+
         DOWNLOADER.startInstallationProcess(this.props.app, installationDir).then(success => {
             if (success === null) return; // Button clicked while installation process is running
             if (success) {
@@ -386,7 +403,6 @@ class PlayStateControl extends Component<ContentProps, PlayState> {
                 console.error(`Could not complete installation process of '${this.props.app.title}'.`);
             }
         }).catch(error => console.error('Could not finish the installation process:', error));
-        // TODO updateStatus() when installation state change: DownloadProgressManager
     }
 }
 

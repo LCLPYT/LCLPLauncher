@@ -1,6 +1,7 @@
 import { BrowserWindow, dialog, ipcMain } from "electron";
 import { IpcMainEvent } from "electron/main";
 import App from "../../common/types/App";
+import AppState from "../../common/types/AppState";
 import Toast from "../../common/types/Toast";
 import { ACTIONS, GenericIPCActionHandler, GenericIPCHandler } from "../../common/utils/ipc";
 import { getAppState, getInstallationDirectory, validateInstallationDir, startInstallationProcess } from "../downloader/downloader";
@@ -85,7 +86,7 @@ registerHandler(new class extends IPCActionHandler {
     }
 }('library'));
 
-registerHandler(new class extends IPCActionHandler {
+export const DOWNLOADER = registerHandler(new class extends IPCActionHandler {
     protected onAction(action: string, event: IpcActionEvent, args: any[]): void {
         switch(action) {
             case ACTIONS.downloader.startInstallationProcess:
@@ -127,6 +128,10 @@ registerHandler(new class extends IPCActionHandler {
             default:
                 throw new Error(`Action '${action}' not implemented.`);
         }
+    }
+
+    public updateInstallationState(state: AppState) {
+        this.sendAction(ACTIONS.downloader.updateInstallationState, state);
     }
 }('downloader'));
 

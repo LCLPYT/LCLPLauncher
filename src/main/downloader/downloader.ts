@@ -22,10 +22,11 @@ import { getBackendHost } from "../../common/utils/settings";
 import AppState from "../../common/types/AppState";
 import { InstalledApplication } from "../database/models/InstalledApplication";
 import { BrowserWindow, dialog } from "electron";
-import { TOASTS } from "../utils/ipc";
+import { DOWNLOADER, TOASTS } from "../utils/ipc";
 import { ToastType } from "../../common/types/Toast";
 
 let currentInstaller: Installer | null = null;
+let currentIsUpdating = false;
 
 export async function getAppState(app: App): Promise<AppState> {
     const installedApp = await InstalledApplication.query().where('app_id', app.id).first();
@@ -38,7 +39,7 @@ export async function getAppState(app: App): Promise<AppState> {
 
     // TODO missing: in queue
 
-    if (currentInstaller) return currentInstaller.isUpdating() ? 'updating' : 'installing';
+    if (currentInstaller) return currentIsUpdating ? 'updating' : 'installing';
 
     const installation = await fetchInstallation();
     const installer = await createAndPrepareInstaller(app, installedApp.path, installation)
@@ -118,6 +119,9 @@ export async function startInstallationProcess(app: App, installationDir: string
 
     // Add to database
     const installedApp = await InstalledApplication.query().where('app_id', app.id).first();
+    currentIsUpdating = !!installedApp;
+    DOWNLOADER.updateInstallationState(currentIsUpdating ? 'updating' : 'installing');
+
     if (!installedApp) await InstalledApplication.query().insert({
         app_id: app.id,
         path: installationDir
@@ -131,6 +135,7 @@ export async function startInstallationProcess(app: App, installationDir: string
     currentInstaller = null;
     console.log(`Installation of '${app.title}' finished successfully.`);
 
+    currentIsUpdating = false;
     TOASTS.removeToast(toastId);
 }
 
@@ -156,7 +161,6 @@ export class Installer {
     protected installedVersion?: AppTracker.Header;
     protected downloadReady = false;
     public dependencyStructure?: DependencyFragment[];
-    protected updating = false;
 
     constructor(app: App, installationDirectory: string, installer: Installation) {
         this.app = app;
@@ -211,8 +215,6 @@ export class Installer {
         if (!this.isUpToDate()) {
             console.log('Updates found. Downloading...');
 
-            if(this.installation.artifacts) this.updating = this.downloadQueue.length !== this.installation.artifacts.length;
-
             this.downloadQueue.forEach(artifact => this.totalBytes += Math.max(0, artifact.size));
             await this.downloadNextArtifact();
 
@@ -222,7 +224,6 @@ export class Installer {
             console.log('Finalization complete.');
 
             await this.writeTracker();
-            this.updating = false;
         } else {
             console.log('Everything is already up-to-date.');
 
@@ -278,10 +279,6 @@ export class Installer {
 
     public isUpToDate() {
         return this.installedVersion && this.installedVersion.versionInt >= this.installation.versionInt && this.downloadQueue.length <= 0;
-    }
-
-    public isUpdating() {
-        return this.updating;
     }
 
     protected async filterDownloadQueue() {
