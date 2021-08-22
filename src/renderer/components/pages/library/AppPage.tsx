@@ -91,10 +91,14 @@ class Content extends Component<ContentProps, ContentState> {
                             </Link>
                         </div>
                         <div className="d-flex">
-                            <div id="appFeed" className="flex-fill px-4 py-3">
-                                <h4 className="text-lighter">Feed</h4>
-                                <div className="feed-yt-wrapper rounded overflow-hidden shadow-lg">
-                                    <YouTube videoId="q_KytDRIODU" className="feed-yt" />
+                            <div id="appFeed" className="flex-fill px-4 pb-3 pt-2 text-lighter">
+                                <div className="fw-bold text-muted mb-1">News</div>
+                                <div className="pb-3">
+                                    <h5 className="mb-1">World generation showcase</h5>
+                                    <div className="text-light mb-1">10 minutes of the world generation of LCLPServer 5.0's (survival) world.</div>
+                                    <div className="feed-yt-wrapper rounded overflow-hidden shadow-lg">
+                                        <YouTube videoId="q_KytDRIODU" className="feed-yt" />
+                                    </div>
                                 </div>
                             </div>
                             <div id="appDetails" className="px-3">
