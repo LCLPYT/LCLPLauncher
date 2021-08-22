@@ -29,6 +29,17 @@ class Library extends Component {
                                 }
                             </div>
                         )} />
+                        <Route exact path="/library/app/:app" render={props => (
+                            <div className="py-1 separator-border-dark-top">
+                                {
+                                    React.createElement(SideAppTab, {
+                                        link: `/library/app/${props.match.params.app}`,
+                                        title: undefined,
+                                        ...props
+                                    } as SideAppTabProps)
+                                }
+                            </div>
+                        )} />
                     </div>
                     <div id="libraryContent">
                         <Switch>
