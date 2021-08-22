@@ -1,9 +1,11 @@
 import AppState from "../../common/types/AppState";
+import DownloadProgress from "../../common/types/DownloadProgress";
 
-export type InstallerEvents = 'update-state';
+export type InstallerEvents = 'update-state' | 'update-progress';
 
 export type InstallerDetails = {
-    currentState?: AppState
+    currentState?: AppState,
+    progress?: DownloadProgress
 }
 
 export class InstallerEvent extends CustomEvent<InstallerDetails> {}
@@ -66,6 +68,14 @@ export function updateInstallationState(state: AppState) {
     installationProgressManager.dispatchEvent(new CustomEvent('update-state', {
         detail: {
             currentState: state
+        }
+    }));
+}
+
+export function updateInstallationProgress(progress: DownloadProgress) {
+    installationProgressManager.dispatchEvent(new CustomEvent('update-state', {
+        detail: {
+            progress: progress
         }
     }));
 }

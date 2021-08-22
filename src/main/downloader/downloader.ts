@@ -25,6 +25,7 @@ import { BrowserWindow, dialog } from "electron";
 import { DOWNLOADER, TOASTS } from "../utils/ipc";
 import { ToastType } from "../../common/types/Toast";
 
+const queue: [app: App, dir: string, callback: (err: any) => void][] = [];
 let currentInstaller: Installer | null = null;
 let currentIsUpdating = false;
 
@@ -37,7 +38,7 @@ export async function getAppState(app: App): Promise<AppState> {
         return 'not-installed';
     }
 
-    // TODO missing: in queue
+    if (queue.find(([queuedApp]) => queuedApp.id === app.id)) return 'in-queue';
 
     if (currentInstaller) return currentIsUpdating ? 'updating' : 'installing';
 
@@ -94,7 +95,15 @@ async function fetchInstallation(): Promise<Installation> {
 }
 
 export async function startInstallationProcess(app: App, installationDir: string) {
-    if (currentInstaller) throw new Error('Multiple installation processes are currently not supported.');
+    if (currentInstaller || queue.length > 0) {
+        await new Promise<void>((resolve, reject) => {
+            queue.push([app, installationDir, err => {
+                if (err) reject(err);
+                else resolve();
+            }]);
+        });
+        return;
+    }
 
     console.log(`Starting installation process of '${app.title}'...`);
 
@@ -137,6 +146,20 @@ export async function startInstallationProcess(app: App, installationDir: string
 
     currentIsUpdating = false;
     TOASTS.removeToast(toastId);
+
+    // start next queue item, if there is one
+    if (queue.length > 0) {
+        const next = queue.splice(0, 1);
+        if (next.length !== 1) throw new Error('Next item could not be determined');
+
+        const [nextApp, nextInstallDir, callback] = next[0];
+
+        // start next installation process, and notify the queued promise on completion.
+        // do not wait in this installation's promise, since this installation process is done.
+        startInstallationProcess(nextApp, nextInstallDir)
+            .then(() => callback(undefined)) // no error
+            .catch(err => callback(err));
+    }
 }
 
 async function createAndPrepareInstaller(app: App, installationDir: string, installation: Installation): Promise<Installer> {
