@@ -60,10 +60,17 @@
     padding-bottom: 0.75rem;
 }
 
-.feed-yt {
+.feed-yt-wrapper {
     aspect-ratio: 16 / 9;
     height: auto;
     width: 60%;
+}
+
+.feed-yt {
+    aspect-ratio: 16 / 9;
+    height: auto;
+    width: 100%;
+    display: block;
 }
 
 .custom-input-wrapper {

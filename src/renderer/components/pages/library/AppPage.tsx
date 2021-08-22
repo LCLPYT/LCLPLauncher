@@ -93,7 +93,9 @@ class Content extends Component<ContentProps, ContentState> {
                         <div className="d-flex">
                             <div id="appFeed" className="flex-fill px-4 py-3">
                                 <h4 className="text-lighter">Feed</h4>
-                                <YouTube videoId="q_KytDRIODU" className="shadow feed-yt" />
+                                <div className="feed-yt-wrapper rounded overflow-hidden shadow-lg">
+                                    <YouTube videoId="q_KytDRIODU" className="feed-yt" />
+                                </div>
                             </div>
                             <div id="appDetails" className="px-3">
                                 <h4 className="text-lighter mb-1">{this.props.app.title}</h4>
