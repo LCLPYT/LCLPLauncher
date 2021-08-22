@@ -85,7 +85,7 @@ class Content extends Component<ContentProps, ContentState> {
                     <div className="foreground-container separator-border-dark-top">
                         <div id="playBar" className="px-4 py-2 d-flex align-items-center text-lighter separator-border-dark-bottom">
                             <PlayStateControl app={this.props.app} />
-                            <Link id="shopPageLink" to={`/library/store/app/${this.props.app.key}`} className="d-flex align-items-center navigation-link-color-dimmed no-underline">
+                            <Link id="shopPageLink" to={`/library/store/app/${this.props.app.key}`} className="d-flex align-items-center navigation-link-color-dimmed no-underline cursor-pointer">
                                 <span className="material-icons">shopping_bag</span>
                             </Link>
                         </div>
@@ -148,19 +148,14 @@ class Content extends Component<ContentProps, ContentState> {
 
         const installDirInput = document.getElementById('installDirInput');
 
-        let defaultPath: string | undefined;
         DOWNLOADER.getDefaultInstallationDir(this.props.app).then(path => {
-            if (path) {
-                defaultPath = path;
-                if (installDirInput) (installDirInput as HTMLInputElement).value = defaultPath;
-            }
+            if (path && installDirInput) (installDirInput as HTMLInputElement).value = path;
         }).catch(err => console.error(err));
 
         const fileSelectorButton = document.getElementById('fileSelectorButton');
         fileSelectorButton?.addEventListener('click', () => {
             UTILITIES.chooseFiles({
                 title: 'Choose installation directory',
-                defaultPath: defaultPath,
                 properties: ['openDirectory', 'promptToCreate', 'dontAddToRecent']
             }).then(result => {
                 if (!result || result.canceled || !installDirInput) return;

@@ -69,7 +69,5 @@ export function getDependencyTemporaryDir() {
 }
 
 export async function getOrCreateDefaultInstallationDir(app: App) {
-    const path = Path.join(os.homedir(), 'LCLPLauncher', 'apps', app.key);
-    await mkdirp(path);
-    return path;
+    return Path.join(os.homedir(), 'LCLPLauncher', 'apps', app.key);
 }
