@@ -91,7 +91,6 @@ class PlayStateButton extends Component<ContentProps, PlayState> {
 
     updateStatus() {
         DOWNLOADER.getAppStatus(this.props.app).then(state => {
-            if (!state) return; // clicked twice
             this.setState({ state: state });
         }).catch(err => console.error('Could not fetch app status:', err));
     }

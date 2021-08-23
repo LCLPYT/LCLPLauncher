@@ -97,14 +97,14 @@ export const DOWNLOADER = registerHandler(new class extends IPCActionHandler {
         resolve: (finishedWithSuccess: boolean) => void,
         reject: (error: any) => void
     };
-    protected getAppStateCB?: {
+    protected getAppStateCB: {
         resolve: (state: AppState) => void,
         reject: (error: any) => void
-    }
-    protected getInstallationDirCB?: {
+    }[] = [];
+    protected getInstallationDirCB: {
         resolve: (dir: string | undefined) => void,
         reject: (error: any) => void
-    }
+    }[] = [];
     protected isValidInstallationDirCB?: {
         resolve: () => void,
         reject: (error: any) => void
@@ -129,19 +129,19 @@ export const DOWNLOADER = registerHandler(new class extends IPCActionHandler {
                 if (args.length < 1) throw new Error('State result argument does not exist.');
                 if (this.getAppStateCB) {
                     const state: AppState | null = args[0];
-                    if (state) this.getAppStateCB.resolve(state);
-                    else this.getAppStateCB.reject(args.length >= 2 ? args[1] : new Error('No error argument provided'));
-                    this.getAppStateCB = undefined;
+                    if (state) this.getAppStateCB.forEach(cb => cb.resolve(state));
+                    else this.getAppStateCB.forEach(cb => cb.reject(args.length >= 2 ? args[1] : new Error('No error argument provided')));
+                    this.getAppStateCB = [];
                 } else console.warn('No callback defined for', ACTIONS.downloader.getAppState);
                 break;
             case ACTIONS.downloader.getInstallationDir:
                 if (args.length < 1) throw new Error('Installation dir argument does not exist.');
                 if (this.getInstallationDirCB) {
                     const dir: string | undefined | null = args[0];
-                    if (dir) this.getInstallationDirCB.resolve(dir);
-                    else if(args.length >= 2) this.getInstallationDirCB.reject(args[1]);
-                    else this.getInstallationDirCB.resolve(undefined);
-                    this.getInstallationDirCB = undefined;
+                    if (dir) this.getInstallationDirCB.forEach(cb => cb.resolve(dir));
+                    else if(args.length >= 2) this.getInstallationDirCB.forEach(cb => cb.reject(args[1]));
+                    else this.getInstallationDirCB.forEach(cb => cb.resolve(undefined));
+                    this.getInstallationDirCB = [];
                 } else console.warn('No callback defined for', ACTIONS.downloader.getInstallationDir);
                 break;
             case ACTIONS.downloader.isValidInstallationDir:
@@ -160,7 +160,7 @@ export const DOWNLOADER = registerHandler(new class extends IPCActionHandler {
                     if (dir) this.getDefaultInstallationDirCB.resolve(dir);
                     else if(args.length >= 2) this.getDefaultInstallationDirCB.reject(args[1]);
                     else this.getDefaultInstallationDirCB.reject(new Error('No further information provided'));
-                    this.getInstallationDirCB = undefined;
+                    this.getDefaultInstallationDirCB = undefined;
                 } else console.warn('No callback defined for', ACTIONS.downloader.getDefaultInstallationDir);
                 break;
             case ACTIONS.downloader.updateInstallationState:
@@ -187,25 +187,23 @@ export const DOWNLOADER = registerHandler(new class extends IPCActionHandler {
         });
     }
 
-    public getAppStatus(app: App): Promise<AppState | null> {
-        if (this.getAppStateCB) return Promise.resolve(null);
+    public getAppStatus(app: App): Promise<AppState> {
         return new Promise((resolve, reject) => {
-            this.getAppStateCB = {
+            this.getAppStateCB.push({
                 resolve: state => resolve(state),
                 reject: err => reject(err)
-            };
-            this.sendAction(ACTIONS.downloader.getAppState, app);
+            });
+            if (this.getAppStateCB.length === 1) this.sendAction(ACTIONS.downloader.getAppState, app);
         });
     }
 
-    public getInstallationDir(app: App): Promise<string | undefined | null> {
-        if (this.getInstallationDirCB) return Promise.resolve(null);
+    public getInstallationDir(app: App): Promise<string | undefined> {
         return new Promise((resolve, reject) => {
-            this.getInstallationDirCB = {
+            this.getInstallationDirCB.push({
                 resolve: dir => resolve(dir),
                 reject: err => reject(err)
-            };
-            this.sendAction(ACTIONS.downloader.getInstallationDir, app);
+            });
+            if (this.getInstallationDirCB.length === 1) this.sendAction(ACTIONS.downloader.getInstallationDir, app);
         });
     }
 

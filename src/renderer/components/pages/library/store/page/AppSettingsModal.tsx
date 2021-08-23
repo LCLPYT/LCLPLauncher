@@ -1,6 +1,23 @@
 import React, { Component } from "react";
+import App from "../../../../../../common/types/App";
+import AppState from "../../../../../../common/types/AppState";
+import { DOWNLOADER } from "../../../../../utils/ipc";
+import LoadingSpinner from "../../../../utility/LoadingSpinner";
 
-class AppSettingsModal extends Component {
+interface ModalProps {
+    app: App
+}
+
+interface ModalState {
+    state?: AppState
+}
+
+class AppSettingsModal extends Component<ModalProps, ModalState> {
+    constructor(props: ModalProps) {
+        super(props);
+        this.state = {};
+    }
+
     render() {
         return (
             <div className="modal fade" id="appSettingsModal" tabIndex={-1} aria-labelledby="appSettingsModalLabel" aria-hidden="true">
@@ -11,12 +28,82 @@ class AppSettingsModal extends Component {
                             <button type="button" className="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                         </div>
                         <div className="modal-body">
-                            Hello World
+                            {this.state.state ? <ModalBody app={this.props.app} state={this.state.state} /> : <Loading />}
                         </div>
                     </div>
                 </div>
             </div>
         );
+    }
+
+    componentDidMount() {
+        DOWNLOADER.getAppStatus(this.props.app).then(state => {
+            this.setState({
+                state: state
+            });
+        }).catch(err => console.error(err));
+    }
+}
+
+class Loading extends Component {
+    render() {
+        return (
+            <div className="text-center">
+                <LoadingSpinner />
+            </div>
+        );
+    }
+}
+
+interface BodyProps {
+    app: App,
+    state: AppState
+}
+
+interface BodyState {
+    installationDir?: string
+}
+
+class ModalBody extends Component<BodyProps, BodyState> {
+    constructor(props: BodyProps) {
+        super(props);
+        this.state = {};
+    }
+
+    render() {
+        if (this.props.state === 'not-installed') return (
+            <div className="text-center text-lighter">
+                <span className="fw-bold">{this.props.app.title}</span> is not yet installed.
+            </div>
+        );
+        return (
+            <>
+                {this.state.installationDir ? (
+                    <div className="d-flex align-items-center text-lighter">
+                        <span className="flex-fill">Installation directory:</span>
+                        <code className="bg-dark rounded px-1 selectable">{this.state.installationDir}</code>
+                    </div>
+                ) : undefined}
+                <div className="mt-2 d-flex justify-content-end">
+                    <button id="uninstallBtn" className="btn btn-danger">Uninstall</button>
+                </div>
+            </>
+        );
+    }
+
+    componentDidMount() {
+        DOWNLOADER.getInstallationDir(this.props.app).then(dir => {
+            this.setState({
+                installationDir: dir
+            });
+        }).catch(err => console.error(err));
+
+        const uninstallBtn = document.getElementById('uninstallBtn');
+        uninstallBtn?.addEventListener('click', () => {
+            if (confirm(`Are you sure you want to uninstall '${this.props.app.title}'?`)) {
+                console.log('uninstall');
+            }
+        });
     }
 }
 

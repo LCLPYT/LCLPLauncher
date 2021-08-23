@@ -110,3 +110,8 @@
         box-shadow: none;
     }
 }
+
+code.selectable {
+    user-select: text;
+    cursor: text;
+}

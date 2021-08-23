@@ -111,7 +111,7 @@ class Content extends Component<ContentProps, ContentState> {
                     </div>
                 </div>
                 <InstallationOptionsModal app={this.props.app} />
-                <AppSettingsModal />
+                <AppSettingsModal app={this.props.app} />
             </div>
         );
     }
