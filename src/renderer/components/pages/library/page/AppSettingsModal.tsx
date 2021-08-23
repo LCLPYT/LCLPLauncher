@@ -1,11 +1,13 @@
+import { Modal } from "bootstrap";
 import React, { Component } from "react";
-import App from "../../../../../../common/types/App";
-import AppState from "../../../../../../common/types/AppState";
-import { DOWNLOADER } from "../../../../../utils/ipc";
-import LoadingSpinner from "../../../../utility/LoadingSpinner";
+import App from "../../../../../common/types/App";
+import AppState from "../../../../../common/types/AppState";
+import { installationProgressManager, InstallerEvent } from "../../../../utils/downloads";
+import { DOWNLOADER } from "../../../../utils/ipc";
+import LoadingSpinner from "../../../utility/LoadingSpinner";
 
 interface ModalProps {
-    app: App
+    app: App,
 }
 
 interface ModalState {
@@ -36,12 +38,25 @@ class AppSettingsModal extends Component<ModalProps, ModalState> {
         );
     }
 
+    protected stateListener?: (event: InstallerEvent) => void;
+
     componentDidMount() {
-        DOWNLOADER.getAppStatus(this.props.app).then(state => {
+        installationProgressManager.addEventListener('update-state', this.stateListener = event => {
+            if (!event.detail.currentState) throw new Error('On update-state: Current state is null');
             this.setState({
-                state: state
+                state: event.detail.currentState
             });
-        }).catch(err => console.error(err));
+        });
+
+        DOWNLOADER.getAppStatus(this.props.app)
+            .then(state => this.setState({
+                state: state
+            }))
+            .catch(err => console.error(err));
+    }
+
+    componentWillUnmount() {
+        if (this.stateListener) installationProgressManager.removeEventListener('update-state', this.stateListener);
     }
 }
 
@@ -101,7 +116,12 @@ class ModalBody extends Component<BodyProps, BodyState> {
         const uninstallBtn = document.getElementById('uninstallBtn');
         uninstallBtn?.addEventListener('click', () => {
             if (confirm(`Are you sure you want to uninstall '${this.props.app.title}'?`)) {
-                console.log('uninstall');
+                DOWNLOADER.uninstall(this.props.app)
+                    .then(() => {
+                        const appSettingsModal = document.getElementById('appSettingsModal');
+                        if (appSettingsModal) Modal.getInstance(appSettingsModal)?.hide();
+                    })
+                    .catch(err => console.error('Error uninstalling app:', err));
             }
         });
     }

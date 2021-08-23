@@ -1,11 +1,11 @@
 import { Modal } from 'bootstrap';
 import React, { Component } from 'react';
-import App from "../../../../../../common/types/App";
-import AppState from "../../../../../../common/types/AppState";
-import DownloadProgress from "../../../../../../common/types/DownloadProgress";
-import { installationProgressManager, InstallerEvent } from '../../../../../utils/downloads';
-import { DOWNLOADER } from '../../../../../utils/ipc';
-import LoadingSpinner from '../../../../utility/LoadingSpinner';
+import App from "../../../../../common/types/App";
+import AppState from "../../../../../common/types/AppState";
+import DownloadProgress from "../../../../../common/types/DownloadProgress";
+import { installationProgressManager, InstallerEvent } from '../../../../utils/downloads';
+import { DOWNLOADER } from '../../../../utils/ipc';
+import LoadingSpinner from '../../../utility/LoadingSpinner';
 
 interface PlayState {
     state?: AppState,
@@ -152,7 +152,7 @@ class PlayStateButton extends Component<ContentProps, PlayState> {
             installationProgressManager.removeEventListener(type, listener)
         });
     }
-
+    
     getInstallationOptionsModal() {
         const modalElement = document.getElementById('installationOptionsModal');
         if (modalElement) {

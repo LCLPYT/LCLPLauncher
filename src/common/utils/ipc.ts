@@ -36,7 +36,8 @@ export const ACTIONS = {
         isValidInstallationDir: 'is-valid-installation-dir',
         getDefaultInstallationDir: 'get-default-installation-dir',
         updateInstallationState: 'update-installation-state',
-        updateInstallationProgress: 'update-installation-progress'
+        updateInstallationProgress: 'update-installation-progress',
+        uninstall: 'uninstall'
     },
     utilities: {
         chooseFile: 'choose-file'

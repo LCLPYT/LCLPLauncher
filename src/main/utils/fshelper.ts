@@ -44,8 +44,12 @@ export function getInstallerAppDir(app: App | number) {
     else return Path.resolve(electronApp.getPath('userData'), '.installer', 'apps', app.id.toString());
 }
 
+export function getAppArtifactsDir(appId: number) {
+    return Path.join(getInstallerAppDir(appId), 'artifacts');
+}
+
 export function getAppArtifactFile(appId: number, artifactId: string) {
-    return Path.resolve(getInstallerAppDir(appId), 'artifacts', artifactId);
+    return Path.join(getAppArtifactsDir(appId), artifactId);
 }
 
 export function getAppTrackerFile(appId: number) {

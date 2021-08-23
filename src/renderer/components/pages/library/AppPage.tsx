@@ -10,9 +10,9 @@ import CollapsableDescription from '../../utility/CollapsableDescription';
 import GenresDisplay from '../../utility/GenresDisplay';
 import YouTube from 'react-youtube';
 import { Modal } from 'bootstrap';
-import PlayStateButton from './store/page/PlayStateButton';
-import AppSettingsModal from './store/page/AppSettingsModal';
-import InstallationOptionsModal from './store/page/InstallationOptionsModal';
+import PlayStateButton from './page/PlayStateButton';
+import AppSettingsModal from './page/AppSettingsModal';
+import InstallationOptionsModal from './page/InstallationOptionsModal';
 
 interface Props extends RouteComponentProps<{ app: string }> { }
 

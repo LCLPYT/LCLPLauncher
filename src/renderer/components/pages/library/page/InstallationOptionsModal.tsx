@@ -1,6 +1,6 @@
 import React, { Component } from "react";
-import App from "../../../../../../common/types/App";
-import { DOWNLOADER, UTILITIES } from "../../../../../utils/ipc";
+import App from "../../../../../common/types/App";
+import { DOWNLOADER, UTILITIES } from "../../../../utils/ipc";
 
 class InstallationOptionsModal extends Component<{ app: App }> {
     render() {

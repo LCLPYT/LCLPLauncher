@@ -113,6 +113,10 @@ export const DOWNLOADER = registerHandler(new class extends IPCActionHandler {
         resolve: (dir: string) => void,
         reject: (error: any) => void
     }
+    protected uninstallCB?: {
+        resolve: () => void,
+        reject: (error: any) => void
+    }
 
     protected onAction(action: string, _event: Electron.IpcRendererEvent, args: any[]): void {
         switch (action) {
@@ -171,6 +175,14 @@ export const DOWNLOADER = registerHandler(new class extends IPCActionHandler {
                 if (args.length < 1) throw new Error('Progress argument does not exist.');
                 updateInstallationProgress(args[0]);
                 break;
+            case ACTIONS.downloader.uninstall:
+                if (args.length < 1) throw new Error('Error argument does not exist.');
+                if (this.uninstallCB) {
+                    const err: any = args[0];
+                    if (err) this.uninstallCB.reject(err);
+                    else this.uninstallCB.resolve();
+                } else console.warn('No callback defined for', ACTIONS.downloader.uninstall);
+                break;
             default:
                 throw new Error(`Action '${action}' not implemented.`);
         }
@@ -226,6 +238,17 @@ export const DOWNLOADER = registerHandler(new class extends IPCActionHandler {
                 reject: err => reject(err)
             };
             this.sendAction(ACTIONS.downloader.getDefaultInstallationDir, app);
+        });
+    }
+
+    public uninstall(app: App): Promise<void> {
+        if (this.uninstallCB) return Promise.resolve();
+        return new Promise((resolve, reject) => {
+            this.uninstallCB = {
+                resolve: () => resolve(),
+                reject: err => reject(err)
+            };
+            this.sendAction(ACTIONS.downloader.uninstall, app);
         });
     }
     

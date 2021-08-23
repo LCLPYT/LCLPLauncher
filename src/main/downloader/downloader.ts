@@ -5,7 +5,7 @@ import * as Path from 'path';
 import * as fs from 'fs';
 import App from "../../common/types/App";
 import Installation, { Artifact, SegmentedPath } from "../types/Installation";
-import { exists, getInstallerAppDir, resolveSegmentedPath, rmdirRecusive } from "../utils/fshelper";
+import { exists, getAppArtifactsDir, getInstallerAppDir, resolveSegmentedPath, rmdirRecusive } from "../utils/fshelper";
 import { PostActionHandle, PostActionWrapper, ActionFactory, ArtifactActionArgument, GeneralActionArgument } from "./postActions";
 import { ArtifactType, TrackerReader, ArtifactTrackerVariables, TrackerHeader } from "./tracker/ArtifactTracker";
 import { SingleFileTracker } from "./tracker/SingleFileTracker";
@@ -78,7 +78,33 @@ export async function validateInstallationDir(dir: string) {
 }
 
 export async function uninstallApp(app: App) {
-    await InstalledApplication.query().where('app_id', app.id).delete();
+    const installedApp = await InstalledApplication.query().where('app_id', app.id).first();
+    if (!installedApp) return;
+
+    const installationDir = installedApp.path;
+
+    const vars: ArtifactTrackerVariables = {
+        installationDir: installationDir,
+        tmpDir: Path.join(installationDir, '.tmp')
+    };
+
+    const artifactTrackerDir = getAppArtifactsDir(app.id);
+    const files = await fs.promises.readdir(artifactTrackerDir);
+    for (const file of files) {
+        const reader = await createReader(app.id, file, vars).catch(() => undefined); // file is equal to artifact id; in case of an error, return undefined
+        if (!reader) return; // if there was an error, do nothing
+
+        console.log(`Deleting artifact '${file}'...`);
+        await reader.deleteEntries(reader, true);
+        console.log(`Artifact '${file}' deleted successfully.`);
+    }
+
+    await InstalledApplication.query().where('app_id', app.id).delete(); // remove from database
+
+    // TODO clean packages
+
+    // update state
+    DOWNLOADER.updateInstallationState('not-installed');
 }
 
 async function fetchInstallation(): Promise<Installation> {
