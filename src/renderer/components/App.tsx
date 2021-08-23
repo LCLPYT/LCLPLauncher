@@ -140,7 +140,7 @@ abstract class AbstractToastComponent<State = {}> extends Component<ToastProps, 
         const age = new Date().getTime() - this.props.memory.createdAt;
 
         const remainingDelay = this.props.memory.toast.autoHideDelay ? this.props.memory.toast.autoHideDelay - age : undefined;
-        const alreadyShown = this.props.memory.alreadyShown ? true : false;
+        const alreadyShown = !!this.props.memory.alreadyShown;
         this.props.memory.alreadyShown = true;
 
         let ageText = 'Just now';

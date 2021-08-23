@@ -281,10 +281,6 @@ export class Installer {
             await this.completePostActions();
             console.log('Finalization complete.');
 
-            await new Promise<void>(resolve => {
-                setTimeout(() => resolve(), 10000);
-            });
-
             await this.writeTracker();
         } else {
             console.log('Everything is already up-to-date.');
