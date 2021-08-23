@@ -9,11 +9,10 @@ import tippy from 'tippy.js';
 import CollapsableDescription from '../../utility/CollapsableDescription';
 import GenresDisplay from '../../utility/GenresDisplay';
 import YouTube from 'react-youtube';
-import { DOWNLOADER, UTILITIES } from '../../../utils/ipc';
-import AppState from '../../../../common/types/AppState';
 import { Modal } from 'bootstrap';
-import { installationProgressManager, InstallerEvent } from '../../../utils/downloads';
-import DownloadProgress from '../../../../common/types/DownloadProgress';
+import PlayStateButton from './store/page/PlayStateButton';
+import AppSettingsModal from './store/page/AppSettingsModal';
+import InstallationOptionsModal from './store/page/InstallationOptionsModal';
 
 interface Props extends RouteComponentProps<{ app: string }> { }
 
@@ -86,10 +85,11 @@ class Content extends Component<ContentProps, ContentState> {
                     </div>
                     <div className="foreground-container separator-border-dark-top">
                         <div id="playBar" className="px-4 py-2 d-flex align-items-center text-lighter separator-border-dark-bottom">
-                            <PlayStateControl app={this.props.app} />
+                            <PlayStateButton app={this.props.app} />
                             <Link id="shopPageLink" to={`/library/store/app/${this.props.app.key}`} className="d-flex align-items-center navigation-link-color-dimmed no-underline cursor-pointer">
                                 <span className="material-icons">shopping_bag</span>
                             </Link>
+                            <span id="appSettingsLink" className="material-icons ms-2 navigation-link-color-dimmed cursor-pointer">settings</span>
                         </div>
                         <div className="d-flex">
                             <div id="appFeed" className="flex-fill px-4 pb-3 pt-2 text-lighter">
@@ -110,30 +110,8 @@ class Content extends Component<ContentProps, ContentState> {
                         </div>
                     </div>
                 </div>
-                <div className="modal fade" id="installationOptionsModal" tabIndex={-1} aria-labelledby="installationOptionsModalLabel" aria-hidden="true">
-                    <div className="modal-dialog modal-lg modal-dialog-centered">
-                        <div className="modal-content">
-                            <div className="modal-header">
-                                <h5 className="modal-title text-lighter" id="installationOptionsModalLabel">Install {this.props.app.title}</h5>
-                                <button type="button" className="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                            </div>
-                            <div className="modal-body">
-                                <div className="mb-1">
-                                    <label htmlFor="installDirInput" className="form-label text-lighter">Installation directory</label>
-                                    <div className="input-group mb-1 custom-input-wrapper" aria-describedby="installDirHelp">
-                                        <input type="string" className="form-control custom-input text-lighter" id="installDirInput" placeholder="Installation directory..." aria-describedby="fileSelectorButton" />
-                                        <button id="fileSelectorButton" className="input-group-text custom-input">Choose folder...</button>
-                                    </div>
-                                    <div id="installDirHelp" className="form-text">Choose a directory in which LCLPLauncher should install the app into.</div>
-                                </div>
-                            </div>
-                            <div className="modal-footer">
-                                <button type="button" className="btn btn-secondary" data-bs-dismiss="modal">Close</button>
-                                <button type="button" id="installBtn" className="btn btn-primary">Install</button>
-                            </div>
-                        </div>
-                    </div>
-                </div>
+                <InstallationOptionsModal app={this.props.app} />
+                <AppSettingsModal />
             </div>
         );
     }
@@ -154,26 +132,22 @@ class Content extends Component<ContentProps, ContentState> {
             'animation': 'scale'
         });
 
-        const installDirInput = document.getElementById('installDirInput');
+        const appSettingsLink = document.getElementById('appSettingsLink');
+        if (appSettingsLink) {
+            tippy(appSettingsLink, {
+                'content': 'App settings',
+                'animation': 'scale'
+            });
 
-        DOWNLOADER.getDefaultInstallationDir(this.props.app).then(path => {
-            if (path && installDirInput) (installDirInput as HTMLInputElement).value = path;
-        }).catch(err => console.error(err));
-
-        const fileSelectorButton = document.getElementById('fileSelectorButton');
-        fileSelectorButton?.addEventListener('click', () => {
-            UTILITIES.chooseFiles({
-                title: 'Choose installation directory',
-                properties: ['openDirectory', 'promptToCreate', 'dontAddToRecent']
-            }).then(result => {
-                if (!result || result.canceled || !installDirInput) return;
-
-                const paths = result.filePaths;
-                if (paths.length !== 1) throw new Error('Only one file must be chosen');
-
-                (installDirInput as HTMLInputElement).value = result.filePaths[0];
-            }).catch(err => console.error('Error while choosing file:', err));
-        });
+            const appSettingsModalElement = document.getElementById('appSettingsModal');
+            if (appSettingsModalElement) {
+                appSettingsLink.addEventListener('click', () => {
+                    let instance = Modal.getInstance(appSettingsModalElement);
+                    if (!instance) instance = new Modal(appSettingsModalElement);
+                    instance.show();
+                });
+            }
+        }
     }
 
     componentDidUpdate() {
@@ -244,183 +218,6 @@ class Content extends Component<ContentProps, ContentState> {
 
         const appTitleBranding = document.querySelector('.app-title-branding');
         if (appTitleBranding) (appTitleBranding as HTMLElement).style.marginTop = `-${appTitleBranding.getBoundingClientRect().height}px`;
-    }
-}
-
-interface PlayState {
-    state?: AppState,
-    progress?: DownloadProgress
-}
-
-class PlayStateControl extends Component<ContentProps, PlayState> {
-    constructor(props: ContentProps) {
-        super(props);
-        this.state = {} as PlayState;
-        this.updateStatus();
-    }
-
-    render() {
-        switch (this.state.state) {
-            case undefined: return (
-                <>
-                    <button id="playBtn" className="px-4 btn btn-lg btn-secondary d-flex align-items-center" disabled>
-                        <LoadingSpinner className="app-btn-spinner" />
-                    </button>
-                    <div id="playDesc" className="ms-3 flex-fill">Loading...</div>
-                </>
-            );
-            case 'not-installed': return (
-                <>
-                    <button id="playBtn" className="px-4 btn btn-lg btn-primary">Install</button>
-                    <div id="playDesc" className="ms-3 flex-fill">Not yet installed</div>
-                </>
-            );
-            case 'ready-to-play': return (
-                <>
-                    <button id="playBtn" className="px-4 btn btn-lg btn-success">Play</button>
-                    <div id="playDesc" className="ms-3 flex-fill">Ready to play</div>
-                </>
-            );
-            case 'needs-update': return (
-                <>
-                    <button id="playBtn" className="px-4 btn btn-lg btn-info">Update</button>
-                    <div id="playDesc" className="ms-3 flex-fill">Needs to be updated</div>
-                </>
-            );
-            case 'installing': return (
-                <>
-                    <button id="playBtn" className="px-4 btn btn-lg btn-primary d-flex align-items-center" disabled>
-                        <LoadingSpinner className="spinner-border-sm progress-spinner" />
-                        <span className="ms-2">Installing</span>
-                        {this.state.progress ? (
-                            <span className="ms-1">{(this.state.progress.currentProgress * 100).toFixed(0)}%</span>
-                        ) : undefined}
-                    </button>
-                    <div id="playDesc" className="ms-3 flex-fill">Currently installing...</div>
-                </>
-            );
-            case 'updating': return (
-                <>
-                    <button id="playBtn" className="px-4 btn btn-lg btn-info d-flex align-items-center" disabled>
-                        <LoadingSpinner className="spinner-border-sm progress-spinner" />
-                        <span className="ms-2">Updating</span>
-                        {this.state.progress ? (
-                            <span className="ms-1">{(this.state.progress.currentProgress * 100).toFixed(0)}%</span>
-                        ) : undefined}
-                    </button>
-                    <div id="playDesc" className="ms-3 flex-fill">Currently updating...</div>
-                </>
-            );
-            case 'in-queue': return (
-                <>
-                    <button id="playBtn" className="px-4 btn btn-lg btn-info d-flex align-items-center" disabled>
-                        <LoadingSpinner className="spinner-border-sm progress-spinner" />
-                        <span className="ms-2">In queue</span>
-                    </button>
-                    <div id="playDesc" className="ms-3 flex-fill">Download pending...</div>
-                </>
-            );
-            default:
-                throw new Error(`Unimplemented state: '${this.state.state}'`);
-        }
-    }
-
-    updateStatus() {
-        DOWNLOADER.getAppStatus(this.props.app).then(state => {
-            if (!state) return; // clicked twice
-            this.setState({ state: state });
-        }).catch(err => console.error('Could not fetch app status:', err));
-    }
-
-    protected progressListeners: {
-        [type: string]: (event: InstallerEvent) => void
-    } = {};
-
-    componentDidMount() {
-        const playBtn = document.getElementById('playBtn');
-        playBtn?.addEventListener('click', () => {
-            switch (this.state.state) {
-                case 'not-installed':
-                    this.startInstallationOptions();
-                    break;
-                case 'needs-update':
-                    this.startUpdate();
-                    break;
-
-                default:
-                    break;
-            }
-        });
-
-        const installBtn = document.getElementById('installBtn');
-        const installationDirInput = document.getElementById('installDirInput');
-        installBtn?.addEventListener('click', () => {
-            if (!installationDirInput) return;
-
-            const path = (installationDirInput as HTMLInputElement).value.trim();
-            if (path.length <= 0) {
-                alert('Please choose installation directory first!');
-                return;
-            }
-
-            DOWNLOADER.isValidInstallationDir(path).then(valid => {
-                if (valid !== null) {
-                    this.getInstallationOptionsModal()?.hide();
-                    this.startInstallation(path);
-                }
-            }).catch(err => {
-                if (err instanceof Error && err.message === 'Operation cancelled.') return;
-                console.error(err);
-            });
-        });
-
-        installationProgressManager.addEventListener('update-state', this.progressListeners['update-state'] = event => {
-            if (!event.detail.currentState) throw new Error('On update-state: Current state is null');
-            this.setState({ state: event.detail.currentState });
-        });
-        installationProgressManager.addEventListener('update-progress', this.progressListeners['update-progress'] = event => {
-            if (!event.detail.progress) throw new Error('On update-progress: Progress is null');
-            this.setState({ progress: event.detail.progress });
-        });
-    }
-
-    componentWillUnmount() {
-        Object.entries(this.progressListeners).forEach(([type, listener]) => {
-            installationProgressManager.removeEventListener(type, listener)
-        });
-    }
-
-    getInstallationOptionsModal() {
-        const modalElement = document.getElementById('installationOptionsModal');
-        if (modalElement) {
-            const modalInstance = Modal.getInstance(modalElement);
-            return modalInstance ? modalInstance : new Modal(modalElement);
-        } else return null;
-    }
-
-    startInstallationOptions() {
-        this.getInstallationOptionsModal()?.show();
-    }
-
-    startUpdate() {
-        DOWNLOADER.getInstallationDir(this.props.app).then(installationDir => {
-            if (installationDir === undefined) this.updateStatus(); // installation dir got deleted since last state check
-            else if (installationDir !== null) this.startInstallation(installationDir);
-        }).catch(err => console.error('Could not fetch installation directory:', err));
-    }
-
-    startInstallation(installationDir: string) {
-        console.info(`Starting installation process of '${this.props.app.title}'...`);
-
-        DOWNLOADER.startInstallationProcess(this.props.app, installationDir).then(success => {
-            if (success === null) return; // Button clicked while installation process is running
-            if (success) {
-                console.info(`Installation of '${this.props.app.title}' has finished successfully.`);
-                this.updateStatus();
-            } else {
-                console.error(`Could not complete installation process of '${this.props.app.title}'.`);
-            }
-        }).catch(error => console.error('Could not finish the installation process:', error));
     }
 }
 
