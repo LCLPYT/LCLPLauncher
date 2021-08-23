@@ -133,10 +133,21 @@ interface ToastProps {
 }
 
 abstract class AbstractToastComponent<State = {}> extends Component<ToastProps, State> {
+    protected static timerUpdateInterval = 7000;
+    protected lastTimeStep = 0;
+
     render() {
-        const remainingDelay = this.props.memory.toast.autoHideDelay ? this.props.memory.toast.autoHideDelay - new Date().getTime() + this.props.memory.createdAt : undefined;
+        const age = new Date().getTime() - this.props.memory.createdAt;
+
+        const remainingDelay = this.props.memory.toast.autoHideDelay ? this.props.memory.toast.autoHideDelay - age : undefined;
         const alreadyShown = this.props.memory.alreadyShown ? true : false;
         this.props.memory.alreadyShown = true;
+
+        let ageText = 'Just now';
+        const step = Number(Math.ceil(age / AbstractToastComponent.timerUpdateInterval).toFixed(0));
+        this.lastTimeStep = step;
+        if (this.lastTimeStep > 1) ageText = `${(age / 1000).toFixed(0)} seconds ago`
+
         return (
             <div id={`toast${this.props.memory.toast.id}`} className={`toast${alreadyShown ? ' show fade' : ''}`} role="alert" aria-live="assertive" aria-atomic="true"
                 data-bs-autohide={this.props.memory.toast.noAutoHide ? 'false' : 'true'}
@@ -144,7 +155,7 @@ abstract class AbstractToastComponent<State = {}> extends Component<ToastProps, 
                 <div className="toast-header">
                     {this.props.memory.toast.icon ? <span className="material-icons toast-icon text-light">{this.props.memory.toast.icon}</span> : undefined}
                     <strong className="ms-1 me-auto text-light">{this.props.memory.toast.title}</strong>
-                    <small className="text-muted">2 seconds ago</small>
+                    <small className="text-muted">{ageText}</small>
                     <button type="button" className="btn-close" data-bs-dismiss="toast" aria-label="Close"></button>
                 </div>
                 <div className="toast-body pt-1 text-lighter">{this.getBody()}</div>
@@ -153,10 +164,15 @@ abstract class AbstractToastComponent<State = {}> extends Component<ToastProps, 
     }
 
     hiddenListener?: () => void;
+    updateTimer?: number;
 
     componentDidMount() {
         const toast = document.getElementById(`toast${this.props.memory.toast.id}`);
         toast?.addEventListener('hidden.bs.toast', this.hiddenListener = () => this.props.onDestroy());
+
+        this.updateTimer = window.setInterval(() => {
+            this.setState({});
+        }, AbstractToastComponent.timerUpdateInterval);
     }
 
     componentWillUnmount() {
@@ -164,6 +180,7 @@ abstract class AbstractToastComponent<State = {}> extends Component<ToastProps, 
             const toast = document.getElementById(`toast${this.props.memory.toast.id}`);
             toast?.removeEventListener('hidden.bs.toast', this.hiddenListener);
         }
+        if (this.updateTimer !== undefined) clearInterval(this.updateTimer);
     }
 
     abstract getBody(): JSX.Element;
