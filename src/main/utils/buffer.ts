@@ -76,13 +76,19 @@ export namespace BufferWrapper {
 export namespace BufferUnwrapper {
     export type BufferSupplier = (bytes: number) => Buffer | null
 
-    export function unwrapString(bufferSupplier: BufferSupplier) {
-        const lengthBuffer = <Buffer | null> bufferSupplier(2); // 16 bits
-        if (lengthBuffer === null) throw ERR_EOS;
-        const length = lengthBuffer.readInt16LE();
-        const buffer = <Buffer | null> bufferSupplier(length);
-        if (buffer === null) throw ERR_EOS;
-        return buffer.toString('utf8');
+    export function unwrapString(supplier: Buffer | BufferSupplier) {
+        if (isBuffer(supplier)) {
+            const length = supplier.readInt16LE();
+            const buffer = supplier.subarray(length);
+            return buffer.toString('utf8');
+        } else {
+            const lengthBuffer = <Buffer | null> supplier(2); // 16 bits
+            if (lengthBuffer === null) throw ERR_EOS;
+            const length = lengthBuffer.readInt16LE();
+            const buffer = <Buffer | null> supplier(length);
+            if (buffer === null) throw ERR_EOS;
+            return buffer.toString('utf8');
+        }
     }
 
     export function unwrapBoolean(bufferSupplier: BufferSupplier) {
@@ -90,5 +96,9 @@ export namespace BufferUnwrapper {
         if (buffer === null) throw ERR_EOS;
         const boolNumber = buffer.readInt8();
         return boolNumber === 1;
+    }
+
+    function isBuffer(bufferSupplier: Buffer | BufferSupplier): bufferSupplier is Buffer {
+        return (<Buffer> bufferSupplier).write !== undefined;
     }
 }

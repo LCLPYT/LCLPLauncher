@@ -44,6 +44,14 @@ export function getInstallerAppDir(app: App | number) {
     else return Path.resolve(electronApp.getPath('userData'), '.installer', 'apps', app.id.toString());
 }
 
+export function getAppUninstallerDir(appId: number) {
+    return Path.join(getInstallerAppDir(appId), 'uninstall');
+}
+
+export function getAppUninstallFile(appId: number, uninstallId: string) {
+    return Path.join(getAppUninstallerDir(appId), uninstallId);
+}
+
 export function getAppArtifactsDir(appId: number) {
     return Path.join(getInstallerAppDir(appId), 'artifacts');
 }

@@ -5,18 +5,14 @@ import * as Path from 'path';
 import * as fs from 'fs';
 import App from "../../common/types/App";
 import Installation, { Artifact, SegmentedPath } from "../types/Installation";
-import { exists, getAppArtifactsDir, getInstallerAppDir, resolveSegmentedPath, rmdirRecusive } from "../utils/fshelper";
+import { exists, getInstallerAppDir, resolveSegmentedPath, rmdirRecusive } from "../utils/fshelper";
 import { PostActionHandle, PostActionWrapper, ActionFactory, ArtifactActionArgument, GeneralActionArgument } from "./postActions";
-import { ArtifactType, TrackerReader, ArtifactTrackerVariables, TrackerHeader } from "./tracker/ArtifactTracker";
-import { SingleFileTracker } from "./tracker/SingleFileTracker";
-import { ExtractedArchiveTracker } from "./tracker/ExtractedArchiveTracker";
-import { withBufferReadMethods } from "../utils/buffer";
+import { ArtifactTrackerVariables } from "./tracker/ArtifactTracker";
 import { AppTracker } from "./tracker/AppTracker";
 import * as semver from 'semver';
 import { getAppVersion } from "../../common/utils/env";
 import { DepedencyAccessor, downloadDependencies } from "./dependencies";
 import { DependencyFragment } from "../types/Dependency";
-import { ExistingFileTracker } from "./tracker/ExistingFileTracker";
 import { resolveUrl } from "./urlResolver";
 import { getBackendHost } from "../../common/utils/settings";
 import AppState from "../../common/types/AppState";
@@ -24,6 +20,8 @@ import { InstalledApplication } from "../database/models/InstalledApplication";
 import { BrowserWindow, dialog } from "electron";
 import { DOWNLOADER, TOASTS } from "../utils/ipc";
 import { ToastType } from "../../common/types/Toast";
+import { uninstallApp } from "./uninstall";
+import { createReader } from "./tracker/ArtifactTrackers";
 
 const queue: [app: App, dir: string, callback: (err: any) => void][] = [];
 let currentInstaller: Installer | null = null;
@@ -77,35 +75,7 @@ export async function validateInstallationDir(dir: string) {
     }
 }
 
-export async function uninstallApp(app: App) {
-    const installedApp = await InstalledApplication.query().where('app_id', app.id).first();
-    if (!installedApp) return;
 
-    const installationDir = installedApp.path;
-
-    const vars: ArtifactTrackerVariables = {
-        installationDir: installationDir,
-        tmpDir: Path.join(installationDir, '.tmp')
-    };
-
-    const artifactTrackerDir = getAppArtifactsDir(app.id);
-    const files = await fs.promises.readdir(artifactTrackerDir);
-    for (const file of files) {
-        const reader = await createReader(app.id, file, vars).catch(() => undefined); // file is equal to artifact id; in case of an error, return undefined
-        if (!reader) return; // if there was an error, do nothing
-
-        console.log(`Deleting artifact '${file}'...`);
-        await reader.deleteEntries(reader, true);
-        console.log(`Artifact '${file}' deleted successfully.`);
-    }
-
-    await InstalledApplication.query().where('app_id', app.id).delete(); // remove from database
-
-    // TODO clean packages
-
-    // update state
-    DOWNLOADER.updateInstallationState('not-installed');
-}
 
 async function fetchInstallation(): Promise<Installation> {
     const headers = new Headers();
@@ -514,64 +484,4 @@ export class Installer {
     public toActualPath(path: SegmentedPath) {
         return resolveSegmentedPath(this.installationDirectory, path);
     }
-}
-
-type TrackerFactory = (artifactId: string, appId: number, vars: ArtifactTrackerVariables, reuseStream?: fs.ReadStream) => TrackerReader;
-
-const TRACKER_READERS = new Map<ArtifactType, TrackerFactory>([
-    [
-        ArtifactType.SINGLE_FILE,
-        (artifact, app, vars, reuseStream) => new (SingleFileTracker.Reader.getConstructor())(artifact, app, vars, reuseStream)
-    ],
-    [
-        ArtifactType.EXTRACTED_ARCHIVE,
-        (artifact, app, vars, reuseStream) => new (ExtractedArchiveTracker.Reader.getConstructor())(artifact, app, vars, reuseStream)
-    ],
-    [
-        ArtifactType.EXISTING_FILE,
-        (artifact, app, vars, reuseStream) => new (ExistingFileTracker.Reader.getConstructor())(artifact, app, vars, reuseStream)
-    ]
-]);
-
-/** Tracker reader to determine tracker type */
-class DummyTrackerReader extends TrackerReader {
-    public static getConstructor() {
-        return withBufferReadMethods(DummyTrackerReader);
-    }
-
-    public async toActualReader<T extends TrackerReader>(): Promise<T> {
-        await this.openFile();
-        let header: TrackerHeader | undefined;
-        try {
-            header = this.readHeader();
-        } catch (err) {
-            await this.deleteFile();
-            throw err;
-        }
-
-        if (!header) {
-            await this.deleteFile();
-            throw new Error('Could not read header.');
-        }
-
-        const readerFactory = TRACKER_READERS.get(header.type);
-        if (!readerFactory) throw new TypeError(`No reader factory defined for artifact type '${header.type}'`);
-
-        return <T>readerFactory(this.artifactId, this.appId, this.vars, this.stream); // reuse this stream, therefore do not close the file here.
-    }
-    public isArtifactUpToDate(): Promise<boolean> {
-        throw new Error("Method not implemented.");
-    }
-    public readUntilEntries(): Promise<void> {
-        throw new Error("Method not implemented.");
-    }
-    protected cloneThisReader(): TrackerReader {
-        throw new Error("Method not implemented.");
-    }
-}
-
-async function createReader<T extends TrackerReader>(appId: number, artifactId: string, vars: ArtifactTrackerVariables): Promise<T> {
-    const constructor = DummyTrackerReader.getConstructor();
-    const dummyReader = new constructor(artifactId, appId, vars);
-    return await dummyReader.toActualReader<T>();
 }

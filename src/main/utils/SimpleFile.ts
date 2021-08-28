@@ -47,7 +47,7 @@ export namespace SimpleFile {
         }
     
         protected closeFile() {
-            if (!this.stream) throw new Error('File is not opened (write)');
+            if (!this.stream) return; // already closed
             this.stream.close();
             this.stream = undefined;
         }
@@ -80,7 +80,7 @@ export namespace SimpleFile {
         }
     
         public closeFile(): void {
-            if (!this.stream) throw new Error('File is not opened (read)');
+            if (!this.stream) return; // file is already closed
             this.stream.close();
             this.stream = undefined;
         }

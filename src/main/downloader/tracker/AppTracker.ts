@@ -46,6 +46,7 @@ export namespace AppTracker {
         public async writeAppTracker() {
             await this.openFile();
             await this.writeHeader();
+            this.closeFile();
         }
     }
     

@@ -15,6 +15,8 @@ import { getBase64DataURL } from "../utils/resources";
 import { DepedencyAccessor } from "./dependencies";
 import execa from "execa";
 import { ExistingFileTracker } from "./tracker/ExistingFileTracker";
+import { UninstallMCProfile } from "./tracker/uninstall/UninstallMCProfile";
+import { UninstallTracker } from "./tracker/uninstall/UninstallTracker";
 
 export type GeneralActionArgument = {
     app: App;
@@ -214,6 +216,9 @@ export namespace ActionFactory {
 
                 await backupFile(profilesFile);
                 await fs.promises.writeFile(profilesFile, JSON.stringify(launcherProfiles, undefined, 2));
+
+                // write an uninstall tracker
+                await UninstallTracker.writeUninstallTracker(new (UninstallMCProfile.Writer.getConstructor())(options.id, arg.app.id, {}));
 
                 console.log(`Launcher profile '${options.name}' added.`);
             }, child);

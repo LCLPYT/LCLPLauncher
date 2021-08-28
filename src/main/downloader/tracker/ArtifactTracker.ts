@@ -116,7 +116,7 @@ export abstract class TrackerReader extends SimpleFile.AbstractReader<ArtifactTr
         if (reuseReader && !atBeginning) {
             // assumes the stream is at the beginning of the entries
             await deleteItems(reuseReader);
-            // leave the closing of the file to caller
+            this.closeFile();
         } else {
             // create a new reader and read it to the entries offset
             const reader = reuseReader ? reuseReader : this.cloneThisReader();
