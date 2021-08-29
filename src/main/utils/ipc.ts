@@ -5,7 +5,7 @@ import AppState from "../../common/types/AppState";
 import DownloadProgress from "../../common/types/DownloadProgress";
 import Toast from "../../common/types/Toast";
 import { ACTIONS, GenericIPCActionHandler, GenericIPCHandler } from "../../common/utils/ipc";
-import { getAppState, getInstallationDirectory, validateInstallationDir, startInstallationProcess } from "../downloader/downloader";
+import { getAppState, getInstallationDirectory, validateInstallationDir, startInstallationProcess, getUninstalledDependencies } from "../downloader/downloader";
 import { uninstallApp } from "../downloader/uninstall";
 import { getOrCreateDefaultInstallationDir } from "./fshelper";
 import { addToLibary, getLibraryApps, isInLibrary } from "./library";
@@ -133,6 +133,12 @@ export const DOWNLOADER = registerHandler(new class extends IPCActionHandler {
                 uninstallApp(args[0])
                     .then(() => event.reply(null))
                     .then(err => event.reply(err));
+                break;
+            case ACTIONS.downloader.getUninstalledDependencies:
+                if (args.length < 1) throw new Error('App argument is missing');
+                getUninstalledDependencies(args[0])
+                    .then(deps => event.reply(deps))
+                    .catch(err => event.reply(null, err));
                 break;
             default:
                 throw new Error(`Action '${action}' not implemented.`);

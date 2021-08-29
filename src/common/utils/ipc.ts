@@ -37,7 +37,8 @@ export const ACTIONS = {
         getDefaultInstallationDir: 'get-default-installation-dir',
         updateInstallationState: 'update-installation-state',
         updateInstallationProgress: 'update-installation-progress',
-        uninstall: 'uninstall'
+        uninstall: 'uninstall',
+        getUninstalledDependencies: 'get-uninstalled-dependencies'
     },
     utilities: {
         chooseFile: 'choose-file'

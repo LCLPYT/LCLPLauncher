@@ -1,6 +1,7 @@
 import { ipcRenderer } from "electron";
 import { IpcRendererEvent } from "electron/renderer";
 import App from "../../common/types/App";
+import AppDependency from "../../common/types/AppDependency";
 import AppState from "../../common/types/AppState";
 import { ACTIONS, GenericIPCActionHandler, GenericIPCHandler } from "../../common/utils/ipc";
 import { updateInstallationProgress, updateInstallationState } from "./downloads";
@@ -117,6 +118,10 @@ export const DOWNLOADER = registerHandler(new class extends IPCActionHandler {
         resolve: () => void,
         reject: (error: any) => void
     }
+    protected getUninstalledDependenciesCB?: {
+        resolve: (deps: AppDependency[]) => void,
+        reject: (error: any) => void
+    };
 
     protected onAction(action: string, _event: Electron.IpcRendererEvent, args: any[]): void {
         switch (action) {
@@ -182,6 +187,16 @@ export const DOWNLOADER = registerHandler(new class extends IPCActionHandler {
                     if (err) this.uninstallCB.reject(err);
                     else this.uninstallCB.resolve();
                 } else console.warn('No callback defined for', ACTIONS.downloader.uninstall);
+                break;
+            case ACTIONS.downloader.getUninstalledDependencies:
+                if (args.length < 1) throw new Error('Dependencies argument is missing.');
+                if (this.getUninstalledDependenciesCB) {
+                    const deps: AppDependency[] | null = args[0];
+                    if (deps) this.getUninstalledDependenciesCB.resolve(deps);
+                    else if (args.length >= 2) this.getUninstalledDependenciesCB.reject(args[1]);
+                    else this.getUninstalledDependenciesCB.reject(new Error('No further information provided'));
+                    this.getUninstalledDependenciesCB = undefined;
+                } else console.warn('No callback defined for', ACTIONS.downloader.getUninstalledDependencies);
                 break;
             default:
                 throw new Error(`Action '${action}' not implemented.`);
@@ -251,7 +266,17 @@ export const DOWNLOADER = registerHandler(new class extends IPCActionHandler {
             this.sendAction(ACTIONS.downloader.uninstall, app);
         });
     }
-    
+
+    public getUninstalledDependencies(app: App): Promise<AppDependency[] | null> {
+        if (this.getUninstalledDependenciesCB) return Promise.resolve(null);
+        return new Promise((resolve, reject) => {
+            this.getUninstalledDependenciesCB = {
+                resolve: deps => resolve(deps),
+                reject: err => reject(err)
+            };
+            this.sendAction(ACTIONS.downloader.getUninstalledDependencies, app);
+        });
+    }
 }('downloader'));
 
 export const UTILITIES = registerHandler(new class extends IPCActionHandler {

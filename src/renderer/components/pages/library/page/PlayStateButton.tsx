@@ -3,6 +3,7 @@ import React, { Component } from 'react';
 import App from "../../../../../common/types/App";
 import AppState from "../../../../../common/types/AppState";
 import DownloadProgress from "../../../../../common/types/DownloadProgress";
+import { setDependencies } from '../../../../utils/dependencies';
 import { installationProgressManager, InstallerEvent } from '../../../../utils/downloads';
 import { DOWNLOADER } from '../../../../utils/ipc';
 import LoadingSpinner from '../../../utility/LoadingSpinner';
@@ -109,7 +110,6 @@ class PlayStateButton extends Component<ContentProps, PlayState> {
                 case 'needs-update':
                     this.startUpdate();
                     break;
-
                 default:
                     break;
             }
@@ -152,7 +152,7 @@ class PlayStateButton extends Component<ContentProps, PlayState> {
             installationProgressManager.removeEventListener(type, listener)
         });
     }
-    
+
     getInstallationOptionsModal() {
         const modalElement = document.getElementById('installationOptionsModal');
         if (modalElement) {
@@ -166,13 +166,31 @@ class PlayStateButton extends Component<ContentProps, PlayState> {
     }
 
     startUpdate() {
+        DOWNLOADER.getUninstalledDependencies(this.props.app).then(uninstalledDeps => {
+            if (!uninstalledDeps) return;
+            if (uninstalledDeps.length > 0) {
+                setDependencies(uninstalledDeps, true, () => this.startActualUpdate());
+            } else this.startActualUpdate();
+        }).catch(err => console.error(err));
+    }
+
+    startActualUpdate() {
         DOWNLOADER.getInstallationDir(this.props.app).then(installationDir => {
             if (installationDir === undefined) this.updateStatus(); // installation dir got deleted since last state check
-            else if (installationDir !== null) this.startInstallation(installationDir);
+            else if (installationDir !== null) this.startActualInstallation(installationDir);
         }).catch(err => console.error('Could not fetch installation directory:', err));
     }
 
     startInstallation(installationDir: string) {
+        DOWNLOADER.getUninstalledDependencies(this.props.app).then(uninstalledDeps => {
+            if (!uninstalledDeps) return;
+            if (uninstalledDeps.length > 0) {
+                setDependencies(uninstalledDeps, true, () => this.startActualInstallation(installationDir));
+            } else this.startActualInstallation(installationDir);
+        }).catch(err => console.error(err));
+    }
+
+    startActualInstallation(installationDir: string) {
         console.info(`Starting installation process of '${this.props.app.title}'...`);
 
         DOWNLOADER.startInstallationProcess(this.props.app, installationDir).then(success => {

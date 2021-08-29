@@ -13,6 +13,7 @@ import { Modal } from 'bootstrap';
 import PlayStateButton from './page/PlayStateButton';
 import AppSettingsModal from './page/AppSettingsModal';
 import InstallationOptionsModal from './page/InstallationOptionsModal';
+import DependenciesAlertModal from './page/DependenciesAlertModal';
 
 interface Props extends RouteComponentProps<{ app: string }> { }
 
@@ -112,6 +113,7 @@ class Content extends Component<ContentProps, ContentState> {
                 </div>
                 <InstallationOptionsModal app={this.props.app} />
                 <AppSettingsModal app={this.props.app} />
+                <DependenciesAlertModal app={this.props.app} />
             </div>
         );
     }

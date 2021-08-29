@@ -11,7 +11,6 @@ import { ArtifactTrackerVariables } from "./tracker/ArtifactTracker";
 import { AppTracker } from "./tracker/AppTracker";
 import * as semver from 'semver';
 import { getAppVersion } from "../../common/utils/env";
-import { DepedencyAccessor, downloadDependencies } from "./dependencies";
 import { DependencyFragment } from "../types/Dependency";
 import { resolveUrl } from "./urlResolver";
 import { getBackendHost } from "../../common/utils/settings";
@@ -22,6 +21,7 @@ import { DOWNLOADER, TOASTS } from "../utils/ipc";
 import { ToastType } from "../../common/types/Toast";
 import { uninstallApp } from "./uninstall";
 import { createReader } from "./tracker/ArtifactTrackers";
+import { Dependencies } from "./dependencies";
 
 const queue: [app: App, dir: string, callback: (err: any) => void][] = [];
 let currentInstaller: Installer | null = null;
@@ -42,7 +42,7 @@ export async function getAppState(app: App): Promise<AppState> {
 
     if (currentInstaller) return currentIsUpdating ? 'updating' : 'installing';
 
-    const installation = await fetchInstallation();
+    const installation = await fetchInstallation(app);
     const installer = await createAndPrepareInstaller(app, installedApp.path, installation)
     
     return installer.isUpToDate() ? 'ready-to-play' : 'needs-update';
@@ -75,14 +75,12 @@ export async function validateInstallationDir(dir: string) {
     }
 }
 
-
-
-async function fetchInstallation(): Promise<Installation> {
+async function fetchInstallation(app: App): Promise<Installation> {
     const headers = new Headers();
     headers.append('pragma', 'no-cache');
     headers.append('cache-control', 'no-cache');
 
-    const [err, result] = await fetch(`${getBackendHost()}/api/lclplauncher/app-installer/ls5`, {
+    const [err, result] = await fetch(`${getBackendHost()}/api/lclplauncher/app-installer/${app.key}`, {
         headers: headers
     }).then(response => response.text())
         .then(text => jsoncSafe.parse(text));
@@ -90,6 +88,11 @@ async function fetchInstallation(): Promise<Installation> {
     if (err) throw err;
 
     return result;
+}
+
+export async function getUninstalledDependencies(app: App) {
+    const installation = await fetchInstallation(app);
+    return installation && installation.dependencies ? await Dependencies.getUninstalledDependencies(installation.dependencies) : [];
 }
 
 export async function startInstallationProcess(app: App, installationDir: string) {
@@ -107,12 +110,12 @@ export async function startInstallationProcess(app: App, installationDir: string
 
     console.log(`Starting installation process of '${app.title}'...`);
 
-    const installation = await fetchInstallation();
+    const installation = await fetchInstallation(app);
 
     let dependencyStructure: DependencyFragment[] | undefined;
     if (installation.dependencies) {
         console.log('Checking dependencies...');
-        dependencyStructure = await downloadDependencies(installation.dependencies);
+        dependencyStructure = await Dependencies.downloadDependencies(installation.dependencies);
         console.log('Dependencies are now up-to-date.');
     }
 
@@ -401,7 +404,7 @@ export class Installer {
                 result: downloadedPath,
                 app: this.app,
                 trackerVars: this.getArtifactTrackerVars(),
-                dependencyAccessor: new DepedencyAccessor(this.dependencyStructure)
+                dependencyAccessor: new Dependencies.DepedencyAccessor(this.dependencyStructure)
             });
         }
 

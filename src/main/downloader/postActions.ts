@@ -12,11 +12,11 @@ import App from "../../common/types/App";
 import { chooseForPlatform, forPlatform, osHandler } from "../utils/oshooks";
 import { parseProfilesFromJson, Profile } from "../types/MCLauncherProfiles";
 import { getBase64DataURL } from "../utils/resources";
-import { DepedencyAccessor } from "./dependencies";
 import execa from "execa";
 import { ExistingFileTracker } from "./tracker/ExistingFileTracker";
 import { UninstallMCProfile } from "./tracker/uninstall/UninstallMCProfile";
 import { UninstallTracker } from "./tracker/uninstall/UninstallTracker";
+import { Dependencies } from "./dependencies";
 
 export type GeneralActionArgument = {
     app: App;
@@ -27,7 +27,7 @@ export type ArtifactActionArgument = GeneralActionArgument & {
     artifact: Artifact;
     trackerVars: ArtifactTrackerVariables;
     tracker?: TrackerWriter;
-    dependencyAccessor: DepedencyAccessor;
+    dependencyAccessor: Dependencies.DepedencyAccessor;
 }
 
 export class PostActionWrapper<T extends GeneralActionArgument> {
