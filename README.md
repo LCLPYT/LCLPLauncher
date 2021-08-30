@@ -2,13 +2,10 @@
 [![Open in Visual Studio Code](https://open.vscode.dev/badges/open-in-vscode.svg)](https://open.vscode.dev/LCLPYT/LCLPLauncher)
 <br>
 A manager for applications provided by LCLPNetwork.
-
-<hr>
+<img align="right" src="https://i.imgur.com/VvTfYMJ.gif" alt="preview">
 
 ## For end-users
 Download precompiled executables for your operating system from the official [download page](https://lclpnet.work/lclplauncher).
-
-<hr>
 
 ## For developers
 ### Building the app yourself
