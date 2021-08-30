@@ -4,12 +4,8 @@
 A manager for applications provided by LCLPNetwork.
 <img align="right" src="https://i.imgur.com/VvTfYMJ.gif" alt="preview">
 
-<hr>
-
 ## For end-users
 Download precompiled executables for your operating system from the official [download page](https://lclpnet.work/lclplauncher).
-
-<hr>
 
 ## For developers
 ### Building the app yourself
