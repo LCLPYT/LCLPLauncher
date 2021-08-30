@@ -1,0 +1,25 @@
+// prevent text selection on non input elements
+:not(input):not(textarea),
+:not(input):not(textarea)::after,
+:not(input):not(textarea)::before {
+    -webkit-user-select: none;
+    user-select: none;
+    cursor: default;
+}
+
+a:not([draggable=true]), img:not([draggable=true]) {
+    -webkit-user-drag: none;
+}
+
+a[href^="http://"],
+a[href^="https://"],
+a[href^="ftp://"] {
+    -webkit-user-drag: auto;
+}
+
+.cursor-pointer {
+    cursor: pointer;
+    * {
+        cursor: pointer;
+    }
+}

@@ -1,0 +1,28 @@
+// navigation link coloring
+$navigation-link-color: rgba(255, 255, 255, 0.6);
+
+.navigation-link-color {
+    color: $navigation-link-color;
+
+    &:hover {
+        color: #fff;
+        transition: color 0.15s ease-in-out, background-color 0.15s ease-in-out, border-color 0.15s ease-in-out;
+    }
+
+    &.active {
+        color: #fff;
+    }
+}
+
+.navigation-link-color-dimmed {
+    color: $navigation-link-color;
+
+    &:hover {
+        color: rgba(255, 255, 255, 0.85);
+        transition: color 0.15s ease-in-out, background-color 0.15s ease-in-out, border-color 0.15s ease-in-out;    
+    }
+
+    &.active {
+        color: rgba(255, 255, 255, 0.9);
+    }
+}

@@ -1,0 +1,78 @@
+/* General application style */
+
+@import "bootstrap/bootstrap"; // include bootstrap css
+
+// components
+@import "components/titlebar";
+@import "components/scrollbar";
+@import "components/navigation";
+@import "components/selections";
+
+// general elements
+html {
+    height: 100%;
+}
+
+body {
+    //border: 1px solid #2D2D2D;
+    overflow-y: hidden;
+    margin: 0px;
+    height: 100%;
+}
+
+// specific elements (id)
+#app {
+    height: calc(100% - 32px);
+    margin-top: 32px;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+}
+
+#pageContent {
+    flex-grow: 1;
+    overflow-y: auto;
+}
+
+#toastContainer {
+    position: fixed;
+    right: 16px;
+    bottom: 8px;
+    z-index: 99;
+}
+
+.toast-icon {
+    font-size: 18px;
+}
+
+.toast-progress {
+    background-color: darken($gray-700, 5%);
+}
+
+// general classes
+.dragarea {
+    -webkit-app-region: drag;
+}
+
+.nodragarea {
+    -webkit-app-region: no-drag;
+}
+
+.btn-nostyle {
+    padding: 6px 12px 6px 12px;
+    background-color: transparent;
+    border: none;
+}
+
+.sidemenu-item {
+    font-size: 20px;
+}
+
+.ws-pre-line {
+    white-space: pre-line;
+}
+
+// type specific classes
+a.no-underline {
+    text-decoration: none;
+}

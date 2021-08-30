@@ -1,0 +1,125 @@
+@import '../bootstrap/variables';
+
+form.aa-Form {
+    transition: border-color 0.2s ease;
+    
+    &:focus-within {
+        border-color: rgba(var(--aa-primary-color-rgb), 0.85);
+        box-shadow: none;
+    }
+}
+
+$searchPrimaryColor: $gray-400;
+$searchHeight: 44px;
+
+#autocomplete {
+    border: 1px solid $gray-600;
+    border-radius: 3px;
+    background-color: $gray-700;
+    transition: border-color 0.15s ease-in-out, 
+        box-shadow 0.1s ease-in-out,
+        border-radius 0.2s ease-in-out;
+    z-index: 2;
+    position: relative;
+
+    &:focus-within {
+        border-color: rgba($secondary, 0.85);
+        box-shadow: 0 0 0 0.2rem rgba($primary, 0.85);
+    }
+}
+
+.ac-wrapper-prefix {
+    height: $searchHeight;
+    display: flex;
+    align-items: center;
+    flex-shrink: 0;
+    order: 1;
+}
+
+.ac-submit {
+    background: none;
+    margin: 0;
+    border: 0;
+    padding: 1px 11px 1px 16px;
+}
+
+.ac-search-icon {
+    position: relative;
+    top: 1px;
+    color: $searchPrimaryColor;
+}
+
+.ac-wrapper {
+    order: 3;
+    position: relative;
+    width: 100%;
+}
+
+.ac-input {
+    background: none;
+    border: 0;
+    color: $gray-500;
+    font: inherit;
+    height: $searchHeight;
+    padding: 0;
+    width: 100%;
+
+    &:focus {
+        box-shadow: none;
+        outline: none;
+    }
+}
+
+.ac-wrapper-suffix {
+    display: flex;
+    align-items: center;
+    height: $searchHeight;
+    order: 4;
+}
+
+.ac-clear {
+    align-items: center;
+    background: none;
+    margin: 0;
+    border: 0;
+    padding: 0px 12px;
+}
+
+.ac-clear-icon {
+    color: rgba($gray-500, 0.6);
+    width: 20px;
+}
+
+a.list-group-item:first-child {
+    border-top: 0;
+    border-top-left-radius: 0;
+    border-top-right-radius: 0;
+    transition: margin-top 0.1s ease-in-out;
+}
+
+a.list-group-item:first-child.is-offset {
+    margin-top: 0.2rem;
+}
+
+#autocomplete.ac-has-items {
+    &:not(:focus-within) {
+        border-bottom-left-radius: 0;
+        border-bottom-right-radius: 0;
+    }
+}
+
+#acItems {
+    z-index: 1;
+}
+
+#acItems .list-group-item {
+    background-color: $gray-700;
+    border-color: $gray-600;
+    transition: background-color .1s ease-in-out,
+        border-color .1s ease-in-out;
+
+    &:hover {
+        background-color: lighten($gray-700, 5%);
+        border-color: lighten($gray-600, 5%);
+    }
+}

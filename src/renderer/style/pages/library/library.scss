@@ -1,0 +1,71 @@
+@import "../../bootstrap/variables.scss";
+
+@font-face {
+    font-family: "Poppins";
+    src: url("../../fonts/Poppins-Bold.ttf") format("truetype");
+}
+
+.card-banner-wrapper {
+    aspect-ratio: 2 / 3;
+    width: 100%;
+    height: auto;
+    max-width: 220px;
+    max-height: 330px;
+    overflow: hidden;
+}
+
+.card-banner {
+    aspect-ratio: 2 / 3;
+    width: 100%;
+    height: auto;
+    max-width: 220px;
+    max-height: 330px;
+    transition: transform .2s ease-in-out;
+
+    &.active {
+        transform: scale(1.05);
+    }
+}
+
+.section-seperator {
+    min-height: 1px;
+}
+
+.section-desc {
+    font-size: 15px;
+}
+
+.card-wrapper {
+    position: relative;
+}
+
+.card-overlay-bottom {
+    position: absolute;
+    background-color: rgba($gray-700, 0.75);
+    border-bottom-left-radius: 0.25rem;
+    border-bottom-right-radius: 0.25rem;
+    right: 0;
+    bottom: -40px;
+    left: 0;
+    height: 40px;
+    z-index: 2;
+    font-family: Poppins;
+    transition: bottom .3s ease-in-out, color .2s ease;
+    color: $gray-400;
+
+    &:hover {
+        color: lighten($gray-400, $amount: 10%);
+    }
+
+    &.wrapper-hover {
+        bottom: 0;
+    }
+}
+
+.hmin-100 {
+    min-height: 100%;
+}
+
+.centered-info {
+    font-size: 22px;
+}

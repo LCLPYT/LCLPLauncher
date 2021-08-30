@@ -1,0 +1,41 @@
+#featured-description {
+    -webkit-transition: opacity 0.3s ease-in-out;
+    -moz-transition: opacity 0.3s ease-in-out;
+    -ms-transition: opacity 0.3s ease-in-out;
+    -o-transition: opacity 0.3s ease-in-out;
+    transition: opacity 0.3s ease-in-out;
+}
+
+.no-border {
+    &.card-footer {
+        border-top: 0;
+    }
+    &.card-header {
+        border-bottom: 0;
+    }
+}
+
+.pointer-click {
+    cursor: pointer;
+}
+
+span.action-card-icon {
+    font-size: 85px;
+}
+
+.action-card {
+    transition: .2s;
+}
+
+.action-card:hover {
+    color: rgba(255, 255, 255, 0.85);
+    transform: scale(1.05);
+}
+
+.featured-banner {
+    transition: .75s;
+}
+
+.featured-banner:hover {
+    transform: scale(1.1);
+}

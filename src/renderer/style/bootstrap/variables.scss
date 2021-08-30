@@ -1,0 +1,24 @@
+/* Colors */
+$gray-600: #5b6874;
+$gray-700: #2f353a;
+$gray-800: #24292E;
+$gray-900: #1F2428;
+
+/* Themes */
+$dark: $gray-900;
+
+/* Components */
+// Body
+$body-bg: $gray-800;
+
+// Cards
+$card-bg: $gray-700;
+
+// Offcanvas
+$offcanvas-bg-color: $dark;
+$offcanvas-border-color: lighten($offcanvas-bg-color, 5%);
+
+// List group
+$list-group-border-color: lighten($dark, 10%);
+
+@import "~bootswatch/dist/darkly/variables";

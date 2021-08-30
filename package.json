@@ -1,30 +1,88 @@
 {
   "name": "lclplauncher",
-  "version": "1.4.3",
-  "description": "A manager for LCLP's environments.",
-  "main": "index.js",
-  "scripts": {
-    "start": "electron .",
-    "postinstall": "electron-builder install-app-deps",
-    "pack": "electron-builder --dir",
-    "dist": "electron-builder"
-  },
-  "author": {
-    "name": "LCLP",
-    "email": "lukas@lclpnet.work",
-    "url": "https://lclpnet.work"
-  },
+  "version": "2.0.0",
+  "description": "LCLP's game launcher.",
+  "repository": "git@github.com:LCLPYT/LCLPLauncher.git",
+  "author": "LCLP <lukas@lclpnet.work>",
   "license": "MIT",
+  "private": true,
+  "devDependencies": {
+    "@babel/cli": "^7.14.3",
+    "@babel/core": "^7.14.3",
+    "@babel/preset-env": "^7.14.4",
+    "@babel/preset-react": "^7.13.13",
+    "@types/bootstrap": "^5.0.15",
+    "@types/gunzip-maybe": "^1.4.0",
+    "@types/progress-stream": "^2.0.2",
+    "@types/react-dom": "^17.0.6",
+    "@types/react-router-dom": "^5.1.7",
+    "@types/rimraf": "^3.0.1",
+    "@types/semver": "^7.3.8",
+    "@types/tar-stream": "^2.2.1",
+    "@types/yauzl": "^2.9.2",
+    "autoprefixer": "^10.2.6",
+    "electron": "^13.1.1",
+    "electron-builder": "^22.10.5",
+    "electron-webpack": "^2.8.2",
+    "electron-webpack-ts": "^4.0.1",
+    "file-loader": "^6.2.0",
+    "postcss": "^8.3.0",
+    "postcss-loader": "4.3.0",
+    "sass": "1.32.13",
+    "sass-loader": "10.1.1",
+    "typescript": "^4.3.2",
+    "webpack": "^4.42.1",
+    "workbox-webpack-plugin": "^6.1.5"
+  },
+  "dependencies": {
+    "@popperjs/core": "^2.9.2",
+    "babel-loader": "^8.2.2",
+    "bootstrap": "^5.0.1",
+    "bootswatch": "^5.0.1",
+    "electron-fetch": "^1.7.3",
+    "electron-store": "^8.0.0",
+    "execa": "^5.1.1",
+    "gunzip-maybe": "^1.4.2",
+    "jsonc": "^2.0.0",
+    "knex": "^0.95.8",
+    "node-html-parser": "^4.1.3",
+    "nodejs-file-downloader": "^4.7.2",
+    "objection": "^2.2.15",
+    "progress-stream": "^2.0.0",
+    "react": "^17.0.2",
+    "react-dom": "^17.0.2",
+    "react-router-dom": "^5.2.0",
+    "react-youtube": "^7.13.1",
+    "rimraf": "^3.0.2",
+    "semver": "^7.3.5",
+    "source-map-support": "^0.5.19",
+    "sqlite": "^4.0.23",
+    "sqlite3": "^5.0.2",
+    "tar-stream": "^2.2.0",
+    "tippy.js": "^6.3.1",
+    "yauzl": "^2.10.0"
+  },
+  "scripts": {
+    "dev": "electron-webpack dev",
+    "compile": "electron-webpack",
+    "dist": "yarn compile && electron-builder",
+    "dist:dir": "yarn dist --dir -c.compression=store -c.mac.identity=null"
+  },
+  "electronWebpack": {
+    "renderer": {
+      "webpackConfig": "webpack.renderer.additions.js"
+    }
+  },
   "build": {
-    "publish": [
-      {
-        "provider": "generic",
-        "url": "http://lclpnet.work/lclplauncher/files"
-      }
-    ],
-    "appId": "lclplauncher",
+    "appId": "work.lclpnet.lclplauncher",
     "productName": "LCLPLauncher",
-    "copyright": "Copyright © 2020 ${author}",
+    "copyright": "Copyright © 2021 LCLP",
+    "directories": {
+      "buildResources": "build_resources"
+    },
+    "extraMetadata": {
+      "name": "LCLPLauncher"
+    },
     "mac": {
       "category": "public.app-category.games"
     },
@@ -44,9 +102,9 @@
     },
     "linux": {
       "target": [
-        "AppImage"
+        "AppImage",
+        "deb"
       ],
-      "icon": "build/icon.icns",
       "files": [
         "!bin/*",
         "!dist/*",
@@ -60,7 +118,6 @@
     },
     "win": {
       "target": "nsis",
-      "icon": "build/icon.ico",
       "files": [
         "!bin/*",
         "!dist/*",
@@ -75,20 +132,5 @@
     "nsis": {
       "guid": "lclplauncher"
     }
-  },
-  "devDependencies": {
-    "asar": "^3.0.3",
-    "electron": "^9.4.0",
-    "electron-builder": "^22.6.0"
-  },
-  "dependencies": {
-    "decompress": "^4.2.1",
-    "electron-dl": "^3.0.2",
-    "electron-log": "^4.1.2",
-    "electron-store": "^5.1.1",
-    "electron-updater": "^4.3.1",
-    "https": "^1.0.0",
-    "md5-file": "^5.0.0",
-    "yargs": "^15.3.1"
   }
 }

@@ -1,0 +1,1 @@
+export const ERR_EOS = new Error('End of stream');

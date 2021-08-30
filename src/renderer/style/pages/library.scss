@@ -1,0 +1,51 @@
+#libraryContainer {
+    height: 100%;
+}
+
+#librarySidebar {
+    float: left;
+    width: 71px;
+    position: fixed;
+    height: 100%;
+}
+
+#libraryContent {
+    float: right;
+    width: calc(100% - 71px); /* 1px border */
+    height: 100%;
+}
+
+span.tab-icon {
+    font-size: 32px;
+}
+
+.tab-desc {
+    font-size: 12px;
+    margin-top: -10px;
+}
+
+.tab-desc-less {
+    font-size: 12px;
+    margin-top: -2px;
+}
+
+.tab-btn {
+    text-align: center;
+}
+
+.tab-img {
+    width: 46px;
+    height: 46px;
+}
+
+.tab-img-sm {
+    width: 40px;
+    height: 40px;
+}
+
+$sidebarPadding: 0.6rem;
+
+.sidebar-padding {
+    padding-top: $sidebarPadding;
+    padding-bottom: $sidebarPadding;
+}
