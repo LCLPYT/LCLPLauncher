@@ -43,6 +43,11 @@ export async function getAppState(app: App): Promise<AppState> {
     if (currentInstaller) return currentIsUpdating ? 'updating' : 'installing';
 
     const installation = await fetchInstallation(app);
+
+    const currentAppVersion = getAppVersion();
+    if (!currentAppVersion) throw new Error('Could not determine app version.');
+    if (!semver.satisfies(currentAppVersion, installation.launcherVersion)) return 'outdated-launcher';
+
     const installer = await createAndPrepareInstaller(app, installedApp.path, installation)
     
     return installer.isUpToDate() ? 'ready-to-play' : 'needs-update';
@@ -88,6 +93,13 @@ async function fetchInstallation(app: App): Promise<Installation> {
     if (err) throw err;
 
     return result;
+}
+
+export async function isInstallationLauncherVersionValid(app: App): Promise<boolean> {
+    const installation = await fetchInstallation(app);
+    const currentAppVersion = getAppVersion();
+    if (!currentAppVersion) throw new Error('Could not determine current launcher version.');
+    return semver.satisfies(currentAppVersion, installation.launcherVersion);
 }
 
 export async function getUninstalledDependencies(app: App) {

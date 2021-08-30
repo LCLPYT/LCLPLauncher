@@ -5,7 +5,7 @@ import AppState from "../../common/types/AppState";
 import DownloadProgress from "../../common/types/DownloadProgress";
 import Toast from "../../common/types/Toast";
 import { ACTIONS, GenericIPCActionHandler, GenericIPCHandler } from "../../common/utils/ipc";
-import { getAppState, getInstallationDirectory, validateInstallationDir, startInstallationProcess, getUninstalledDependencies } from "../downloader/downloader";
+import { getAppState, getInstallationDirectory, validateInstallationDir, startInstallationProcess, getUninstalledDependencies, isInstallationLauncherVersionValid } from "../downloader/downloader";
 import { uninstallApp } from "../downloader/uninstall";
 import { getOrCreateDefaultInstallationDir } from "./fshelper";
 import { addToLibary, getLibraryApps, isInLibrary } from "./library";
@@ -138,6 +138,12 @@ export const DOWNLOADER = registerHandler(new class extends IPCActionHandler {
                 if (args.length < 1) throw new Error('App argument is missing');
                 getUninstalledDependencies(args[0])
                     .then(deps => event.reply(deps))
+                    .catch(err => event.reply(null, err));
+                break;
+            case ACTIONS.downloader.isLauncherInstallerVersionValid:
+                if (args.length < 1) throw new Error('App argument is missing');
+                isInstallationLauncherVersionValid(args[0])
+                    .then(valid => event.reply(valid))
                     .catch(err => event.reply(null, err));
                 break;
             default:

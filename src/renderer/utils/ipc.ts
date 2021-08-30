@@ -122,6 +122,10 @@ export const DOWNLOADER = registerHandler(new class extends IPCActionHandler {
         resolve: (deps: AppDependency[]) => void,
         reject: (error: any) => void
     };
+    protected isLauncherInstallerVersionValidCB?: {
+        resolve: (valid: boolean) => void,
+        reject: (error: any) => void
+    }
 
     protected onAction(action: string, _event: Electron.IpcRendererEvent, args: any[]): void {
         switch (action) {
@@ -197,6 +201,16 @@ export const DOWNLOADER = registerHandler(new class extends IPCActionHandler {
                     else this.getUninstalledDependenciesCB.reject(new Error('No further information provided'));
                     this.getUninstalledDependenciesCB = undefined;
                 } else console.warn('No callback defined for', ACTIONS.downloader.getUninstalledDependencies);
+                break;
+            case ACTIONS.downloader.isLauncherInstallerVersionValid:
+                if (args.length < 1) throw new Error('Validity argument is missing.');
+                if (this.isLauncherInstallerVersionValidCB) {
+                    const valid: boolean | null = args[0];
+                    if (valid !== null) this.isLauncherInstallerVersionValidCB.resolve(valid);
+                    else if (args.length >= 2) this.isLauncherInstallerVersionValidCB.reject(args[1]);
+                    else this.isLauncherInstallerVersionValidCB.reject(new Error('No futher information provided'));
+                    this.isLauncherInstallerVersionValidCB = undefined;
+                } else console.warn('No callback defined for', ACTIONS.downloader.isLauncherInstallerVersionValid);
                 break;
             default:
                 throw new Error(`Action '${action}' not implemented.`);
@@ -275,6 +289,17 @@ export const DOWNLOADER = registerHandler(new class extends IPCActionHandler {
                 reject: err => reject(err)
             };
             this.sendAction(ACTIONS.downloader.getUninstalledDependencies, app);
+        });
+    }
+
+    public isLauncherInstallerVersionValid(app: App): Promise<boolean | null> {
+        if (this.isLauncherInstallerVersionValidCB) return Promise.resolve(null);
+        return new Promise((resolve, reject) => {
+            this.isLauncherInstallerVersionValidCB = {
+                resolve: valid => resolve(valid),
+                reject: err => reject(err)
+            };
+            this.sendAction(ACTIONS.downloader.isLauncherInstallerVersionValid, app);
         });
     }
 }('downloader'));

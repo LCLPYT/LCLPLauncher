@@ -38,7 +38,8 @@ export const ACTIONS = {
         updateInstallationState: 'update-installation-state',
         updateInstallationProgress: 'update-installation-progress',
         uninstall: 'uninstall',
-        getUninstalledDependencies: 'get-uninstalled-dependencies'
+        getUninstalledDependencies: 'get-uninstalled-dependencies',
+        isLauncherInstallerVersionValid: 'is-launcher-installer-version-valid'
     },
     utilities: {
         chooseFile: 'choose-file'

@@ -85,6 +85,14 @@ class PlayStateButton extends Component<ContentProps, PlayState> {
                     <div id="playDesc" className="ms-3 flex-fill">Download pending...</div>
                 </>
             );
+            case 'outdated-launcher': return (
+                <>
+                    <button id="playBtn" className="px-4 btn btn-lg btn-secondary d-flex align-items-center" disabled>
+                        <span className="ms-2">Outdated</span>
+                    </button>
+                    <div id="playDesc" className="ms-3 flex-fill">Please update LCLPLauncher</div>
+                </>
+            );
             default:
                 throw new Error(`Unimplemented state: '${this.state.state}'`);
         }
@@ -105,10 +113,10 @@ class PlayStateButton extends Component<ContentProps, PlayState> {
         playBtn?.addEventListener('click', () => {
             switch (this.state.state) {
                 case 'not-installed':
-                    this.startInstallationOptions();
+                    this.checkValidVersion(() => this.startInstallationOptions());
                     break;
                 case 'needs-update':
-                    this.startUpdate();
+                    this.checkValidVersion(() => this.startUpdate());
                     break;
                 default:
                     break;
@@ -150,6 +158,14 @@ class PlayStateButton extends Component<ContentProps, PlayState> {
     componentWillUnmount() {
         Object.entries(this.progressListeners).forEach(([type, listener]) => {
             installationProgressManager.removeEventListener(type, listener)
+        });
+    }
+
+    checkValidVersion(callback: () => void) {
+        DOWNLOADER.isLauncherInstallerVersionValid(this.props.app).then(valid => {
+            if (valid === null) return; // called twice
+            if (valid) callback();
+            else alert(`'${this.props.app.title}' requires a newer version of LCLPLauncher. Please update your launcher first.`);
         });
     }
 
