@@ -50,7 +50,7 @@ export async function getAppState(app: App): Promise<AppState> {
 
     const installer = await createAndPrepareInstaller(app, installedApp.path, installation)
     
-    return installer.isUpToDate() ? 'ready-to-play' : 'needs-update';
+    return installer.isUpToDate() ? 'ready-to-play' : 'needs-update'; // TODO maybe enable users to play with outdated launcher versions
 }
 
 export async function getInstallationDirectory(app: App) {

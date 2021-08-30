@@ -7,7 +7,8 @@ type App = {
     tags?: string,
     description?: string,
     cost?: number,
-    genres: Genre[]
+    genres: Genre[],
+    type?: 'software' | 'game'
 }
 
 export default App;

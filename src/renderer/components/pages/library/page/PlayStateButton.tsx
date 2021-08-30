@@ -25,6 +25,7 @@ class PlayStateButton extends Component<ContentProps, PlayState> {
     }
 
     render() {
+        const appType = this.props.app.type ? this.props.app.type : 'software';
         switch (this.state.state) {
             case undefined: return (
                 <>
@@ -42,8 +43,8 @@ class PlayStateButton extends Component<ContentProps, PlayState> {
             );
             case 'ready-to-play': return (
                 <>
-                    <button id="playBtn" className="px-4 btn btn-lg btn-success">Play</button>
-                    <div id="playDesc" className="ms-3 flex-fill">Ready to play</div>
+                    <button id="playBtn" className="px-4 btn btn-lg btn-success">{appType === 'game' ? 'Play' : 'Start'}</button>
+                    <div id="playDesc" className="ms-3 flex-fill">{appType === 'game' ? 'Ready to play' : 'Ready to start'}</div>
                 </>
             );
             case 'needs-update': return (

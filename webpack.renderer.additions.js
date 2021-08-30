@@ -27,7 +27,7 @@ module.exports = {
                 options: {
                     cacheName: 'backend',
                     expiration: {
-                        maxAgeSeconds: 60 * 15,
+                        maxAgeSeconds: 30,
                         maxEntries: 1024
                     }
                 }
