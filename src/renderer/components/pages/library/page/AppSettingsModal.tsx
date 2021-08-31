@@ -76,17 +76,20 @@ interface BodyProps {
 }
 
 interface BodyState {
-    installationDir?: string
+    installationDir?: string,
+    state: AppState
 }
 
 class ModalBody extends Component<BodyProps, BodyState> {
     constructor(props: BodyProps) {
         super(props);
-        this.state = {};
+        this.state = {
+            state: this.props.state
+        };
     }
 
     render() {
-        if (this.props.state === 'not-installed') return (
+        if (this.state.state === 'not-installed') return (
             <div className="text-center text-lighter">
                 <span className="fw-bold">{this.props.app.title}</span> is not yet installed.
             </div>
@@ -106,24 +109,46 @@ class ModalBody extends Component<BodyProps, BodyState> {
         );
     }
 
+    protected stateChangeListener?: (event: InstallerEvent) => void;
+
     componentDidMount() {
-        DOWNLOADER.getInstallationDir(this.props.app).then(dir => {
-            this.setState({
-                installationDir: dir
-            });
-        }).catch(err => console.error(err));
+        installationProgressManager.addEventListener('update-state', this.stateChangeListener = event => {
+            if (!event.detail.currentState) throw new Error('On update-state: Current state is undefined');
+            this.setState({ state: event.detail.currentState });
+        });
+
+        this.update();
+    }
+
+    componentWillUnmount() {
+        if (this.stateChangeListener) installationProgressManager.removeEventListener('update-state', this.stateChangeListener);
+    }
+
+    componentDidUpdate() {
+        this.update();
+    }
+
+    protected prevClickListener?: () => void;
+
+    update() {
+        DOWNLOADER.getInstallationDir(this.props.app)
+            .then(dir => this.setState({ installationDir: dir }))
+            .catch(err => console.error(err));
 
         const uninstallBtn = document.getElementById('uninstallBtn');
-        uninstallBtn?.addEventListener('click', () => {
-            if (confirm(`Are you sure you want to uninstall '${this.props.app.title}'?`)) {
-                DOWNLOADER.uninstall(this.props.app)
-                    .then(() => {
-                        const appSettingsModal = document.getElementById('appSettingsModal');
-                        if (appSettingsModal) Modal.getInstance(appSettingsModal)?.hide();
-                    })
-                    .catch(err => console.error('Error uninstalling app:', err));
-            }
-        });
+        if (uninstallBtn) {
+            if (this.prevClickListener) uninstallBtn.removeEventListener('click', this.prevClickListener);
+            uninstallBtn.addEventListener('click', this.prevClickListener = () => {
+                if (confirm(`Are you sure you want to uninstall '${this.props.app.title}'?`)) {
+                    DOWNLOADER.uninstall(this.props.app)
+                        .then(() => {
+                            const appSettingsModal = document.getElementById('appSettingsModal');
+                            if (appSettingsModal) Modal.getInstance(appSettingsModal)?.hide();
+                        })
+                        .catch(err => console.error('Error uninstalling app:', err));
+                }
+            });
+        }
     }
 }
 
