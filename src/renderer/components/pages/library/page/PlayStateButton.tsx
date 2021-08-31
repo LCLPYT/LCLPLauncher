@@ -2,15 +2,14 @@ import { Modal } from 'bootstrap';
 import React, { Component } from 'react';
 import App from "../../../../../common/types/App";
 import AppState from "../../../../../common/types/AppState";
-import DownloadProgress from "../../../../../common/types/DownloadProgress";
+import DownloadProgress, { PackageDownloadProgress } from "../../../../../common/types/DownloadProgress";
 import { setDependencies } from '../../../../utils/dependencies';
 import { installationProgressManager, InstallerEvent } from '../../../../utils/downloads';
 import { DOWNLOADER } from '../../../../utils/ipc';
 import LoadingSpinner from '../../../utility/LoadingSpinner';
 
 interface PlayState {
-    state?: AppState,
-    progress?: DownloadProgress
+    state?: AppState
 }
 
 interface ContentProps {
@@ -53,30 +52,8 @@ class PlayStateButton extends Component<ContentProps, PlayState> {
                     <div id="playDesc" className="ms-3 flex-fill">Needs to be updated</div>
                 </>
             );
-            case 'installing': return (
-                <>
-                    <button id="playBtn" className="px-4 btn btn-lg btn-primary d-flex align-items-center" disabled>
-                        <LoadingSpinner className="spinner-border-sm progress-spinner" />
-                        <span className="ms-2">Installing</span>
-                        {this.state.progress ? (
-                            <span className="ms-1">{(this.state.progress.currentProgress * 100).toFixed(0)}%</span>
-                        ) : undefined}
-                    </button>
-                    <div id="playDesc" className="ms-3 flex-fill">Currently installing...</div>
-                </>
-            );
-            case 'updating': return (
-                <>
-                    <button id="playBtn" className="px-4 btn btn-lg btn-info d-flex align-items-center" disabled>
-                        <LoadingSpinner className="spinner-border-sm progress-spinner" />
-                        <span className="ms-2">Updating</span>
-                        {this.state.progress ? (
-                            <span className="ms-1">{(this.state.progress.currentProgress * 100).toFixed(0)}%</span>
-                        ) : undefined}
-                    </button>
-                    <div id="playDesc" className="ms-3 flex-fill">Currently updating...</div>
-                </>
-            );
+            case 'installing': return <InstallingButton />;
+            case 'updating': return <UpdatingButton />;
             case 'in-queue': return (
                 <>
                     <button id="playBtn" className="px-4 btn btn-lg btn-info d-flex align-items-center" disabled>
@@ -86,6 +63,7 @@ class PlayStateButton extends Component<ContentProps, PlayState> {
                     <div id="playDesc" className="ms-3 flex-fill">Download pending...</div>
                 </>
             );
+            case 'preinstalling': return <PreInstallingButton />;
             case 'outdated-launcher': return (
                 <>
                     <button id="playBtn" className="px-4 btn btn-lg btn-secondary d-flex align-items-center" disabled>
@@ -147,12 +125,11 @@ class PlayStateButton extends Component<ContentProps, PlayState> {
         });
 
         installationProgressManager.addEventListener('update-state', this.progressListeners['update-state'] = event => {
-            if (!event.detail.currentState) throw new Error('On update-state: Current state is null');
-            this.setState({ state: event.detail.currentState });
-        });
-        installationProgressManager.addEventListener('update-progress', this.progressListeners['update-progress'] = event => {
-            if (!event.detail.progress) throw new Error('On update-progress: Progress is null');
-            this.setState({ progress: event.detail.progress });
+            if (!event.detail.currentState) { // cause manual update
+                DOWNLOADER.getAppStatus(this.props.app)
+                    .then(state => this.setState({ state: state }))
+                    .catch(err => console.error('Could not fetch app state:', err));
+            } else this.setState({ state: event.detail.currentState });
         });
     }
 
@@ -219,6 +196,131 @@ class PlayStateButton extends Component<ContentProps, PlayState> {
                 console.error(`Could not complete installation process of '${this.props.app.title}'.`);
             }
         }).catch(error => console.error('Could not finish the installation process:', error));
+    }
+}
+
+interface InstallingState {
+    progress?: DownloadProgress
+}
+
+class InstallingButton extends Component<{}, InstallingState> {
+    constructor(props: {}) {
+        super(props);
+        this.state = {};
+    }
+
+    render() {
+        return (
+            <>
+                <button id="playBtn" className="px-4 btn btn-lg btn-primary d-flex align-items-center" disabled>
+                    <LoadingSpinner className="spinner-border-sm progress-spinner" />
+                    <span className="ms-2">Installing</span>
+                    {this.state.progress ? (
+                        <span className="ms-1">{(this.state.progress.currentProgress * 100).toFixed(0)}%</span>
+                    ) : undefined}
+                </button>
+                <div id="playDesc" className="ms-3 flex-fill">Currently installing...</div>
+            </>
+        )
+    }
+
+    protected progressListeners: {
+        [type: string]: (event: InstallerEvent) => void
+    } = {};
+
+    componentDidMount() {
+        installationProgressManager.addEventListener('update-progress', this.progressListeners['update-progress'] = event => {
+            if (!event.detail.progress) throw new Error('On update-progress: Progress is null');
+            this.setState({ progress: event.detail.progress });
+        });
+    }
+
+    componentWillUnmount() {
+        Object.entries(this.progressListeners).forEach(([type, listener]) => {
+            installationProgressManager.removeEventListener(type, listener)
+        });
+    }
+}
+
+class UpdatingButton extends Component<{}, InstallingState> {
+    constructor(props: {}) {
+        super(props);
+        this.state = {};
+    }
+
+    render() {
+        return (
+            <>
+                <button id="playBtn" className="px-4 btn btn-lg btn-info d-flex align-items-center" disabled>
+                    <LoadingSpinner className="spinner-border-sm progress-spinner" />
+                    <span className="ms-2">Updating</span>
+                    {this.state.progress ? (
+                        <span className="ms-1">{(this.state.progress.currentProgress * 100).toFixed(0)}%</span>
+                    ) : undefined}
+                </button>
+                <div id="playDesc" className="ms-3 flex-fill">Currently updating...</div>
+            </>
+        )
+    }
+
+    protected progressListeners: {
+        [type: string]: (event: InstallerEvent) => void
+    } = {};
+
+    componentDidMount() {
+        installationProgressManager.addEventListener('update-progress', this.progressListeners['update-progress'] = event => {
+            if (!event.detail.progress) throw new Error('On update-progress: Progress is null');
+            this.setState({ progress: event.detail.progress });
+        });
+    }
+
+    componentWillUnmount() {
+        Object.entries(this.progressListeners).forEach(([type, listener]) => {
+            installationProgressManager.removeEventListener(type, listener)
+        });
+    }
+}
+
+interface PreInstallingState {
+    progress?: PackageDownloadProgress
+}
+
+class PreInstallingButton extends Component<{}, PreInstallingState> {
+    constructor(props: {}) {
+        super(props);
+        this.state = {};
+    }
+
+    render() {
+        return (
+            <>
+                <button id="playBtn" className="px-4 btn btn-lg btn-secondary d-flex align-items-center" disabled>
+                    <LoadingSpinner className="spinner-border-sm progress-spinner" />
+                    <span className="ms-2">Preinstalling</span>
+                    {this.state.progress ? (
+                        <span className="ms-1">{this.state.progress.currentQueuePosition}/{this.state.progress.queueSize}</span>
+                    ) : undefined}
+                </button>
+                <div id="playDesc" className="ms-3 flex-fill">Preinstalling...</div>
+            </>
+        )
+    }
+
+    protected progressListeners: {
+        [type: string]: (event: InstallerEvent) => void
+    } = {};
+
+    componentDidMount() {
+        installationProgressManager.addEventListener('update-package-progress', this.progressListeners['update-package-progress'] = event => {
+            if (!event.detail.packageProgress) throw new Error('On update-progress: Progress is null');
+            this.setState({ progress: event.detail.packageProgress });
+        });
+    }
+
+    componentWillUnmount() {
+        Object.entries(this.progressListeners).forEach(([type, listener]) => {
+            installationProgressManager.removeEventListener(type, listener)
+        });
     }
 }
 

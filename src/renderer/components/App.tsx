@@ -10,7 +10,7 @@ import ToastOptions, { ToastType } from '../../common/types/Toast';
 
 import toastSound from '../sound/toast.ogg';
 import { installationProgressManager, InstallerEvent } from '../utils/downloads';
-import DownloadProgress from '../../common/types/DownloadProgress';
+import DownloadProgress, { PackageDownloadProgress } from '../../common/types/DownloadProgress';
 
 class App extends Component {
     render() {
@@ -119,8 +119,16 @@ class ToastStack extends Component<{}, ToastState> {
             toasts: this.state.toasts.filter(toast => toast !== memory)
         });
 
+        const props: React.ClassAttributes<any> & ToastProps = {
+            key: key,
+            memory: memory,
+            onDestroy: () => onDestroy()
+        };
+
         switch (memory.toast.type) {
-            case ToastType.DOWNLOAD_STATUS: return <DownloadToast key={key} memory={memory} onDestroy={() => onDestroy()} />
+            case ToastType.TEXT: return <TextToast {...props} />;
+            case ToastType.DOWNLOAD_STATUS: return <DownloadToast {...props} />;
+            case ToastType.PACKAGE_DOWNLOAD_STATUS: return <PackageDownloadToast {...props} />;
             default:
                 throw new Error(`Unimplemented toast type: '${memory.toast.type}'`);
         }
@@ -158,7 +166,7 @@ abstract class AbstractToastComponent<State = {}> extends Component<ToastProps, 
                     <small className="text-muted">{ageText}</small>
                     <button type="button" className="btn-close" data-bs-dismiss="toast" aria-label="Close"></button>
                 </div>
-                <div className="toast-body pt-1 text-lighter">{this.getBody()}</div>
+                <div className="toast-body py-1 text-lighter">{this.getBody()}</div>
             </div>
         );
     }
@@ -186,6 +194,13 @@ abstract class AbstractToastComponent<State = {}> extends Component<ToastProps, 
     abstract getBody(): JSX.Element;
 }
 
+class TextToast extends AbstractToastComponent {
+    getBody(): JSX.Element {
+        const text = this.props.memory.toast ? this.props.memory.toast.detail as string : undefined;
+        return <div className="py-1 text-lighter">{text}</div>;
+    }
+}
+
 interface DownloadToastState {
     progress?: DownloadProgress
 }
@@ -209,7 +224,7 @@ class DownloadToast extends AbstractToastComponent<DownloadToastState> {
                                 </span>
                             ) : undefined
                         }
-                        {this.state.progress ? this.state.progress.currentDownload.title : undefined}
+                        {this.state.progress?.currentDownload.title}
                     </div>
                     <div>{percent ? `${percent}%` : undefined}</div>
                 </div>
@@ -235,6 +250,59 @@ class DownloadToast extends AbstractToastComponent<DownloadToastState> {
     componentWillUnmount() {
         super.componentWillUnmount();
         if (this.progressListener) installationProgressManager.removeEventListener('update-progress', this.progressListener);
+    }
+}
+
+interface PackageDownloadToastState {
+    progress?: PackageDownloadProgress
+}
+
+class PackageDownloadToast extends AbstractToastComponent<PackageDownloadToastState> {
+    constructor(props: ToastProps) {
+        super(props);
+        this.state = {} as PackageDownloadToastState;
+    }
+
+    getBody(): JSX.Element {
+        const percent = this.state.progress ? Number((this.state.progress.currentProgress * 100).toFixed(0)) : undefined;
+        return (
+            <>
+                <div className="d-flex align-items-center text-lighter">
+                    <div className="fw-bold flex-fill">
+                        {
+                            this.state.progress ? (
+                                <span className="me-1">
+                                    {`(${this.state.progress.currentQueuePosition}/${this.state.progress.queueSize})`}
+                                </span>
+                            ) : undefined
+                        }
+                        {this.state.progress?.packageName}
+                    </div>
+                    <div>{percent ? `${percent}%` : undefined}</div>
+                </div>
+                <div className="progress toast-progress">
+                    <div className="progress-bar progress-bar-striped progress-bar-animated" role="progressbar" aria-valuenow={percent !== undefined ? percent : 0} aria-valuemin={0} aria-valuemax={100} style={{ width: `${percent !== undefined ? percent : 0}%`}} />
+                </div>
+            </>
+        );
+    }
+
+    protected progressListener?: (event: InstallerEvent) => void;
+
+    componentDidMount() {
+        console.log('mount update packages')
+        super.componentDidMount();
+        installationProgressManager.addEventListener('update-package-progress', this.progressListener = event => {
+            if (!event.detail.packageProgress) throw new Error('On update-package-progress: Progress is null');
+            this.setState({
+                progress: event.detail.packageProgress
+            });
+        });
+    }
+
+    componentWillUnmount() {
+        super.componentWillUnmount();
+        if (this.progressListener) installationProgressManager.removeEventListener('update-package-progress', this.progressListener);
     }
 }
 

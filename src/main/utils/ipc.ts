@@ -2,7 +2,7 @@ import { dialog, ipcMain } from "electron";
 import { IpcMainEvent } from "electron/main";
 import App from "../../common/types/App";
 import AppState from "../../common/types/AppState";
-import DownloadProgress from "../../common/types/DownloadProgress";
+import DownloadProgress, { PackageDownloadProgress } from "../../common/types/DownloadProgress";
 import Toast from "../../common/types/Toast";
 import { ACTIONS, GenericIPCActionHandler, GenericIPCHandler } from "../../common/utils/ipc";
 import { getAppState, getInstallationDirectory, validateInstallationDir, startInstallationProcess, getUninstalledDependencies, isInstallationLauncherVersionValid } from "../downloader/downloader";
@@ -151,12 +151,16 @@ export const DOWNLOADER = registerHandler(new class extends IPCActionHandler {
         }
     }
 
-    public updateInstallationState(state: AppState) {
+    public updateInstallationState(state?: AppState) {
         this.sendAction(ACTIONS.downloader.updateInstallationState, state);
     }
 
     public updateInstallationProgress(progress: DownloadProgress) {
         this.sendAction(ACTIONS.downloader.updateInstallationProgress, progress);
+    }
+
+    public updatePackageDownloadProgress(progress: PackageDownloadProgress) {
+        this.sendAction(ACTIONS.downloader.updatePackageDownloadProgress, progress);
     }
 }('downloader'));
 

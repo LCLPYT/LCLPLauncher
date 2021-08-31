@@ -1,11 +1,12 @@
 import AppState from "../../common/types/AppState";
-import DownloadProgress from "../../common/types/DownloadProgress";
+import DownloadProgress, { PackageDownloadProgress } from "../../common/types/DownloadProgress";
 
-export type InstallerEvents = 'update-state' | 'update-progress';
+export type InstallerEvents = 'update-state' | 'update-progress' | 'update-package-progress';
 
 export type InstallerDetails = {
     currentState?: AppState,
-    progress?: DownloadProgress
+    progress?: DownloadProgress,
+    packageProgress?: PackageDownloadProgress
 }
 
 export class InstallerEvent extends CustomEvent<InstallerDetails> {}
@@ -64,7 +65,7 @@ function isEventListener(listener: InstallerEventListenerOrObject): listener is 
 
 export const installationProgressManager = new InstallationProgressManager();
 
-export function updateInstallationState(state: AppState) {
+export function updateInstallationState(state?: AppState) {
     installationProgressManager.dispatchEvent(new CustomEvent('update-state', {
         detail: {
             currentState: state
@@ -76,6 +77,14 @@ export function updateInstallationProgress(progress: DownloadProgress) {
     installationProgressManager.dispatchEvent(new CustomEvent('update-progress', {
         detail: {
             progress: progress
+        }
+    }));
+}
+
+export function updatePackageDownloadProgress(progress: PackageDownloadProgress) {
+    installationProgressManager.dispatchEvent(new CustomEvent('update-package-progress', {
+        detail: {
+            packageProgress: progress
         }
     }));
 }

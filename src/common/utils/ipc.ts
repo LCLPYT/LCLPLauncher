@@ -37,6 +37,7 @@ export const ACTIONS = {
         getDefaultInstallationDir: 'get-default-installation-dir',
         updateInstallationState: 'update-installation-state',
         updateInstallationProgress: 'update-installation-progress',
+        updatePackageDownloadProgress: 'update-package-download-progress',
         uninstall: 'uninstall',
         getUninstalledDependencies: 'get-uninstalled-dependencies',
         isLauncherInstallerVersionValid: 'is-launcher-installer-version-valid'

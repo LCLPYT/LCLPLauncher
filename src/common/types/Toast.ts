@@ -4,11 +4,14 @@ type Toast = {
     title: string,
     type: ToastType,
     noAutoHide?: boolean,
-    autoHideDelay?: number
+    autoHideDelay?: number,
+    detail?: any
 }
 
 export enum ToastType {
-    DOWNLOAD_STATUS
+    TEXT,
+    DOWNLOAD_STATUS,
+    PACKAGE_DOWNLOAD_STATUS
 }
 
 export default Toast;

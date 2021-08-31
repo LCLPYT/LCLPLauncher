@@ -4,7 +4,7 @@ import App from "../../common/types/App";
 import AppDependency from "../../common/types/AppDependency";
 import AppState from "../../common/types/AppState";
 import { ACTIONS, GenericIPCActionHandler, GenericIPCHandler } from "../../common/utils/ipc";
-import { updateInstallationProgress, updateInstallationState } from "./downloads";
+import { updateInstallationProgress, updateInstallationState, updatePackageDownloadProgress } from "./downloads";
 import { addToast, removeToast } from "./toasts";
 
 abstract class IPCActionHandler extends GenericIPCActionHandler<IpcRendererEvent, IpcRendererEvent> {
@@ -177,12 +177,15 @@ export const DOWNLOADER = registerHandler(new class extends IPCActionHandler {
                 } else console.warn('No callback defined for', ACTIONS.downloader.getDefaultInstallationDir);
                 break;
             case ACTIONS.downloader.updateInstallationState:
-                if (args.length < 1) throw new Error('State argument does not exist.');
-                updateInstallationState(args[0]);
+                updateInstallationState(args.length >= 1 ? args[0] : undefined);
                 break;
             case ACTIONS.downloader.updateInstallationProgress:
                 if (args.length < 1) throw new Error('Progress argument does not exist.');
                 updateInstallationProgress(args[0]);
+                break;
+            case ACTIONS.downloader.updatePackageDownloadProgress:
+                if (args.length < 1) throw new Error('Progress argument does not exist.');
+                updatePackageDownloadProgress(args[0]);
                 break;
             case ACTIONS.downloader.uninstall:
                 if (args.length < 1) throw new Error('Error argument does not exist.');

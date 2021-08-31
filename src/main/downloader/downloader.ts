@@ -25,6 +25,7 @@ import { Dependencies } from "./dependencies";
 
 const queue: [app: App, dir: string, callback: (err: any) => void][] = [];
 let currentInstaller: Installer | null = null;
+let currentPreinstalling = false;
 let currentIsUpdating = false;
 let queueBatchLength = 0;
 let queueBatchPosition = 0;
@@ -40,6 +41,9 @@ export async function getAppState(app: App): Promise<AppState> {
 
     if (queue.find(([queuedApp]) => queuedApp.id === app.id)) return 'in-queue';
 
+    // current must be this app
+
+    if (currentPreinstalling) return 'preinstalling';
     if (currentInstaller) return currentIsUpdating ? 'updating' : 'installing';
 
     const installation = await fetchInstallation(app);
@@ -127,7 +131,9 @@ export async function startInstallationProcess(app: App, installationDir: string
     let dependencyStructure: DependencyFragment[] | undefined;
     if (installation.dependencies) {
         console.log('Checking dependencies...');
+        currentPreinstalling = true;
         dependencyStructure = await Dependencies.downloadDependencies(installation.dependencies);
+        currentPreinstalling = false;
         console.log('Dependencies are now up-to-date.');
     }
 
@@ -161,6 +167,15 @@ export async function startInstallationProcess(app: App, installationDir: string
 
     currentIsUpdating = false;
     TOASTS.removeToast(toastId);
+
+    // provide finish notification
+    TOASTS.addToast({
+        id: TOASTS.getNextToastId(),
+        icon: 'done',
+        title: 'Installation finished',
+        type: ToastType.TEXT,
+        detail: `'${app.title}' was successfully installed.`
+    });
 
     // start next queue item, if there is one
     if (queue.length > 0) {
@@ -196,8 +211,8 @@ export class Installer {
     public readonly installation: Installation;
     protected downloadQueue: Artifact[] = [];
     protected actionQueue: PostActionWrapper<any>[] = [];
-    protected totalBytes: number = 0;
-    protected downloadedBytes: number = 0;
+    protected totalBytes = 0;
+    protected downloadedBytes = 0;
     protected active = false;
     protected actionWorkerActive = false;
     protected currentPostAction: PostActionHandle<any> | null = null;
@@ -376,10 +391,10 @@ export class Installer {
                 this.downloadedBytes += (chunk as Buffer).length;
                 DOWNLOADER.updateInstallationProgress({
                     currentDownload: this.app,
-                    queueSize: queueBatchLength, // include self in count
+                    queueSize: queueBatchLength,
                     currentQueuePosition: queueBatchPosition + 1, // include self
                     currentProgress: this.downloadedBytes / this.totalBytes
-                })
+                });
             }
         });
 

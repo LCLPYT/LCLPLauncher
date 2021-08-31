@@ -10,6 +10,8 @@ import { ActionFactory, ArtifactActionArgument, GeneralActionArgument, PostActio
 import { unzip } from "../utils/zip";
 import { extractTar } from "../utils/tar";
 import AppDependency from "../../common/types/AppDependency";
+import { DOWNLOADER, TOASTS } from "../utils/ipc";
+import { ToastType } from "../../common/types/Toast";
 
 export namespace Dependencies {
     export async function getUninstalledDependencies(dependencies: DependencyDescriptor[]): Promise<AppDependency[]> {
@@ -64,7 +66,6 @@ export namespace Dependencies {
     
     class DependencyInstaller {
         protected readonly downloadQueue: DependencyInfo[] = [];
-        protected totalBytes = 0;
         protected readonly dependencyCache: Map<string, DependencyInfo | undefined> = new Map();
         protected downloadReady = false;
         protected active = false;
@@ -72,6 +73,8 @@ export namespace Dependencies {
         protected currentPostAction: PostActionHandle<any> | null = null;
         protected actionWorkerActive = false;
         protected structure: DependencyFragment[] = [];
+        protected queueLength = 0;
+        protected queuePosition = 0;
     
         public async prepare(descriptors: DependencyDescriptor[]) {
             const filterDeps = async (descriptors: DependencyDescriptor[]) => {
@@ -113,7 +116,6 @@ export namespace Dependencies {
         protected addToDownloadQueue(dependency: DependencyInfo) {
             const info = this.getInfoForOperatingSystem(dependency);
             if (!info.size) throw new Error('Dependency download size is not given');
-            this.totalBytes = Math.max(0, info.size);
             this.downloadQueue.push(dependency);
         }
     
@@ -145,10 +147,29 @@ export namespace Dependencies {
         public async start(): Promise<DependencyFragment[] | undefined> {
             if (!this.downloadReady) throw new Error('Download is not yet ready.');
             if (this.active) return undefined;
+
+            if (this.downloadQueue.length <= 0) return this.structure; // no artifacts to download
     
+            const toastId = TOASTS.getNextToastId();
+            TOASTS.addToast({
+                id: toastId,
+                icon: 'file_download',
+                title: 'Downloading dependencies',
+                type: ToastType.PACKAGE_DOWNLOAD_STATUS,
+                noAutoHide: true
+            });
+
+            DOWNLOADER.updateInstallationState('preinstalling');
+
             this.active = true;
+            this.queueLength = this.downloadQueue.length;
+            this.queuePosition = 0;
             await this.downloadNext();
             await this.completePostActions();
+
+            DOWNLOADER.updateInstallationState('preinstalling');
+
+            TOASTS.removeToast(toastId);
     
             return this.structure;
         }
@@ -162,6 +183,7 @@ export namespace Dependencies {
         }
     
         protected async download(dependency: DependencyInfo) {
+            this.queuePosition++;
             const info = this.getInfoForOperatingSystem(dependency);
     
             console.log(`Resolving dependency '${dependency.id}...'`);
@@ -174,6 +196,8 @@ export namespace Dependencies {
             const downloadSize = info.size;
     
             let downloadedName: string | null = null;
+            let contentLength = downloadSize;
+            let downloadedBytes = 0;
     
             const downloader = new Downloader({
                 url: url,
@@ -181,14 +205,19 @@ export namespace Dependencies {
                 cloneFiles: false,
                 onResponse: response => {
                     const sizeHeader = response.headers['content-length'];
-                    if (sizeHeader) {
-                        const size = Number(sizeHeader);
-                        // correct total bytes, if the actual size deviates from the given size
-                        if (downloadSize !== size) this.totalBytes -= downloadSize - size;
-                    }
+                    if (sizeHeader) contentLength = Number(sizeHeader);
                 },
                 onBeforeSave: deducedName => {
                     return downloadedName = deducedName;
+                },
+                onProgress: (_progress, chunk) => {
+                    downloadedBytes += (chunk as Buffer).length;
+                    DOWNLOADER.updatePackageDownloadProgress({
+                        packageName: dependency.id,
+                        queueSize: this.queueLength,
+                        currentQueuePosition: this.queuePosition,
+                        currentProgress: downloadedBytes / contentLength
+                    });
                 }
             });
     
