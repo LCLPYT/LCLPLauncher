@@ -90,14 +90,14 @@ $searchHeight: 44px;
     width: 20px;
 }
 
-a.list-group-item:first-child {
+a.search-item.list-group-item:first-child {
     border-top: 0;
     border-top-left-radius: 0;
     border-top-right-radius: 0;
     transition: margin-top 0.1s ease-in-out;
 }
 
-a.list-group-item:first-child.is-offset {
+a.search-item.list-group-item:first-child.is-offset {
     margin-top: 0.2rem;
 }
 

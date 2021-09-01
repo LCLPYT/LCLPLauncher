@@ -126,7 +126,7 @@ class AutoCompleteItem extends Component<{ item: AppAutoComplete, query: string,
         const first = this.props.index <= 0;
         const isOffset = first && document.activeElement && document.activeElement.id === 'searchInput';
         return (
-            <Link to={`/library/store/app/${this.props.item.key}`} className={`list-group-item list-group-item-action cursor-pointer p-2 d-flex align-items-center${isOffset ? ' is-offset' : ''}`}>
+            <Link to={`/library/store/app/${this.props.item.key}`} className={`list-group-item list-group-item-action search-item cursor-pointer p-2 d-flex align-items-center${isOffset ? ' is-offset' : ''}`}>
                 <img src={`${getBackendHost()}/api/lclplauncher/apps/assets/banner-small/${this.props.item.key}`} alt="App preview" className="rounded" width="120" height="45" />
                 <div className="ms-3 flex-grow-1">{ this.constructTitle() }</div>
                 <span className="material-icons text-light pe-1 app-link">arrow_forward</span>
