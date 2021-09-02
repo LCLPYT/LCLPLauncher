@@ -14,15 +14,31 @@ interface ConfigStructure<Group, Item> {
 }
 
 // default values for writing / code info
-export const defaults: DefaultConfig = {
+export const defaultSettings: DefaultConfig = Object.freeze({
     settingGroupLevels: [{
+        id: 'general',
         title: 'General',
         description: 'General Settings'
     }],
+    launcher: {
+        properties: {
+            title: 'Launcher',
+            description: 'Launcher settings',
+            levelId: 'general'
+        },
+        toast_sound: {
+            default: true,
+            properties: {
+                title: 'Toast Sounds',
+                description: 'If enabled, toast sounds will be played.'
+            }
+        }
+    },
     network: {
         properties: {
             title: 'Network',
-            description: 'Network Settings'
+            description: 'Network Settings',
+            levelId: 'general'
         },
         backend: {
             default: 'live',
@@ -60,30 +76,16 @@ export const defaults: DefaultConfig = {
                 inputType: 'url'
             }
         }
-    },
-    launcher: {
-        properties: {
-            title: 'Launcher',
-            description: 'Launcher settings'
-        },
-        toast_sound: {
-            default: true,
-            properties: {
-                title: 'Toast Sounds',
-                description: 'If enabled, toast sounds will be played.'
-            }
-        }
     }
-};
-Object.freeze(defaults);
+});
 
 // Getters
 /**
- * Gets the protocol and host prefix for backend requests.
- * E.g. 'https://lclpnet.work'
- * @returns A string containing the protocol and host for backend interaction.
- */
- export function getBackendHost(): string {
+* Gets the protocol and host prefix for backend requests.
+* E.g. 'https://lclpnet.work'
+* @returns A string containing the protocol and host for backend interaction.
+*/
+export function getBackendHost(): string {
     const backend: string = getConfigItem(conf => conf.network.backend);
     return getConfigItem(conf => {
         const property = conf.network[`host_${backend}`];
@@ -97,10 +99,10 @@ export function shouldPlayToastSound(): boolean {
 }
 
 // Getter helper
-export function getConfigItem<ItemType>(accessor: (config: LoadedConfig) => any): ItemType {
-    if(!store) store = new ElectronStore();
+function getConfigItem<ItemType>(accessor: (config: LoadedConfig) => any): ItemType {
+    if(!Settings.store) Settings.store = new ElectronStore();
     try {
-        return <ItemType> accessor(<LoadedConfig> <unknown> store.store);
+        return <ItemType> accessor(<LoadedConfig> <unknown> Settings.store.store);
     } catch(err) {
         if (err instanceof Error) err.message = `Could not get setting: ${err.message}`;
         throw err;
@@ -109,7 +111,7 @@ export function getConfigItem<ItemType>(accessor: (config: LoadedConfig) => any)
 
 // Default config for writing / setting info
 export interface DefaultConfig extends ConfigStructure<SettingGroup, Setting> {
-    settingGroupLevels: NamedSetting[],
+    settingGroupLevels: SettingGroupLevel[],
 }
 export type SettingLike = SettingGroup | Setting | SettingGroupProperties;
 export type Setting = {
@@ -120,10 +122,13 @@ export type NamedSetting = {
     title: string,
     description?: string
 }
+export type SettingGroupLevel = NamedSetting & {
+    id: string
+};
 /**
- * Properties for settings GUI.
- * By default, the setting type is 'checkbox' which indicates a boolean value.
- */
+* Properties for settings GUI.
+* By default, the setting type is 'checkbox' which indicates a boolean value.
+*/
 export type SettingProperties = NamedSetting & {
     /** If true, setting will only be shown in debug mode */
     debugOnly?: boolean,
@@ -136,7 +141,9 @@ export type SettingGroup = {
     properties: SettingGroupProperties,
     [key: string]: SettingLike
 }
-export type SettingGroupProperties = NamedSetting;
+export type SettingGroupProperties = NamedSetting & {
+    levelId?: string
+};
 
 // Loaded config which is used after config parsing
 export interface LoadedConfig extends ConfigStructure<LoadedGroup, any> {}
@@ -144,37 +151,39 @@ type LoadedGroup = {
     [key: string]: LoadedGroup | any
 }
 
-// utilities
-let store: ElectronStore | undefined;
-
-export function init() {
-    store = new ElectronStore();
-    initDefaults(store);
-}
-
-function initDefaults(store: ElectronStore) {
-    const iterate = (obj: object, pathSegments: string[]) => {
-        Object.entries(obj).forEach(keyVal => {
-            const key = keyVal[0];
-            const value = keyVal[1];
-
-            if (Array.isArray(value)) return; // Can't write arrays; e.g. settingGroupLevels
-
-            if (isSetting(value)) {
-                const path = [...pathSegments, key].join('.');
-                if (!store.has(path)) store.set(path, value.default);
-            }
-            else if (!isSettingGroupPropeties(value)) iterate(value, [...pathSegments, key]); // if value is SettingGroupProperties, skip
-        });
-    };
-
-    iterate(defaults, []);
-}
-
-function isSetting(object: any): object is Setting {
-    return (<Setting> object).default !== undefined;
-}
-
-function isSettingGroupPropeties(object: any): object is SettingGroupProperties {
-    return (<SettingGroupProperties> object).title !== undefined;
+export namespace Settings {
+    // utilities
+    export let store: ElectronStore | undefined;
+    
+    export function init() {
+        store = new ElectronStore();
+        initDefaults(store);
+    }
+    
+    function initDefaults(store: ElectronStore) {
+        const iterate = (obj: object, pathSegments: string[]) => {
+            Object.entries(obj).forEach(keyVal => {
+                const key = keyVal[0];
+                const value = keyVal[1];
+                
+                if (Array.isArray(value)) return; // Can't write arrays; e.g. settingGroupLevels
+                
+                if (isSetting(value)) {
+                    const path = [...pathSegments, key].join('.');
+                    if (!store.has(path)) store.set(path, value.default);
+                }
+                else if (!isSettingGroupPropeties(value)) iterate(value, [...pathSegments, key]); // if value is SettingGroupProperties, skip
+            });
+        };
+        
+        iterate(defaultSettings, []);
+    }
+    
+    export function isSetting(object: any): object is Setting {
+        return (<Setting> object).default !== undefined;
+    }
+    
+    export function isSettingGroupPropeties(object: any): object is SettingGroupProperties {
+        return (<SettingGroupProperties> object).title !== undefined;
+    }
 }

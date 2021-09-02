@@ -4,12 +4,12 @@ process.env['NODE_' + 'ENV'] = process.env.NODE_ENV;
 import { app, shell, BrowserWindow, nativeTheme } from 'electron'
 import * as path from 'path'
 import { isDevelopment } from '../common/utils/env';
-import * as Settings from '../common/utils/settings';
 import * as Database from './database/database';
 import * as Ipc from './utils/ipc';
 import { isExternalResource } from '../common/utils/urls';
 import { customWords } from './utils/dictionary';
 import { setMainWindow } from './utils/window';
+import { Settings } from '../common/utils/settings';
 
 // init settings
 Settings.init();
