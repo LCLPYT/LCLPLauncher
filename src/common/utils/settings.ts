@@ -44,7 +44,7 @@ export const defaultSettings: DefaultConfig = Object.freeze({
             default: 'live',
             properties: {
                 title: 'Backend Host',
-                description: 'Determines which backend host to use. The host in network.host_<value> will be used.',
+                description: 'Determines which backend host to use.',
                 debugOnly: true,
                 options: ['live', 'staging', 'debug']
             }
@@ -55,7 +55,7 @@ export const defaultSettings: DefaultConfig = Object.freeze({
                 title: 'Live host',
                 description: 'Live backend server host.',
                 debugOnly: true,
-                inputType: 'url'
+                inputTextType: 'url'
             }
         },
         host_staging: {
@@ -64,7 +64,7 @@ export const defaultSettings: DefaultConfig = Object.freeze({
                 title: 'Staging host',
                 description: 'Staging backend server host.',
                 debugOnly: true,
-                inputType: 'url'
+                inputTextType: 'url'
             }
         },
         host_debug: {
@@ -73,7 +73,7 @@ export const defaultSettings: DefaultConfig = Object.freeze({
                 title: 'Debug host',
                 description: 'Backend server host for debug mode.',
                 debugOnly: true,
-                inputType: 'url'
+                inputTextType: 'url'
             }
         }
     }
@@ -135,7 +135,7 @@ export type SettingProperties = NamedSetting & {
     /** If set, setting type will be 'select' with the given options */
     options?: any[],
     /** If set, setting type will be 'input' with the given type */
-    inputType?: 'text' | 'url'
+    inputTextType?: 'text' | 'url'
 }
 export type SettingGroup = {
     properties: SettingGroupProperties,

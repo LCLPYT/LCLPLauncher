@@ -21,4 +21,13 @@ $offcanvas-border-color: lighten($offcanvas-bg-color, 5%);
 // List group
 $list-group-border-color: lighten($dark, 10%);
 
+$input-bg: $gray-700;
+
 @import "~bootswatch/dist/darkly/variables";
+
+$input-color: $gray-400;
+$input-focus-border-color: rgba($secondary, 0.85);
+$input-focus-box-shadow: 0 0 0 0.2rem rgba($primary, 0.85);
+$form-select-focus-border-color: rgba($secondary, 0.85);
+$form-select-focus-box-shadow: 0 0 0 0.2rem rgba($primary, 0.85);
+$form-select-indicator-color: $gray-500;

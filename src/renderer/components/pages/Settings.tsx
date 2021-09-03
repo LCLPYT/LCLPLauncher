@@ -2,6 +2,8 @@ import React, { Component } from 'react';
 import { isDevelopment } from '../../../common/utils/env';
 import { defaultSettings, Setting, SettingGroup, SettingGroupLevel, Settings as settings } from '../../../common/utils/settings';
 
+import '../../style/pages/settings.scss';
+
 type SettingGroupWrapper = {
     name: string,
     group: SettingGroup
@@ -88,18 +90,35 @@ class Settings extends Component<{}, State> {
                 <h3 className="text-lighter">Settings</h3>
                 <div className="row">
                     <div className="col-3">
-                        {
-                            Array.from(this.groupsByLevel).map(([level, groups]) => <SettingGroupLevelComponent key={level.id} level={level} groups={groups} currentGroup={this.state.currentGroup} />)
-                        }
+                        <div id="settingsGroupLevels" className="sticky-top">
+                            {
+                                Array.from(this.groupsByLevel).map(([level, groups]) => <SettingGroupLevelComponent key={level.id} level={level} groups={groups} currentGroup={this.state.currentGroup} />)
+                            }
+                        </div>
                     </div>
                     <div className="col-9">
                         {
-                            settingWrappers.map(setting => <SettingComponent key={setting.name} setting={setting} />)
+                            settingWrappers.map(setting => this.getSettingComponent(setting))
                         }
                     </div>
                 </div>
             </div>
         );
+    }
+
+    getSettingComponent(setting: SettingWrapper) {
+        if (!setting.setting.properties) return <div />;
+
+        const commonProps = {
+            key: setting.name,
+            setting: setting
+        };
+
+        if (setting.setting.properties.inputTextType) return <TextInputComponent {...commonProps} />
+        if (setting.setting.properties.options) return <OptionSelectComponent {...commonProps} />;
+
+        // else assume boolean value
+        return <CheckBoxComponent {...commonProps} />;
     }
 
     componentDidMount() {
@@ -125,11 +144,57 @@ interface SettingProps {
     setting: SettingWrapper
 }
 
-class SettingComponent extends Component<SettingProps> {
+abstract class AbstractSettingComponent<T extends SettingProps> extends Component<T> {
     render() {
+        if (!this.props.setting.setting.properties) return <div />;
+
+        const [input, addDesc] = this.getInputElement();
+        const shouldAddDesc = addDesc && !!this.props.setting.setting.properties.description;
+
         return (
-            <div>{this.props.setting.name}</div>
+            <div className="mb-3">
+                <label className="text-lighter">{this.props.setting.setting.properties.title}</label>
+                {input}
+                {shouldAddDesc ? <div className="form-text text-light">{this.props.setting.setting.properties.description}</div> : undefined}
+            </div>
         );
+    }
+
+    abstract getInputElement(): [JSX.Element, boolean];
+}
+
+class CheckBoxComponent extends AbstractSettingComponent<SettingProps> {
+    getInputElement(): [JSX.Element, boolean] {
+        const id = `input${this.props.setting.name}`;
+        return [(
+            <div className="form-check form-switch">
+                <input className="form-check-input" type="checkbox" id={id} />
+                <label className="form-check-label text-light" htmlFor={id}>{this.props.setting.setting.properties?.description ? this.props.setting.setting.properties.description : 'Enable'}</label>
+            </div>
+        ), false];
+    }
+}
+
+class TextInputComponent extends AbstractSettingComponent<SettingProps> {
+    getInputElement(): [JSX.Element, boolean] {
+        const id = `input${this.props.setting.name}`;
+        const type = this.props.setting.setting.properties?.inputTextType ? this.props.setting.setting.properties.inputTextType : 'text';
+        return [(
+            <input type={type} className="form-control" id={id} />
+        ), true];
+    }
+}
+
+class OptionSelectComponent extends AbstractSettingComponent<SettingProps> {
+    getInputElement(): [JSX.Element, boolean] {
+        if (!this.props.setting.setting.properties || !this.props.setting.setting.properties.options) return [<div />, true];
+
+        const id = `input${this.props.setting.name}`;
+        return [(
+            <select className="form-select" aria-label={`Select ${this.props.setting.setting.properties?.title}`} id={id}>
+                { this.props.setting.setting.properties.options.map((option, index) => <option key={index} value={option}>{option}</option>) }
+            </select>
+        ), true];
     }
 }
 
@@ -163,7 +228,7 @@ class SettingGroupComponent extends Component<GroupProps> {
     render() {
         return (
             <span title={this.props.group.group.properties.description} className="list-group-item p-0 border-0">
-                <button type="button" className={`setting-group-btn list-group-item border-top-0 list-group-item-action${this.props.isCurrent ? ' active' : ''}`} 
+                <button type="button" className={`setting-group-btn list-group-item border-top-0 list-group-item-action${this.props.isCurrent ? ' active' : ''}`}
                     disabled={this.props.isCurrent} data-group={this.props.group.name}>
                     {this.props.group.group.properties.title}
                 </button>
