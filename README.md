@@ -8,8 +8,14 @@ A manager for applications provided by LCLPNetwork.
 Download precompiled executables for your operating system from the official [download page](https://lclpnet.work/lclplauncher).
 
 ## For developers
+LCLPLauncher was build using **Node.js 16** if you want to do anything development related, make sure you use Node 16 or higher.
+
 ### Building the app yourself
-You may simply build the app for your OS by using [Yarn](https://yarnpkg.com/):
+First, install all dependencies with:
+```bash
+yarn
+```
+Then, you may simply build the app for your OS by using [Yarn](https://yarnpkg.com/):
 ```bash
 yarn dist
 ```
