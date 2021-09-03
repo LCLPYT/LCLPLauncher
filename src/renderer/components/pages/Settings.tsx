@@ -1,9 +1,15 @@
 import React, { Component } from 'react';
-import { defaultSettings, SettingGroup, SettingGroupLevel, Settings as settings } from '../../../common/utils/settings';
+import { isDevelopment } from '../../../common/utils/env';
+import { defaultSettings, Setting, SettingGroup, SettingGroupLevel, Settings as settings } from '../../../common/utils/settings';
 
 type SettingGroupWrapper = {
     name: string,
     group: SettingGroup
+}
+
+type SettingWrapper = {
+    name: string,
+    setting: Setting
 }
 
 interface State {
@@ -54,17 +60,42 @@ class Settings extends Component<{}, State> {
     }
 
     render() {
+        const settingWrappers: SettingWrapper[] = [];
+
+        const recurseSettings = (obj: object, currentGroup: string | null) => {
+            Object.entries(obj).forEach(([key, value]) => {
+                if (Array.isArray(value)) return; // skip array values
+
+                const fullKey = currentGroup ? currentGroup.concat('.').concat(key) : key;
+                if (!this.state.currentGroup || !fullKey.startsWith(this.state.currentGroup.name)) return;
+
+                if (settings.isSetting(value)) {
+                    if (value.properties && !!value.properties.debugOnly && !isDevelopment) return; // filter devOnly settings on non dev environments
+                    settingWrappers.push({
+                        'name': fullKey,
+                        setting: value
+                    });
+                } else if (!settings.isSettingGroupPropeties(value)) {
+                    recurseSettings(value, fullKey);
+                }
+            });
+        };
+
+        recurseSettings(defaultSettings, null);
+
         return (
             <div className="container mt-3">
                 <h3 className="text-lighter">Settings</h3>
                 <div className="row">
                     <div className="col-3">
                         {
-                            Array.from(this.groupsByLevel).map(([level, groups]) => <SettingGroupLevelComponent level={level} groups={groups} currentGroup={this.state.currentGroup} />)
+                            Array.from(this.groupsByLevel).map(([level, groups]) => <SettingGroupLevelComponent key={level.id} level={level} groups={groups} currentGroup={this.state.currentGroup} />)
                         }
                     </div>
                     <div className="col-9">
-                        Content
+                        {
+                            settingWrappers.map(setting => <SettingComponent key={setting.name} setting={setting} />)
+                        }
                     </div>
                 </div>
             </div>
@@ -90,6 +121,18 @@ class Settings extends Component<{}, State> {
     }
 }
 
+interface SettingProps {
+    setting: SettingWrapper
+}
+
+class SettingComponent extends Component<SettingProps> {
+    render() {
+        return (
+            <div>{this.props.setting.name}</div>
+        );
+    }
+}
+
 interface LevelProps {
     level: SettingGroupLevel,
     groups: SettingGroupWrapper[],
@@ -103,7 +146,7 @@ class SettingGroupLevelComponent extends Component<LevelProps> {
                 <span title={this.props.level.description} className="list-group-item p-0 border-0">
                     <a href="" className="list-group-item disabled">{this.props.level.title}</a>
                     {
-                        this.props.groups.map(group => <SettingGroupComponent group={group} isCurrent={!!this.props.currentGroup && this.props.currentGroup === group} />)
+                        this.props.groups.map(group => <SettingGroupComponent key={group.name} group={group} isCurrent={!!this.props.currentGroup && this.props.currentGroup === group} />)
                     }
                 </span>
             </div>
@@ -120,7 +163,7 @@ class SettingGroupComponent extends Component<GroupProps> {
     render() {
         return (
             <span title={this.props.group.group.properties.description} className="list-group-item p-0 border-0">
-                <button type="button" className={`setting-group-btn list-group-item list-group-item-action${this.props.isCurrent ? ' active' : ''}`} 
+                <button type="button" className={`setting-group-btn list-group-item border-top-0 list-group-item-action${this.props.isCurrent ? ' active' : ''}`} 
                     disabled={this.props.isCurrent} data-group={this.props.group.name}>
                     {this.props.group.group.properties.title}
                 </button>
