@@ -41,6 +41,10 @@ class Settings extends Component<{}, State> {
                     console.error('Top-level setting group ', group.properties.title, ' has no group level assigned to it.');
                     return;
                 }
+
+                const subSettings = this.findSettings(group, key);
+                if (subSettings.length <= 0) return; // skip empty group
+
                 const groups = groupsByLevelId.get(group.properties.levelId);
                 if (groups === undefined) {
                     console.error('Unknown group level id:', group.properties.levelId);
@@ -62,28 +66,7 @@ class Settings extends Component<{}, State> {
     }
 
     render() {
-        const settingWrappers: SettingWrapper[] = [];
-
-        const recurseSettings = (obj: object, currentGroup: string | null) => {
-            Object.entries(obj).forEach(([key, value]) => {
-                if (Array.isArray(value)) return; // skip array values
-
-                const fullKey = currentGroup ? currentGroup.concat('.').concat(key) : key;
-                if (!this.state.currentGroup || !fullKey.startsWith(this.state.currentGroup.name)) return;
-
-                if (settings.isSetting(value)) {
-                    if (value.properties && !!value.properties.debugOnly && !isDevelopment) return; // filter devOnly settings on non dev environments
-                    settingWrappers.push({
-                        'name': fullKey,
-                        setting: value
-                    });
-                } else if (!settings.isSettingGroupPropeties(value)) {
-                    recurseSettings(value, fullKey);
-                }
-            });
-        };
-
-        recurseSettings(defaultSettings, null);
+        const settingWrappers = this.findSettings(defaultSettings, null, this.state.currentGroup ? this.state.currentGroup.name : null);
 
         return (
             <div className="container mt-3">
@@ -104,6 +87,36 @@ class Settings extends Component<{}, State> {
                 </div>
             </div>
         );
+    }
+
+    findSettings(object: object, currentGroup: string | null, onlyFromGroup?: string | null): SettingWrapper[] {
+        const settingWrappers: SettingWrapper[] = [];
+
+        const recurseSettings = (obj: object, currentGroup: string | null, onlyFromGroup?: string | null) => {
+            Object.entries(obj).forEach(([key, value]) => {
+                if (Array.isArray(value)) return; // skip array values
+
+                const fullKey = currentGroup ? currentGroup.concat('.').concat(key) : key;
+                
+                // filter groups according to onlyFromGroup
+                if (onlyFromGroup !== undefined && (onlyFromGroup === null || !fullKey.startsWith(onlyFromGroup))) return;
+
+                if (settings.isSetting(value)) {
+                    if (!value.properties) return; // if no properties are given, skip the setting
+                    if (!!value.properties.debugOnly && !isDevelopment) return; // filter devOnly settings on non dev environments
+                    settingWrappers.push({
+                        'name': fullKey,
+                        setting: value
+                    });
+                } else if (!settings.isSettingGroupPropeties(value)) {
+                    recurseSettings(value, fullKey, onlyFromGroup);
+                }
+            });
+        };
+
+        recurseSettings(object, currentGroup, onlyFromGroup);
+
+        return settingWrappers;
     }
 
     getSettingComponent(setting: SettingWrapper) {
