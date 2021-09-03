@@ -9,7 +9,11 @@ Download precompiled executables for your operating system from the official [do
 
 ## For developers
 ### Building the app yourself
-You may simply build the app for your OS by using [Yarn](https://yarnpkg.com/):
+First, install all dependencies with:
+```bash
+yarn
+```
+Then, you may simply build the app for your OS by using [Yarn](https://yarnpkg.com/):
 ```bash
 yarn dist
 ```
