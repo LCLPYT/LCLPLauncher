@@ -28,48 +28,48 @@ class PlayStateButton extends Component<ContentProps, PlayState> {
         switch (this.state.state) {
             case undefined: return (
                 <>
-                    <button id="playBtn" className="px-4 btn btn-lg btn-secondary d-flex align-items-center" disabled>
+                    <button id="playBtn" className="px-4_5 btn btn-xl fw-bold shadow btn-secondary d-flex align-items-center" disabled>
                         <LoadingSpinner className="app-btn-spinner" />
                     </button>
-                    <div id="playDesc" className="ms-3 flex-fill">Loading...</div>
+                    <div id="playDesc" className="ms-2_5 flex-fill">Loading...</div>
                 </>
             );
             case 'not-installed': return (
                 <>
-                    <button id="playBtn" className="px-4 btn btn-lg btn-primary">Install</button>
-                    <div id="playDesc" className="ms-3 flex-fill">Not yet installed</div>
+                    <button id="playBtn" className="px-4_5 btn btn-xl fw-bold shadow btn-primary">Install</button>
+                    <div id="playDesc" className="ms-2_5 flex-fill">Not yet installed</div>
                 </>
             );
             case 'ready-to-play': return (
                 <>
-                    <button id="playBtn" className="px-4 btn btn-lg btn-success">{appType === 'game' ? 'Play' : 'Start'}</button>
-                    <div id="playDesc" className="ms-3 flex-fill">{appType === 'game' ? 'Ready to play' : 'Ready to start'}</div>
+                    <button id="playBtn" className="px-4_5 btn btn-xl fw-bold shadow btn-success">{appType === 'game' ? 'Play' : 'Start'}</button>
+                    <div id="playDesc" className="ms-2_5 flex-fill">{appType === 'game' ? 'Ready to play' : 'Ready to start'}</div>
                 </>
             );
             case 'needs-update': return (
                 <>
-                    <button id="playBtn" className="px-4 btn btn-lg btn-info">Update</button>
-                    <div id="playDesc" className="ms-3 flex-fill">Needs to be updated</div>
+                    <button id="playBtn" className="px-4_5 btn btn-xl fw-bold shadow btn-info">Update</button>
+                    <div id="playDesc" className="ms-2_5 flex-fill">Needs to be updated</div>
                 </>
             );
             case 'installing': return <InstallingButton />;
             case 'updating': return <UpdatingButton />;
             case 'in-queue': return (
                 <>
-                    <button id="playBtn" className="px-4 btn btn-lg btn-info d-flex align-items-center" disabled>
+                    <button id="playBtn" className="px-4_5 btn btn-xl fw-bold shadow btn-info d-flex align-items-center" disabled>
                         <LoadingSpinner className="spinner-border-sm progress-spinner" />
                         <span className="ms-2">In queue</span>
                     </button>
-                    <div id="playDesc" className="ms-3 flex-fill">Download pending...</div>
+                    <div id="playDesc" className="ms-2_5 flex-fill">Download pending...</div>
                 </>
             );
             case 'preinstalling': return <PreInstallingButton />;
             case 'outdated-launcher': return (
                 <>
-                    <button id="playBtn" className="px-4 btn btn-lg btn-secondary d-flex align-items-center" disabled>
+                    <button id="playBtn" className="px-4_5 btn btn-xl fw-bold shadow btn-secondary d-flex align-items-center" disabled>
                         <span className="ms-2">Outdated</span>
                     </button>
-                    <div id="playDesc" className="ms-3 flex-fill">Please update LCLPLauncher</div>
+                    <div id="playDesc" className="ms-2_5 flex-fill">Please update LCLPLauncher</div>
                 </>
             );
             default:
@@ -212,14 +212,14 @@ class InstallingButton extends Component<{}, InstallingState> {
     render() {
         return (
             <>
-                <button id="playBtn" className="px-4 btn btn-lg btn-primary d-flex align-items-center" disabled>
+                <button id="playBtn" className="px-4_5 btn btn-xl fw-bold shadow btn-primary d-flex align-items-center" disabled>
                     <LoadingSpinner className="spinner-border-sm progress-spinner" />
                     <span className="ms-2">Installing</span>
                     {this.state.progress ? (
                         <span className="ms-1">{(this.state.progress.currentProgress * 100).toFixed(0)}%</span>
                     ) : undefined}
                 </button>
-                <div id="playDesc" className="ms-3 flex-fill">Currently installing...</div>
+                <div id="playDesc" className="ms-2_5 flex-fill">Currently installing...</div>
             </>
         )
     }
@@ -251,14 +251,14 @@ class UpdatingButton extends Component<{}, InstallingState> {
     render() {
         return (
             <>
-                <button id="playBtn" className="px-4 btn btn-lg btn-info d-flex align-items-center" disabled>
+                <button id="playBtn" className="px-4_5 btn btn-xl fw-bold shadow btn-info d-flex align-items-center" disabled>
                     <LoadingSpinner className="spinner-border-sm progress-spinner" />
                     <span className="ms-2">Updating</span>
                     {this.state.progress ? (
                         <span className="ms-1">{(this.state.progress.currentProgress * 100).toFixed(0)}%</span>
                     ) : undefined}
                 </button>
-                <div id="playDesc" className="ms-3 flex-fill">Currently updating...</div>
+                <div id="playDesc" className="ms-2_5 flex-fill">Currently updating...</div>
             </>
         )
     }
@@ -294,14 +294,14 @@ class PreInstallingButton extends Component<{}, PreInstallingState> {
     render() {
         return (
             <>
-                <button id="playBtn" className="px-4 btn btn-lg btn-secondary d-flex align-items-center" disabled>
+                <button id="playBtn" className="px-4_5 btn btn-xl fw-bold shadow btn-secondary d-flex align-items-center" disabled>
                     <LoadingSpinner className="spinner-border-sm progress-spinner" />
                     <span className="ms-2">Preinstalling</span>
                     {this.state.progress ? (
                         <span className="ms-1">{this.state.progress.currentQueuePosition}/{this.state.progress.queueSize}</span>
                     ) : undefined}
                 </button>
-                <div id="playDesc" className="ms-3 flex-fill">Preinstalling...</div>
+                <div id="playDesc" className="ms-2_5 flex-fill">Preinstalling...</div>
             </>
         )
     }

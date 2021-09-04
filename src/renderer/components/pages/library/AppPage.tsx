@@ -77,7 +77,7 @@ class Content extends Component<ContentProps, ContentState> {
     render() {
         return (
             <div id="appWrapper">
-                <div id="appBackground" className="parallax" data-parallax-speed="0.3">
+                <div id="appBackground" className="parallax w-100" data-parallax-speed="0.4">
                     <img src={`${getBackendHost()}/api/lclplauncher/apps/assets/page-banner/${this.props.app.key}`} alt="Page banner" className="w-100" />
                 </div>
                 <div id="appForeground">
@@ -85,7 +85,7 @@ class Content extends Component<ContentProps, ContentState> {
                         {this.state.titleBranding ? <img src={this.state.titleBranding} alt={this.props.app.title} className="app-title-branding p-1" /> : <h1 className="app-title px-3">{this.props.app.title}</h1>}
                     </div>
                     <div className="foreground-container separator-border-dark-top">
-                        <div id="playBar" className="px-4 py-2 d-flex align-items-center text-lighter separator-border-dark-bottom">
+                        <div id="playBar" className="px-4 d-flex align-items-center text-lighter separator-border-dark-bottom sticky-top">
                             <PlayStateButton app={this.props.app} />
                             <Link id="shopPageLink" to={`/library/store/app/${this.props.app.key}`} className="d-flex align-items-center navigation-link-color-dimmed no-underline cursor-pointer">
                                 <span className="material-icons">shopping_bag</span>
@@ -102,6 +102,24 @@ class Content extends Component<ContentProps, ContentState> {
                                         <YouTube videoId="q_KytDRIODU" className="feed-yt" />
                                     </div>
                                 </div>
+                                <YouTube videoId="q_KytDRIODU" className="feed-yt" />
+                                <YouTube videoId="q_KytDRIODU" className="feed-yt" />
+                                <YouTube videoId="q_KytDRIODU" className="feed-yt" />
+                                <YouTube videoId="q_KytDRIODU" className="feed-yt" />
+                                <YouTube videoId="q_KytDRIODU" className="feed-yt" />
+                                <YouTube videoId="q_KytDRIODU" className="feed-yt" />
+                                <YouTube videoId="q_KytDRIODU" className="feed-yt" />
+                                <YouTube videoId="q_KytDRIODU" className="feed-yt" />
+                                <YouTube videoId="q_KytDRIODU" className="feed-yt" />
+                                <YouTube videoId="q_KytDRIODU" className="feed-yt" />
+                                <YouTube videoId="q_KytDRIODU" className="feed-yt" />
+                                <YouTube videoId="q_KytDRIODU" className="feed-yt" />
+                                <YouTube videoId="q_KytDRIODU" className="feed-yt" />
+                                <YouTube videoId="q_KytDRIODU" className="feed-yt" />
+                                <YouTube videoId="q_KytDRIODU" className="feed-yt" />
+                                <YouTube videoId="q_KytDRIODU" className="feed-yt" />
+                                <YouTube videoId="q_KytDRIODU" className="feed-yt" />
+                                <YouTube videoId="q_KytDRIODU" className="feed-yt" />
                             </div>
                             <div id="appDetails" className="px-3">
                                 <h4 className="text-lighter mb-1">{this.props.app.title}</h4>

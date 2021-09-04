@@ -40,7 +40,10 @@
 
 #playBar {
     font-size: 18px;
-    background-color: rgba(black, 0.1);
+    background-color: rgba($body-bg, 0.9);
+    padding-top: 0.7rem;
+    padding-bottom: 0.7rem;
+    top: -1px
 }
 
 .spinner-border.app-btn-spinner {

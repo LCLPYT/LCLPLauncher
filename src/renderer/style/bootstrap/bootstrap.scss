@@ -13,6 +13,18 @@ $theme-colors: (
   "lighter": $gray-400
 );
 
+$spacer: 1rem !default;
+$spacers: (
+  0: 0,
+  1: $spacer * .25,
+  2: $spacer * .5,
+  2_5: $spacer * .75,
+  3: $spacer,
+  4: $spacer * 1.5,
+  4_5: $spacer * 2,
+  5: $spacer * 3,
+) !default;
+
 @import "~bootstrap/scss/bootstrap";
 @import "~bootswatch/dist/darkly/bootswatch";
 
@@ -44,4 +56,8 @@ $theme-colors: (
 
 .action-list {
     @include row-cols(5);
+}
+
+.btn-xl {
+    @include button-size(0.5rem, 1rem, 1.5rem, 0.4rem);
 }
