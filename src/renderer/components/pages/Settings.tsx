@@ -1,3 +1,4 @@
+import { Unsubscribe } from 'conf/dist/source/types';
 import React, { Component } from 'react';
 import { isDevelopment } from '../../../common/utils/env';
 import { defaultSettings, Setting, SettingGroup, SettingGroupLevel, Settings as settings } from '../../../common/utils/settings';
@@ -157,7 +158,14 @@ interface SettingProps {
     setting: SettingWrapper
 }
 
-abstract class AbstractSettingComponent<T extends SettingProps> extends Component<T> {
+abstract class AbstractSettingComponent<T extends SettingProps, ValueType> extends Component<T> {
+    protected inputId: string;
+
+    constructor(props: T) {
+        super(props);
+        this.inputId = `input${this.props.setting.name}`;
+    }
+
     render() {
         if (!this.props.setting.setting.properties) return <div />;
 
@@ -174,40 +182,72 @@ abstract class AbstractSettingComponent<T extends SettingProps> extends Componen
     }
 
     abstract getInputElement(): [JSX.Element, boolean];
+
+    abstract onSettingDidChange(newValue?: ValueType, oldValue?: ValueType): void;
+
+    protected unsubscribe?: Unsubscribe;
+
+    componentDidMount() {
+        this.unsubscribe = settings.onSettingChanged<ValueType>(this.props.setting.name, (newValue, oldValue) => {
+            this.onSettingDidChange(newValue, oldValue)
+        });
+    }
+
+    componentWillUnmount() {
+        if (this.unsubscribe) this.unsubscribe();
+    }
 }
 
-class CheckBoxComponent extends AbstractSettingComponent<SettingProps> {
+class CheckBoxComponent extends AbstractSettingComponent<SettingProps, boolean> {
     getInputElement(): [JSX.Element, boolean] {
-        const id = `input${this.props.setting.name}`;
+        const value: boolean | undefined = settings.getConfigItemByName(this.props.setting.name);
         return [(
             <div className="form-check form-switch">
-                <input className="form-check-input" type="checkbox" id={id} />
-                <label className="form-check-label text-light" htmlFor={id}>{this.props.setting.setting.properties?.description ? this.props.setting.setting.properties.description : 'Enable'}</label>
+                <input className="form-check-input" type="checkbox" id={this.inputId} defaultChecked={value} />
+                <label className="form-check-label text-light" htmlFor={this.inputId}>{this.props.setting.setting.properties?.description ? this.props.setting.setting.properties.description : 'Enable'}</label>
             </div>
         ), false];
     }
-}
 
-class TextInputComponent extends AbstractSettingComponent<SettingProps> {
-    getInputElement(): [JSX.Element, boolean] {
-        const id = `input${this.props.setting.name}`;
-        const type = this.props.setting.setting.properties?.inputTextType ? this.props.setting.setting.properties.inputTextType : 'text';
-        return [(
-            <input type={type} className="form-control" id={id} />
-        ), true];
+    componentDidMount() {
+        super.componentDidMount();
+        const checkbox = document.getElementById(this.inputId) as HTMLInputElement | null;
+        checkbox?.addEventListener('change', () => settings.setConfigItemByName(this.props.setting.name, checkbox.checked));
+    }
+
+    onSettingDidChange(newValue?: boolean): void {
+        console.log(this.props.setting.name, 'is now:', newValue);
     }
 }
 
-class OptionSelectComponent extends AbstractSettingComponent<SettingProps> {
+class TextInputComponent extends AbstractSettingComponent<SettingProps, string> {
+    getInputElement(): [JSX.Element, boolean] {
+        const type = this.props.setting.setting.properties?.inputTextType ? this.props.setting.setting.properties.inputTextType : 'text';
+        const value: string | undefined = settings.getConfigItemByName(this.props.setting.name);
+        return [(
+            <input type={type} className="form-control" id={this.inputId} defaultValue={value} />
+        ), true];
+    }
+
+    onSettingDidChange(newValue?: string): void {
+        console.log(this.props.setting.name, 'is now:', newValue);
+    }
+}
+
+class OptionSelectComponent extends AbstractSettingComponent<SettingProps, string> {
     getInputElement(): [JSX.Element, boolean] {
         if (!this.props.setting.setting.properties || !this.props.setting.setting.properties.options) return [<div />, true];
 
-        const id = `input${this.props.setting.name}`;
+        const value: string | undefined = settings.getConfigItemByName(this.props.setting.name);
         return [(
-            <select className="form-select" aria-label={`Select ${this.props.setting.setting.properties?.title}`} id={id}>
-                { this.props.setting.setting.properties.options.map((option, index) => <option key={index} value={option}>{option}</option>) }
+            <select className="form-select" aria-label={`Select ${this.props.setting.setting.properties?.title}`} id={this.inputId} defaultValue={value}>
+                {this.props.setting.setting.properties.options.map((option, index) => <option key={index} value={option}>{option}</option>)}
             </select>
         ), true];
+    }
+
+    onSettingDidChange(newValue?: string): void {
+        console.log(this.props.setting.name, 'is now:', newValue);
     }
 }
 

@@ -1,3 +1,4 @@
+import { OnDidChangeCallback } from "conf/dist/source/types";
 import ElectronStore from "electron-store";
 
 // config structure
@@ -100,7 +101,7 @@ export function shouldPlayToastSound(): boolean {
 
 // Getter helper
 function getConfigItem<ItemType>(accessor: (config: LoadedConfig) => any): ItemType {
-    if(!Settings.store) Settings.store = new ElectronStore();
+    if(!Settings.store) Settings.store = new ElectronStore({ watch: true });
     try {
         return <ItemType> accessor(<LoadedConfig> <unknown> Settings.store.store);
     } catch(err) {
@@ -156,7 +157,7 @@ export namespace Settings {
     export let store: ElectronStore | undefined;
     
     export function init() {
-        store = new ElectronStore();
+        store = new ElectronStore({ watch: true });
         initDefaults(store);
     }
     
@@ -185,5 +186,21 @@ export namespace Settings {
     
     export function isSettingGroupPropeties(object: any): object is SettingGroupProperties {
         return (<SettingGroupProperties> object).title !== undefined;
+    }
+
+    export function getConfigItemByName<ItemType>(name: string): ItemType | undefined {
+        if (!store) store = new ElectronStore({ watch: true });
+        if (!store.has(name)) return undefined;
+        else return <ItemType> store.get(name);
+    }
+
+    export function setConfigItemByName(setting: string, value: any) {
+        if (!store) store = new ElectronStore({ watch: true });
+        store.set(setting, value);
+    }
+
+    export function onSettingChanged<T>(setting: string, callback: OnDidChangeCallback<T>) {
+        if (!store) store = new ElectronStore({ watch: true });
+        return store.onDidChange(setting, <OnDidChangeCallback<unknown>> callback);
     }
 }
