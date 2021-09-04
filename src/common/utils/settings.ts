@@ -1,5 +1,6 @@
 import { OnDidChangeCallback } from "conf/dist/source/types";
 import ElectronStore from "electron-store";
+import chokidar from 'chokidar';
 
 // config structure
 interface ConfigStructure<Group, Item> {
@@ -101,9 +102,9 @@ export function shouldPlayToastSound(): boolean {
 
 // Getter helper
 function getConfigItem<ItemType>(accessor: (config: LoadedConfig) => any): ItemType {
-    if(!Settings.store) Settings.store = new ElectronStore({ watch: true });
+    const store = Settings.store ? Settings.store : Settings.initWatchedStore();
     try {
-        return <ItemType> accessor(<LoadedConfig> <unknown> Settings.store.store);
+        return <ItemType> accessor(<LoadedConfig> <unknown> store.store);
     } catch(err) {
         if (err instanceof Error) err.message = `Could not get setting: ${err.message}`;
         throw err;
@@ -155,9 +156,24 @@ type LoadedGroup = {
 export namespace Settings {
     // utilities
     export let store: ElectronStore | undefined;
-    
+    let watcher: chokidar.FSWatcher | undefined;
+
+    export function initWatchedStore(): ElectronStore<Record<string, unknown>> {
+        if (!store) store = getWatchedStore();
+        return store;
+    }
+
+    function getWatchedStore() {
+        const store = new ElectronStore();
+        if (!watcher) {
+            watcher = chokidar.watch(store.path);
+            watcher.on('change', () => store.events.emit('change'));
+        }
+        return store;
+    }
+
     export function init() {
-        store = new ElectronStore({ watch: true });
+        store = getWatchedStore();
         initDefaults(store);
     }
     
@@ -191,19 +207,19 @@ export namespace Settings {
     const manuallyChanged: string[] = [];
 
     export function getConfigItemByName<ItemType>(name: string): ItemType | undefined {
-        if (!store) store = new ElectronStore({ watch: true });
+        if (!store) store = getWatchedStore();
         if (!store.has(name)) return undefined;
         else return <ItemType> store.get(name);
     }
 
     export function setConfigItemByName(setting: string, value: any) {
-        if (!store) store = new ElectronStore({ watch: true });
+        if (!store) store = getWatchedStore();
         if (!manuallyChanged.includes(setting)) manuallyChanged.push(setting);
         store.set(setting, value);
     }
 
     export function onSettingChanged<T>(setting: string, callback: OnDidChangeCallback<T>) {
-        if (!store) store = new ElectronStore({ watch: true });
+        if (!store) store = getWatchedStore()
         return store.onDidChange(setting, (newValue, oldValue) => {
             if (manuallyChanged.includes(setting)) {
                 const idx = manuallyChanged.indexOf(setting);
