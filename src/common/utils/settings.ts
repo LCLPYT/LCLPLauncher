@@ -188,6 +188,8 @@ export namespace Settings {
         return (<SettingGroupProperties> object).title !== undefined;
     }
 
+    const manuallyChanged: string[] = [];
+
     export function getConfigItemByName<ItemType>(name: string): ItemType | undefined {
         if (!store) store = new ElectronStore({ watch: true });
         if (!store.has(name)) return undefined;
@@ -196,11 +198,17 @@ export namespace Settings {
 
     export function setConfigItemByName(setting: string, value: any) {
         if (!store) store = new ElectronStore({ watch: true });
+        if (!manuallyChanged.includes(setting)) manuallyChanged.push(setting);
         store.set(setting, value);
     }
 
     export function onSettingChanged<T>(setting: string, callback: OnDidChangeCallback<T>) {
         if (!store) store = new ElectronStore({ watch: true });
-        return store.onDidChange(setting, <OnDidChangeCallback<unknown>> callback);
+        return store.onDidChange(setting, (newValue, oldValue) => {
+            if (manuallyChanged.includes(setting)) {
+                const idx = manuallyChanged.indexOf(setting);
+                if (idx >= 0) manuallyChanged.splice(idx, 1);  
+            } else callback(<T> newValue, <T> oldValue);
+        });
     }
 }

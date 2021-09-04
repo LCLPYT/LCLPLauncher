@@ -1,5 +1,6 @@
 import { Unsubscribe } from 'conf/dist/source/types';
 import React, { Component } from 'react';
+import tippy from 'tippy.js';
 import { isDevelopment } from '../../../common/utils/env';
 import { defaultSettings, Setting, SettingGroup, SettingGroupLevel, Settings as settings } from '../../../common/utils/settings';
 
@@ -71,19 +72,18 @@ class Settings extends Component<{}, State> {
 
         return (
             <div className="container mt-3">
-                <h3 className="text-lighter">Settings</h3>
+                <div className="d-flex align-items-center justify-content-between">
+                    <h3 className="text-lighter">Settings</h3>
+                    <span id="settingsEditBtn" className="material-icons navigation-link-color">edit</span>
+                </div>
                 <div className="row">
                     <div className="col-3">
                         <div id="settingsGroupLevels" className="sticky-top">
-                            {
-                                Array.from(this.groupsByLevel).map(([level, groups]) => <SettingGroupLevelComponent key={level.id} level={level} groups={groups} currentGroup={this.state.currentGroup} />)
-                            }
+                            {Array.from(this.groupsByLevel).map(([level, groups]) => <SettingGroupLevelComponent key={level.id} level={level} groups={groups} currentGroup={this.state.currentGroup} />)}
                         </div>
                     </div>
                     <div className="col-9">
-                        {
-                            settingWrappers.map(setting => this.getSettingComponent(setting))
-                        }
+                        {settingWrappers.map(setting => this.getSettingComponent(setting))}
                     </div>
                 </div>
             </div>
@@ -151,6 +151,15 @@ class Settings extends Component<{}, State> {
 
             element.addEventListener('click', () => this.setState({ currentGroup: group }));
         });
+
+        const settingsEditBtn = document.getElementById('settingsEditBtn');
+        if (settingsEditBtn) {
+            settingsEditBtn.addEventListener('click', () => settings.store?.openInEditor());
+            tippy(settingsEditBtn, {
+                content: 'Edit JSON',
+                animation: 'scale'
+            });
+        }
     }
 }
 
@@ -216,7 +225,8 @@ class CheckBoxComponent extends AbstractSettingComponent<SettingProps, boolean> 
     }
 
     onSettingDidChange(newValue?: boolean): void {
-        console.log(this.props.setting.name, 'is now:', newValue);
+        const checkbox = document.getElementById(this.inputId) as HTMLInputElement | null;
+        if (checkbox) checkbox.checked = !!newValue;
     }
 }
 
@@ -229,8 +239,22 @@ class TextInputComponent extends AbstractSettingComponent<SettingProps, string> 
         ), true];
     }
 
+    componentDidMount() {
+        super.componentDidMount();
+        const input = document.getElementById(this.inputId) as HTMLInputElement | null;
+        if (input) {
+            input.addEventListener('change', () => settings.setConfigItemByName(this.props.setting.name, input.value));
+            tippy(input, {
+                content: 'Unfocus to apply changes',
+                trigger: 'click',
+                placement: 'top-end'
+            });
+        }
+    }
+
     onSettingDidChange(newValue?: string): void {
-        console.log(this.props.setting.name, 'is now:', newValue);
+        const input = document.getElementById(this.inputId) as HTMLInputElement | null;
+        if (input && newValue) input.value = newValue;
     }
 }
 
@@ -246,8 +270,15 @@ class OptionSelectComponent extends AbstractSettingComponent<SettingProps, strin
         ), true];
     }
 
+    componentDidMount() {
+        super.componentDidMount();
+        const input = document.getElementById(this.inputId) as HTMLInputElement | null;
+        input?.addEventListener('change', () => settings.setConfigItemByName(this.props.setting.name, input.value));
+    }
+
     onSettingDidChange(newValue?: string): void {
-        console.log(this.props.setting.name, 'is now:', newValue);
+        const input = document.getElementById(this.inputId) as HTMLInputElement | null;
+        if (input && newValue) input.value = newValue;
     }
 }
 
