@@ -102,24 +102,6 @@ class Content extends Component<ContentProps, ContentState> {
                                         <YouTube videoId="q_KytDRIODU" className="feed-yt" />
                                     </div>
                                 </div>
-                                <YouTube videoId="q_KytDRIODU" className="feed-yt" />
-                                <YouTube videoId="q_KytDRIODU" className="feed-yt" />
-                                <YouTube videoId="q_KytDRIODU" className="feed-yt" />
-                                <YouTube videoId="q_KytDRIODU" className="feed-yt" />
-                                <YouTube videoId="q_KytDRIODU" className="feed-yt" />
-                                <YouTube videoId="q_KytDRIODU" className="feed-yt" />
-                                <YouTube videoId="q_KytDRIODU" className="feed-yt" />
-                                <YouTube videoId="q_KytDRIODU" className="feed-yt" />
-                                <YouTube videoId="q_KytDRIODU" className="feed-yt" />
-                                <YouTube videoId="q_KytDRIODU" className="feed-yt" />
-                                <YouTube videoId="q_KytDRIODU" className="feed-yt" />
-                                <YouTube videoId="q_KytDRIODU" className="feed-yt" />
-                                <YouTube videoId="q_KytDRIODU" className="feed-yt" />
-                                <YouTube videoId="q_KytDRIODU" className="feed-yt" />
-                                <YouTube videoId="q_KytDRIODU" className="feed-yt" />
-                                <YouTube videoId="q_KytDRIODU" className="feed-yt" />
-                                <YouTube videoId="q_KytDRIODU" className="feed-yt" />
-                                <YouTube videoId="q_KytDRIODU" className="feed-yt" />
                             </div>
                             <div id="appDetails" className="px-3">
                                 <h4 className="text-lighter mb-1">{this.props.app.title}</h4>
