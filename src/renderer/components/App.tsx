@@ -11,6 +11,7 @@ import ToastOptions, { ToastType } from '../../common/types/Toast';
 import toastSound from '../sound/toast.ogg';
 import { installationProgressManager, InstallerEvent } from '../utils/downloads';
 import DownloadProgress, { PackageDownloadProgress } from '../../common/types/DownloadProgress';
+import { shouldPlayToastSound } from '../../common/utils/settings';
 
 class App extends Component {
     render() {
@@ -72,7 +73,7 @@ class ToastStack extends Component<{}, ToastState> {
                 }]
             });
 
-            new Audio(toastSound).play();
+            if (shouldPlayToastSound()) new Audio(toastSound).play();
         });
 
         toastManager.addEventListener('remove-toast', this.toastListeners['remove-toast'] = (event: ToastEvent) => {

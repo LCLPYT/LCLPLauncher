@@ -25,8 +25,8 @@ export class WindowsOSHandler extends AbstractOSHandler {
 
             await execa('fsutil', ['dirty', 'query', systemdrive]);
             return true;
-        } catch (error) {
-            if (error.code === 'ENOENT') {
+        } catch (error: any) {
+            if (error && 'code' in error && error.code === 'ENOENT') {
                 // https://stackoverflow.com/a/28268802
                 try {
                     await execa('fltmc');
@@ -84,4 +84,8 @@ export function forPlatform<Arg, Res>(platformMap: OSDependantFunction<Arg, Res>
     const currentPlatform = os.platform();
     if (!(currentPlatform in platformMap)) throw new Error(`Platform map does not contain a mapping for platform '${currentPlatform}'`);
     return platformMap[currentPlatform];
+}
+
+export async function doOnPlatformAsync(action: () => Promise<void>, ...platforms: string[]) {
+    if (platforms.includes(os.platform())) await action();
 }

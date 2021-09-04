@@ -9,7 +9,7 @@ import { ExtractedArchiveTracker } from "./tracker/ExtractedArchiveTracker";
 import { Installer } from "./downloader";
 import { ArtifactTrackerVariables, TrackerWriter } from "./tracker/ArtifactTracker";
 import App from "../../common/types/App";
-import { chooseForPlatform, forPlatform, osHandler } from "../utils/oshooks";
+import { chooseForPlatform, doOnPlatformAsync, forPlatform, osHandler } from "../utils/oshooks";
 import { parseProfilesFromJson, Profile } from "../types/MCLauncherProfiles";
 import { getBase64DataURL } from "../utils/resources";
 import execa from "execa";
@@ -252,6 +252,12 @@ export namespace ActionFactory {
                 })([forgeInstaller, arg.result]);
 
                 console.log('Installing Minecraft Forge...');
+                doOnPlatformAsync(async () => {
+                    const childProcess = execa('chmod', ['+x', javaExecutable]);
+                    childProcess.stdout?.pipe(process.stdout);
+                    await childProcess;
+                }, 'linux');
+
                 const childProcess = execa(javaExecutable, ['-Xms1G', '-Xmx2G', '-cp', classPath, 'work.lclpnet.forgeinstaller.ForgeInstaller', 'none', '0']);
                 if(childProcess.stdout) childProcess.stdout.pipe(process.stdout);
 
