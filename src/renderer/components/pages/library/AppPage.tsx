@@ -8,12 +8,12 @@ import '../../../style/pages/library/app_page.scss';
 import tippy from 'tippy.js';
 import CollapsableDescription from '../../utility/CollapsableDescription';
 import GenresDisplay from '../../utility/GenresDisplay';
-import YouTube from 'react-youtube';
 import { Modal } from 'bootstrap';
 import PlayStateButton from './page/PlayStateButton';
 import AppSettingsModal from './page/AppSettingsModal';
 import InstallationOptionsModal from './page/InstallationOptionsModal';
 import DependenciesAlertModal from './page/DependenciesAlertModal';
+import AppFeed from './page/AppFeed';
 
 interface Props extends RouteComponentProps<{ app: string }> { }
 
@@ -68,10 +68,13 @@ interface ContentState {
 }
 
 class Content extends Component<ContentProps, ContentState> {
+    protected feedRef: React.RefObject<AppFeed>;
+
     constructor(props: ContentProps) {
         super(props);
         this.state = {} as ContentState;
         this.loadTitleImage();
+        this.feedRef = React.createRef();
     }
 
     render() {
@@ -93,19 +96,10 @@ class Content extends Component<ContentProps, ContentState> {
                             <span id="appSettingsLink" className="material-icons ms-2 navigation-link-color-dimmed cursor-pointer">settings</span>
                         </div>
                         <div className="d-flex">
-                            <div id="appFeed" className="flex-fill px-4 pb-3 pt-2 text-lighter">
-                                <div className="fw-bold text-muted mb-1">News</div>
-                                <div className="pb-3">
-                                    <h5 className="mb-1">World generation showcase</h5>
-                                    <div className="text-light mb-1">10 minutes of the world generation of LCLPServer 5.0's (survival) world.</div>
-                                    <div className="feed-yt-wrapper rounded overflow-hidden shadow-lg">
-                                        <YouTube videoId="q_KytDRIODU" className="feed-yt" />
-                                    </div>
-                                </div>
-                            </div>
+                            <AppFeed ref={this.feedRef} app={this.props.app} />
                             <div id="appDetails" className="px-3">
                                 <h4 className="text-lighter mb-1">{this.props.app.title}</h4>
-                                {this.props.app.description ? <CollapsableDescription content={this.props.app.description} /> : undefined}
+                                {this.props.app.description ? <CollapsableDescription id="appDesc" content={this.props.app.description} /> : undefined}
                                 <GenresDisplay values={this.props.app.genres} theme="dark" />
                             </div>
                         </div>
@@ -199,6 +193,16 @@ class Content extends Component<ContentProps, ContentState> {
             element.style.transform = `translateY(${this.scrollY * speed}px)`;
             this.onResize();
         });
+
+        if (this.feedRef.current && !this.feedRef.current.wasEndReached()) {
+            const lastElement = this.feedRef.current.getLastElement();
+            if (lastElement) {
+                const rect = lastElement.getBoundingClientRect();
+                if (rect.top >= 0 && rect.bottom <= (window.innerHeight || document.documentElement.clientHeight)) { // if lastElement is in viewport
+                    this.feedRef.current.loadNextPage();
+                }
+            }
+        }
     }
 
     onResize() {

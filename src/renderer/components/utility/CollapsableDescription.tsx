@@ -1,20 +1,20 @@
 import React, { Component } from 'react';
 
-class CollapsableDescription extends Component<{ content: string }> {
+class CollapsableDescription extends Component<{ id: string, content: string }> {
     render() {
         return <>
-            <p id="descriptionDummy" hidden>{this.props.content}</p>
-            <p className="collapse text-lighter" id="description" aria-expanded="false">{this.props.content}</p>
+            <p id={`dummy_${this.props.id}`} hidden>{this.props.content}</p>
+            <p className="collapse text-lighter collapseDesc" id={`desc_${this.props.id}`} aria-expanded="false">{this.props.content}</p>
             <div className="text-center">
-                <button className="btn btn-sm btn-primary mb-2" id="descToggler" type="button" data-bs-toggle="collapse" data-bs-target="#description" aria-expanded="false" aria-controls="description" hidden>Show more</button>
+                <button className="btn btn-sm btn-primary mb-2 collapseDescToggler" id={`toggle_${this.props.id}`} type="button" data-bs-toggle="collapse" data-bs-target={`#desc_${this.props.id}`} aria-expanded="false" aria-controls={`desc_${this.props.id}`} hidden>Show more</button>
             </div>
         </>;
     }
 
     componentDidMount() {
-        const desc = document.getElementById('description');
-        const descDummy = document.getElementById('descriptionDummy');
-        const descToggler = document.getElementById('descToggler');
+        const desc = document.getElementById(`desc_${this.props.id}`);
+        const descDummy = document.getElementById(`dummy_${this.props.id}`);
+        const descToggler = document.getElementById(`toggle_${this.props.id}`);
 
         function onResize() {
             // Collapse

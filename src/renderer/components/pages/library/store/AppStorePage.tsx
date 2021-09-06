@@ -83,7 +83,7 @@ class Content extends Component<ContentProps, ContentState> {
                       {this.state.previewData ? <AppPreview app={this.props.app} previewData={this.state.previewData} /> : undefined}
                   </div>
                   <div className="w-50 p-3 overflow-auto custom-scrollbar" id="previewContainerRight">
-                      {this.props.app.description ? <CollapsableDescription content={this.props.app.description} /> : undefined}
+                      {this.props.app.description ? <CollapsableDescription id="storeDesc" content={this.props.app.description} /> : undefined}
                       <div className="pt-2 border-top border-secondary">
                           <GenresDisplay values={this.props.app.genres} />
                       </div>

@@ -6,23 +6,23 @@
 $descSize: 16px;
 $descLines: $descSize * 1.5 * 4;
 
-#description.collapse:not(.show) {
+.collapseDesc.collapse:not(.show) {
     display: block;
     font-size: $descSize;
     max-height: $descLines;
     overflow: hidden;
 }
 
-#description.collapsing {
+.collapseDesc.collapsing {
     min-height: $descLines;
     transition-timing-function: linear;
 }
 
-#description {
+.collapseDesc {
     margin-bottom: 0.5rem;
 }
 
-#descToggler {
+.collapseDescToggler {
     margin-top: -5px;
 }
 

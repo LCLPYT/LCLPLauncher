@@ -77,6 +77,11 @@
     display: block;
 }
 
+.feed-img {
+    width: 60%;
+    height: auto;
+}
+
 .custom-input-wrapper {
     background-color: $gray-700;
     border-radius: 0.25rem;
@@ -121,4 +126,12 @@ code.selectable {
 
 table.table-dark {
     color: $gray-400;
+}
+
+.feed-mw {
+    max-width: 85%;
+}
+
+.timestamp-sm {
+    font-size: 12px;
 }
