@@ -36,9 +36,9 @@ export type OptifineUrlResolverArgs = AbstractUrlResolverArgs & {
 }
 
 /* Post Actions */
-export type PostAction = GeneralPostAction | ExtractZipPostAction | AddMCProfilePostAction | InstallMCForgePostAction;
+export type PostAction = GeneralPostAction | ExtractZipPostAction | AddMCProfilePostAction | PrepareMCProfilePostAction | InstallMCForgePostAction;
 export type GeneralPostAction = {
-    type: 'extractZip' | 'addMinecraftProfile' | 'installMinecraftForge',
+    type: 'extractZip' | 'addMinecraftProfile' | 'prepareMinecraftProfile' | 'installMinecraftForge',
     /** Action to execute after this action */
     post?: PostAction
 }
@@ -58,6 +58,10 @@ export type AddMCProfilePostAction = GeneralPostAction & {
     lastVersionId: string,
     /** If true, the installer will ensure that the created profile will be the latest (and thereby the first to show to the user in the launcher) */
     ensureLatest?: boolean
+}
+export type PrepareMCProfilePostAction = GeneralPostAction & {
+    /** The id of the profile */
+    id: string
 }
 export type InstallMCForgePostAction = GeneralPostAction & {
     /** The version id of the minecraft profile */

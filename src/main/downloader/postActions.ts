@@ -1,4 +1,4 @@
-import { AddMCProfilePostAction, Artifact, ExtractZipPostAction, InstallMCForgePostAction, PostAction } from "../types/Installation";
+import { AddMCProfilePostAction, Artifact, ExtractZipPostAction, InstallMCForgePostAction, PostAction, PrepareMCProfilePostAction } from "../types/Installation";
 import * as Path from 'path';
 import * as fs from 'fs';
 import { checksumFile } from "../utils/checksums";
@@ -6,7 +6,6 @@ import { backupFile, exists, getDependencyDir, rename } from "../utils/fshelper"
 import { unzip } from "../utils/zip";
 import { SingleFileTracker } from "./tracker/SingleFileTracker";
 import { ExtractedArchiveTracker } from "./tracker/ExtractedArchiveTracker";
-import { Installer } from "./downloader";
 import { ArtifactTrackerVariables, TrackerWriter } from "./tracker/ArtifactTracker";
 import App from "../../common/types/App";
 import { chooseForPlatform, doOnPlatformAsync, forPlatform, osHandler } from "../utils/oshooks";
@@ -99,8 +98,12 @@ export namespace ActionFactory {
     export function createMoveActionHandle(targetFile: string) {
         return new MoveAction(targetFile, null);
     }
+
+    export type InstallerProto = {
+        installationDirectory: string
+    }
     
-    export function createPostActionHandle(installer: Installer, action: PostAction): PostActionHandle<any> {
+    export function createPostActionHandle(installer: InstallerProto, action: PostAction): PostActionHandle<any> {
         switch (action.type) {
             case 'extractZip':
                 const extractZipAction = <ExtractZipPostAction> <unknown> action;
@@ -109,6 +112,8 @@ export namespace ActionFactory {
                 return new ExtractZipAction(target, child);
             case 'addMinecraftProfile':
                 return new AddMCProfileAction(<AddMCProfilePostAction> <unknown> action, null);
+            case 'prepareMinecraftProfile':
+                return new PrepareMCProfileAction(<PrepareMCProfilePostAction> <unknown> action, null);
             case 'installMinecraftForge':
                 const installForgeAction = <InstallMCForgePostAction> <unknown> action;
                 return new InstallMCForgeAction(installForgeAction.versionId, null);
@@ -221,6 +226,36 @@ export namespace ActionFactory {
                 await UninstallTracker.writeUninstallTracker(new (UninstallMCProfile.Writer.getConstructor())(options.id, arg.app.id, {}));
 
                 console.log(`Launcher profile '${options.name}' added.`);
+            }, child);
+        }
+    }
+
+    class PrepareMCProfileAction extends PostActionHandle<GeneralActionArgument> {
+        constructor(options: PrepareMCProfilePostAction, child: PostActionHandle<GeneralActionArgument> | null) {
+            super(async () => {
+                console.log(`Preparing launcher profile '${options.id}'...`);
+
+                const profilesFile = Path.resolve(osHandler.getMinecraftDir(), 'launcher_profiles.json');
+                const jsonContent = await fs.promises.readFile(profilesFile, 'utf8');
+                const launcherProfiles = parseProfilesFromJson(jsonContent);
+    
+                if (!(options.id in launcherProfiles.profiles)) return; // profile does not exist
+
+                const now = new Date();
+                const diff = 1000 * 60;
+                const beforeNow = new Date(now.getTime() - diff);
+
+                Object.entries(launcherProfiles.profiles).forEach(([_id, profile]) => {
+                    if (!profile.lastUsed || profile.lastUsed.getTime() > beforeNow.getTime()) profile.lastUsed = beforeNow;
+                });
+
+                const profile = launcherProfiles.profiles[options.id];
+                profile.lastUsed = now;
+    
+                await backupFile(profilesFile);
+                await fs.promises.writeFile(profilesFile, JSON.stringify(launcherProfiles, undefined, 2));
+    
+                console.log(`Launcher profile '${options.id}' was successfully prepared.`);
             }, child);
         }
     }
