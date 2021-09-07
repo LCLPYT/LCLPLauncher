@@ -102,10 +102,17 @@ async function fetchAppInfo(app: App): Promise<AppInfo> {
     return appInfo;
 }
 
+function isAppInfoVersionValid(info: AppInfo) {
+    const currentAppVersion = getAppVersion();
+    if (!currentAppVersion) throw new Error('Could not determine app version.');
+    return semver.satisfies(currentAppVersion, info.launcherVersion);
+}
+
 async function fetchInstallation(app: App): Promise<Installation> {
     const appInfo = await fetchAppInfo(app);
-    if (!(os.platform() in appInfo.platforms)) throw new Error(`Current platform '${os.platform()}' is not supported by the app '${app.key}'.`);
+    if (!isAppInfoVersionValid(appInfo)) throw new Error(`The app '${app.key}' requires launcher version ${appInfo.launcherVersion}`);
 
+    if (!(os.platform() in appInfo.platforms)) throw new Error(`Current platform '${os.platform()}' is not supported by the app '${app.key}'.`);
     const platformInfo = appInfo.platforms[os.platform()];
 
     const headers = new Headers();
