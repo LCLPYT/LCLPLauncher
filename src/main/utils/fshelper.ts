@@ -40,8 +40,12 @@ export async function exists(file: string): Promise<boolean> {
 }
 
 export function getInstallerAppDir(app: App | number) {
-    if(typeof app === 'number') return Path.resolve(electronApp.getPath('userData'), '.installer', 'apps', app.toString());
+    if (typeof app === 'number') return Path.resolve(electronApp.getPath('userData'), '.installer', 'apps', app.toString());
     else return Path.resolve(electronApp.getPath('userData'), '.installer', 'apps', app.id.toString());
+}
+
+export function getAppStartupFile(app: App | number) {
+    return Path.join(getInstallerAppDir(app), 'startup.json');
 }
 
 export function getAppUninstallerDir(appId: number) {

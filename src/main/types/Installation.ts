@@ -6,7 +6,8 @@ type Installation = {
     launcherVersion: string,
     dependencies?: DependencyDescriptor[],
     artifacts?: Artifact[],
-    finalize?: PostAction[]
+    finalize?: PostAction[],
+    startup: AppStartup
 }
 
 export type Artifact = {
@@ -64,5 +65,12 @@ export type InstallMCForgePostAction = GeneralPostAction & {
 }
 
 export type SegmentedPath = string[];
+
+export type AppStartup = {
+    launcherCompat: number,
+    program: SegmentedPath | SegmentedPath[],
+    args?: string[],
+    before?: PostAction[]
+};
 
 export default Installation;

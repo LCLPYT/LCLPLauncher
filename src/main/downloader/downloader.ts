@@ -3,9 +3,10 @@ import { jsoncSafe } from "jsonc/lib/jsonc.safe";
 import Downloader from 'nodejs-file-downloader';
 import * as Path from 'path';
 import * as fs from 'fs';
+import * as os from 'os';
 import App from "../../common/types/App";
 import Installation, { Artifact, SegmentedPath } from "../types/Installation";
-import { exists, getInstallerAppDir, resolveSegmentedPath, rmdirRecusive } from "../utils/fshelper";
+import { exists, getAppStartupFile, getInstallerAppDir, mkdirp, resolveSegmentedPath, rmdirRecusive } from "../utils/fshelper";
 import { PostActionHandle, PostActionWrapper, ActionFactory, ArtifactActionArgument, GeneralActionArgument } from "./postActions";
 import { ArtifactTrackerVariables } from "./tracker/ArtifactTracker";
 import { AppTracker } from "./tracker/AppTracker";
@@ -22,6 +23,7 @@ import { ToastType } from "../../common/types/Toast";
 import { uninstallApp } from "./uninstall";
 import { createReader } from "./tracker/ArtifactTrackers";
 import { Dependencies } from "./dependencies";
+import AppInfo from "../types/AppInfo";
 
 const queue: [app: App, dir: string, callback: (err: any) => void][] = [];
 let currentInstaller: Installer | null = null;
@@ -84,19 +86,41 @@ export async function validateInstallationDir(dir: string) {
     }
 }
 
-async function fetchInstallation(app: App): Promise<Installation> {
+async function fetchAppInfo(app: App): Promise<AppInfo> {
     const headers = new Headers();
     headers.append('pragma', 'no-cache');
     headers.append('cache-control', 'no-cache');
 
-    const [err, result] = await fetch(`${getBackendHost()}/api/lclplauncher/app-installer/${app.key}`, {
+    const [err, appInfo]: [any, AppInfo?] = await fetch(`${getBackendHost()}/api/lclplauncher/app-info/${app.key}`, {
         headers: headers
     }).then(response => response.text())
         .then(text => jsoncSafe.parse(text));
 
     if (err) throw err;
+    if (!appInfo) throw new Error('Info result could not be read.');
 
-    return result;
+    return appInfo;
+}
+
+async function fetchInstallation(app: App): Promise<Installation> {
+    const appInfo = await fetchAppInfo(app);
+    if (!(os.platform() in appInfo.platforms)) throw new Error(`Current platform '${os.platform()}' is not supported by the app '${app.key}'.`);
+
+    const platformInfo = appInfo.platforms[os.platform()];
+
+    const headers = new Headers();
+    headers.append('pragma', 'no-cache');
+    headers.append('cache-control', 'no-cache');
+
+    const [err, installation]: [any, Installation?] = await fetch(`${getBackendHost()}/api/lclplauncher/app-installer/${app.key}/${platformInfo.installer}`, {
+        headers: headers
+    }).then(response => response.text())
+        .then(text => jsoncSafe.parse(text));
+
+    if (err) throw err;
+    if (!installation) throw new Error('Installation could not be read.');
+
+    return installation;
 }
 
 export async function isInstallationLauncherVersionValid(app: App): Promise<boolean> {
@@ -270,26 +294,22 @@ export class Installer {
         this.active = true;
         this.totalBytes = 0;
 
-        if (!this.isUpToDate()) {
+        const needsUpdate = !this.isUpToDate();
+        if (needsUpdate) {
             console.log('Updates found. Downloading...');
 
             this.downloadQueue.forEach(artifact => this.totalBytes += Math.max(0, artifact.size));
             await this.downloadNextArtifact();
+        } else console.log('Everything is already up-to-date.');
 
-            console.log('Finalizing...');
-            this.enqueueFinalization();
-            await this.completePostActions();
-            console.log('Finalization complete.');
+        console.log('Finalizing...');
+        this.enqueueFinalization();
+        await this.completePostActions();
+        console.log('Finalization complete.');
 
-            await this.writeTracker();
-        } else {
-            console.log('Everything is already up-to-date.');
+        if (needsUpdate) await this.writeTracker();
 
-            console.log('Finalizing...');
-            this.enqueueFinalization();
-            await this.completePostActions();
-            console.log('Finalization complete.');
-        }
+        await this.writeStartup();
         await this.cleanUp();
     }
 
@@ -513,5 +533,15 @@ export class Installer {
 
     public toActualPath(path: SegmentedPath) {
         return resolveSegmentedPath(this.installationDirectory, path);
+    }
+
+    protected async writeStartup() {
+        console.log('Writing startup file...');
+        const startupFile = getAppStartupFile(this.app);
+        await mkdirp(Path.dirname(startupFile));
+
+        const data = JSON.stringify(this.installation.startup);
+        await fs.promises.writeFile(startupFile, data, 'utf8');
+        console.log('Startup file written.');
     }
 }

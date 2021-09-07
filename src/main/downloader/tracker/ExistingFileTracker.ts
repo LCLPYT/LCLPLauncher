@@ -23,7 +23,6 @@ export namespace ExistingFileTracker {
 
         public async isArtifactUpToDate(): Promise<boolean> {
             const oldPath = this.readString();
-            console.log(oldPath, await exists(oldPath));
             return await exists(oldPath);
         }
 
