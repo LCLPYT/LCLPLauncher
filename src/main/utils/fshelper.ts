@@ -65,7 +65,28 @@ export function getAppTrackerFile(appId: number) {
 }
 
 export function resolveSegmentedPath(rootDir: string, path: SegmentedPath) {
-    return Path.resolve(rootDir, ...path);
+    if (path.length <= 0) return Path.resolve(rootDir, ...path); // empty path is mapped to given rootDir
+
+    const win32 = os.platform() === 'win32'
+
+    // replace environment variables
+    if (win32) { // replace %VAR% on windows systems
+        path = path.map(segment => segment.replace(/%([^%]+)%/g, (match, n) => { // https://stackoverflow.com/a/21363956
+            const env = process.env[n];
+            return env ? env : match;
+        }));
+    } else { // replace $VAR and ${VAR} on unix systems
+        path = path.map(segment => segment.replace(/\$([A-Z_]+[A-Z0-9_]*)|\${([A-Z0-9_]*)}/ig, (match, a, b) => { // https://stackoverflow.com/a/58173283
+            const env = process.env[a || b];
+            return env ? env : match;
+        }));
+    }
+
+    if (path[0] === '/' // system root
+        || (win32 && /^[a-zA-Z]:/.test(path[0])) // windows path with drive letter
+    ) return Path.resolve(...path);
+    if (path[0] === '~') return Path.resolve(os.homedir(), ...path.slice(1)); // home dir
+    else return Path.resolve(rootDir, ...path); // default behaviour
 }
 
 export async function backupFile(file: string) {
