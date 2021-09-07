@@ -3,8 +3,6 @@ import * as fs from 'fs';
 import { AppStartup, PostAction, SegmentedPath } from "../types/Installation";
 import { exists, getAppStartupFile, resolveSegmentedPath } from "./fshelper";
 import { getInstallationDirectory } from "../downloader/installedApps";
-import { doOnPlatformAsync } from "./oshooks";
-import execa from "execa";
 import * as childProcess from 'child_process';
 import { getRunningProcess, handleRunningProcess } from "./runningApps";
 import { ActionFactory, GeneralActionArgument, PostActionHandle, PostActionWrapper } from "../downloader/postActions";
@@ -66,7 +64,7 @@ const compatHandlers = new Map<number, CompatHandler>([
                 await executor.execute();
             }
 
-            await makeFileExecutable(executable);
+            // await makeFileExecutable(executable);
             runProgram(app, executable, appStartup.args);
         }
     }]
@@ -136,13 +134,13 @@ class PreActionExecutor {
     }
 }
 
-async function makeFileExecutable(executable: string) {
+/*async function makeFileExecutable(executable: string) {
     await doOnPlatformAsync(async () => {
         const childProcess = execa('chmod', ['+x', executable]);
         childProcess.stdout?.pipe(process.stdout);
         await childProcess;
     }, 'linux');
-}
+}*/
 
 function runProgram(app: App, executable: string, args?: string[]) {
     console.log(`Executing '${executable}'...`);
