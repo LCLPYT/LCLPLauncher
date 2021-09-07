@@ -3,7 +3,7 @@
   "version": "2.0.0",
   "description": "LCLP's game launcher.",
   "repository": "git@github.com:LCLPYT/LCLPLauncher.git",
-  "author": "LCLP <lukas@lclpnet.work>",
+  "author": "LCLP <lukas.lupale.2003@gmail.com>",
   "license": "MIT",
   "private": true,
   "devDependencies": {

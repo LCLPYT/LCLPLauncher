@@ -11,6 +11,7 @@ import * as Ipc from './utils/ipc';
 import 'bootstrap'; // bootstrap js
 import './style/material-icons/material-icons.css'; // material-icons
 import './style/app.scss'; // general application style
+import './img/logo.png';
 
 // Add content security policy tag when in production
 if (!isDevelopment) {

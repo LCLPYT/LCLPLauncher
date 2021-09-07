@@ -1,7 +1,7 @@
 // set NODE_ENV correctly for react-router-dom, so it will work in production...
 process.env['NODE_' + 'ENV'] = process.env.NODE_ENV;
 
-import { app, shell, BrowserWindow, nativeTheme } from 'electron'
+import { app, shell, BrowserWindow, nativeTheme, nativeImage } from 'electron'
 import * as path from 'path'
 import { isDevelopment } from '../common/utils/env';
 import * as Database from './database/database';
@@ -10,6 +10,8 @@ import { isExternalResource } from '../common/utils/urls';
 import { customWords } from './utils/dictionary';
 import { setMainWindow } from './utils/window';
 import { Settings } from '../common/utils/settings';
+
+import logoData from '../renderer/img/logo.png';
 
 // init settings
 Settings.init();
@@ -27,7 +29,10 @@ let mainWindow: BrowserWindow | null;
  * Creates the main window of the application.
  * @returns The main window.
  */
-function createMainWindow(): BrowserWindow {
+async function createMainWindow(): Promise<BrowserWindow> {
+    let icon: nativeImage | undefined;
+    if (isDevelopment) icon = nativeImage.createFromDataURL(logoData);
+
     const window = new BrowserWindow({
         webPreferences: {
             nodeIntegration: true,
@@ -40,12 +45,15 @@ function createMainWindow(): BrowserWindow {
         width: 1000,
         height: 750,
         minWidth: 800,
-        minHeight: 600
+        minHeight: 600,
+        title: 'LCLPLauncher',
+        icon: icon
     });
 
     window.removeMenu();
 
     if (isDevelopment) {
+        console.log(`Loading content from: http://localhost:${process.env.ELECTRON_WEBPACK_WDS_PORT}...`);
         window.loadURL(`http://localhost:${process.env.ELECTRON_WEBPACK_WDS_PORT}`).catch(e => console.error(e));
     } else {
         const indexHTML = path.join(__dirname + '/index.html');
@@ -90,8 +98,10 @@ function createMainWindow(): BrowserWindow {
 // create main BrowserWindow when electron is ready
 app.on('ready', () => {
     nativeTheme.themeSource = 'dark';
-    mainWindow = createMainWindow();
-    setMainWindow(mainWindow);
+    createMainWindow().then(window => {
+        mainWindow = window;
+        setMainWindow(mainWindow);
+    });
 });
 
 // quit application when all windows are closed
@@ -103,7 +113,9 @@ app.on('window-all-closed', () => {
 app.on('activate', () => {
     // on macOS it is common to re-create a window even after all windows have been closed
     if (mainWindow === null) {
-        mainWindow = createMainWindow();
-        setMainWindow(mainWindow);
+        createMainWindow().then(window => {
+            mainWindow = window;
+            setMainWindow(mainWindow);
+        });
     }
 });

@@ -33,5 +33,16 @@ module.exports = {
                 }
             }],
         }),
-    ]
+    ],
+    module: {
+        rules: [
+            {
+                test: /logo\.(ico)$/i, 
+                loader: 'file-loader',
+                options: {
+                    name: '[name].[ext]',
+                },
+            },
+        ],
+    },
 }
