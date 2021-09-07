@@ -36,29 +36,53 @@ export const LIBRARY = registerHandler(new class extends IPCActionHandler {
     protected addAppToLibraryCB?: (success: boolean) => void;
     protected isAppInLibraryCB?: (inLibrary: boolean) => void;
     protected getLibraryAppsCB?: (apps: (App[] | null)) => void;
+    protected startAppCB?: {
+        resolve: () => void,
+        reject: (error: any) => void
+    };
+    protected stopAppCB?: {
+        resolve: (stopped: boolean) => void,
+        reject: (error: any) => void
+    };
 
     protected onAction(action: string, _event: IpcRendererEvent, args: any[]): void {
         switch (action) {
             case ACTIONS.library.addAppToLibrary:
                 if(args.length < 1) throw new Error('Success argument does not exist.');
                 if(this.addAppToLibraryCB) {
-                    this.addAppToLibraryCB(<boolean> args[0]);
+                    this.addAppToLibraryCB(args[0]);
                     this.addAppToLibraryCB = undefined;
                 } else console.warn('No callback defined for', ACTIONS.library.addAppToLibrary);
                 break;
             case ACTIONS.library.isAppInLibrary:
                 if(args.length < 1) throw new Error('Result argument does not exist.');
                 if(this.isAppInLibraryCB) {
-                    this.isAppInLibraryCB(<boolean> args[0]);
+                    this.isAppInLibraryCB(args[0]);
                     this.isAppInLibraryCB = undefined;
                 } else console.warn('No callback defined for', ACTIONS.library.isAppInLibrary);
                 break;
             case ACTIONS.library.getLibraryApps:
                 if(args.length < 1) throw new Error('Apps argument does not exist.');
                 if(this.getLibraryAppsCB) {
-                    this.getLibraryAppsCB(<App[]> args[0]);
+                    this.getLibraryAppsCB(args[0]);
                     this.getLibraryAppsCB = undefined;
                 } else console.warn('No callback defined for', ACTIONS.library.getLibraryApps);
+                break;
+            case ACTIONS.library.startApp:
+                if (args.length < 1) throw new Error('Error argument does not exist.');
+                if (this.startAppCB) {
+                    if (args[0] === null) this.startAppCB.resolve();
+                    else this.startAppCB.reject(args[0]);
+                    this.startAppCB = undefined;
+                } else console.warn('No callback defined for', ACTIONS.library.startApp);
+                break;
+            case ACTIONS.library.stopApp:
+                if (args.length < 1) throw new Error('Error argument does not exist.');
+                if (this.stopAppCB) {
+                    if (typeof args[0] === 'boolean') this.stopAppCB.resolve(args[0]);
+                    else this.stopAppCB.reject(args[0]);
+                    this.stopAppCB = undefined;
+                } else console.warn('No callback defined for', ACTIONS.library.stopApp);
                 break;
             default:
                 throw new Error(`Action '${action}' not implemented.`);
@@ -90,6 +114,28 @@ export const LIBRARY = registerHandler(new class extends IPCActionHandler {
             };
             this.sendAction(ACTIONS.library.getLibraryApps);
         })
+    }
+
+    public startApp(app: App): Promise<boolean> {
+        if (this.startAppCB) return Promise.resolve(false);
+        return new Promise((resolve, reject) => {
+            this.startAppCB = {
+                resolve: () => resolve(true),
+                reject: err => reject(err)
+            };
+            this.sendAction(ACTIONS.library.startApp, app);
+        });
+    }
+
+    public stopApp(app: App): Promise<boolean | null> {
+        if (this.stopAppCB) return Promise.resolve(null);
+        return new Promise((resolve, reject) => {
+            this.stopAppCB = {
+                resolve: stopped => resolve(stopped),
+                reject: err => reject(err)
+            };
+            this.sendAction(ACTIONS.library.stopApp, app);
+        });
     }
 }('library'));
 

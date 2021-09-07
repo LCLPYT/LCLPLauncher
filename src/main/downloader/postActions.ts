@@ -252,7 +252,7 @@ export namespace ActionFactory {
                 })([forgeInstaller, arg.result]);
 
                 console.log('Installing Minecraft Forge...');
-                doOnPlatformAsync(async () => {
+                await doOnPlatformAsync(async () => {
                     const childProcess = execa('chmod', ['+x', javaExecutable]);
                     childProcess.stdout?.pipe(process.stdout);
                     await childProcess;

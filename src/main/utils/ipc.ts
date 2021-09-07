@@ -5,10 +5,12 @@ import AppState from "../../common/types/AppState";
 import DownloadProgress, { PackageDownloadProgress } from "../../common/types/DownloadProgress";
 import Toast from "../../common/types/Toast";
 import { ACTIONS, GenericIPCActionHandler, GenericIPCHandler } from "../../common/utils/ipc";
-import { getAppState, getInstallationDirectory, validateInstallationDir, startInstallationProcess, getUninstalledDependencies, isInstallationLauncherVersionValid } from "../downloader/downloader";
+import { getAppState, validateInstallationDir, startInstallationProcess, getUninstalledDependencies, isInstallationLauncherVersionValid } from "../downloader/downloader";
+import { getInstallationDirectory } from "../downloader/installedApps";
 import { uninstallApp } from "../downloader/uninstall";
 import { getOrCreateDefaultInstallationDir } from "./fshelper";
 import { addToLibary, getLibraryApps, isInLibrary } from "./library";
+import { startApp, stopApp } from "./startup";
 import { getMainWindow } from "./window";
 
 class IpcActionEvent {
@@ -82,6 +84,24 @@ registerHandler(new class extends IPCActionHandler {
                         console.error('Error getting library apps:', err);
                         event.reply(null);
                     })
+                break;
+            case ACTIONS.library.startApp:
+                if (args.length < 1) throw new Error('App argument is missing');
+                startApp(args[0])
+                    .then(() => event.reply(null))
+                    .catch(err => {
+                        console.error('Error starting app:', err);
+                        event.reply(err);
+                    });
+                break;
+            case ACTIONS.library.stopApp:
+                if (args.length < 1) throw new Error('App argument is missing');
+                try {
+                    event.reply(stopApp(args[0]));
+                } catch(err) {
+                    console.error('Error stopping app:', err);
+                    event.reply(err);
+                }
                 break;
             default:
                 throw new Error(`Action '${action}' not implemented.`);

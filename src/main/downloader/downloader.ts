@@ -24,6 +24,7 @@ import { uninstallApp } from "./uninstall";
 import { createReader } from "./tracker/ArtifactTrackers";
 import { Dependencies } from "./dependencies";
 import AppInfo from "../types/AppInfo";
+import { isAppRunning } from "../utils/runningApps";
 
 const queue: [app: App, dir: string, callback: (err: any) => void][] = [];
 let currentInstaller: Installer | null = null;
@@ -33,6 +34,8 @@ let queueBatchLength = 0;
 let queueBatchPosition = 0;
 
 export async function getAppState(app: App): Promise<AppState> {
+    if (isAppRunning(app)) return 'running';
+
     const installedApp = await InstalledApplication.query().where('app_id', app.id).first();
     if (!installedApp) return 'not-installed';
 
@@ -57,13 +60,6 @@ export async function getAppState(app: App): Promise<AppState> {
     const installer = await createAndPrepareInstaller(app, installedApp.path, installation)
     
     return installer.isUpToDate() ? 'ready-to-play' : 'needs-update'; // TODO maybe enable users to play with outdated launcher versions
-}
-
-export async function getInstallationDirectory(app: App) {
-    const installedApp = await InstalledApplication.query().where('app_id', app.id).first();
-    if (!installedApp || !await exists(installedApp.path)) return undefined;
-
-    return installedApp.path;
 }
 
 export async function validateInstallationDir(dir: string) {

@@ -5,21 +5,24 @@ import AppState from "../../../../../common/types/AppState";
 import DownloadProgress, { PackageDownloadProgress } from "../../../../../common/types/DownloadProgress";
 import { setDependencies } from '../../../../utils/dependencies';
 import { installationProgressManager, InstallerEvent } from '../../../../utils/downloads';
-import { DOWNLOADER } from '../../../../utils/ipc';
+import { DOWNLOADER, LIBRARY } from '../../../../utils/ipc';
 import LoadingSpinner from '../../../utility/LoadingSpinner';
-
-interface PlayState {
-    state?: AppState
-}
 
 interface ContentProps {
     app: App
 }
 
+interface PlayState {
+    state?: AppState,
+    pressedAction: boolean
+}
+
 class PlayStateButton extends Component<ContentProps, PlayState> {
     constructor(props: ContentProps) {
         super(props);
-        this.state = {} as PlayState;
+        this.state = {
+            pressedAction: false
+        };
         this.updateStatus();
     }
 
@@ -34,6 +37,13 @@ class PlayStateButton extends Component<ContentProps, PlayState> {
                     <div id="playDesc" className="ms-2_5 flex-fill">Loading...</div>
                 </>
             );
+            case 'running':
+                return (
+                    <>
+                        <button id="playBtn" className="px-4_5 btn btn-xl fw-bold shadow btn-danger">Stop</button>
+                        <div id="playDesc" className="ms-2_5 flex-fill">This {appType === 'game' ? 'Game' : 'App'} is currently running.</div>
+                    </>
+                );
             case 'not-installed': return (
                 <>
                     <button id="playBtn" className="px-4_5 btn btn-xl fw-bold shadow btn-primary">Install</button>
@@ -42,8 +52,17 @@ class PlayStateButton extends Component<ContentProps, PlayState> {
             );
             case 'ready-to-play': return (
                 <>
-                    <button id="playBtn" className="px-4_5 btn btn-xl fw-bold shadow btn-success">{appType === 'game' ? 'Play' : 'Start'}</button>
-                    <div id="playDesc" className="ms-2_5 flex-fill">{appType === 'game' ? 'Ready to play' : 'Ready to start'}</div>
+                    <button id="playBtn" className="px-4_5 btn btn-xl fw-bold shadow btn-success" disabled={this.state.pressedAction}>
+                        {this.state.pressedAction ? (
+                            <>
+                                <LoadingSpinner className="spinner-border-sm progress-spinner" />
+                                <span className="ms-2">Starting</span>
+                            </>
+                        ) : (appType === 'game' ? 'Play' : 'Start')}
+                    </button>
+                    <div id="playDesc" className="ms-2_5 flex-fill">
+                        {this.state.pressedAction ? 'Starting...' : (appType === 'game' ? 'Ready to play' : 'Ready to start')}
+                    </div>
                 </>
             );
             case 'needs-update': return (
@@ -96,6 +115,50 @@ class PlayStateButton extends Component<ContentProps, PlayState> {
                     break;
                 case 'needs-update':
                     this.checkValidVersion(() => this.startUpdate());
+                    break;
+                case 'ready-to-play':
+                    if (this.state.pressedAction) return;
+
+                    this.setState({ pressedAction: true });
+
+                    LIBRARY.startApp(this.props.app).then(started => {
+                        if (started) {
+                            DOWNLOADER.getAppStatus(this.props.app)
+                                .then(state => this.setState({
+                                    pressedAction: false,
+                                    state: state
+                                }))
+                                .catch(err => {
+                                    console.error('Error fetching app state:', err);
+                                    this.setState({ pressedAction: false });
+                                })
+                        }
+                    }).catch(err => {
+                        console.error('Error starting app:', err)
+                        this.setState({ pressedAction: false });
+                    });
+                    break;
+                case 'running':
+                    if (this.state.pressedAction) return;
+
+                    this.setState({ pressedAction: true });
+
+                    LIBRARY.stopApp(this.props.app).then(stopped => {
+                        if (stopped === null) return;
+                        if (!stopped) console.warn('Could not stop', this.props.app.title);
+                        DOWNLOADER.getAppStatus(this.props.app)
+                            .then(state => this.setState({
+                                pressedAction: false,
+                                state: state
+                            }))
+                            .catch(err => {
+                                console.error('Error fetching app state:', err);
+                                this.setState({ pressedAction: false });
+                            })
+                    }).catch(err => {
+                        console.error('Error fetching app state:', err);
+                        this.setState({ pressedAction: false });
+                    });
                     break;
                 default:
                     break;

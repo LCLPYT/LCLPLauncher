@@ -42,8 +42,11 @@ class AppSettingsModal extends Component<ModalProps, ModalState> {
 
     componentDidMount() {
         installationProgressManager.addEventListener('update-state', this.stateListener = event => {
-            if (!event.detail.currentState) throw new Error('On update-state: Current state is null');
-            this.setState({
+            if (!event.detail.currentState) { // cause manual update
+                DOWNLOADER.getAppStatus(this.props.app)
+                    .then(state => this.setState({ state: state }))
+                    .catch(err => console.error('Could not fetch app state:', err));
+            } else this.setState({
                 state: event.detail.currentState
             });
         });
@@ -72,24 +75,21 @@ class Loading extends Component {
 
 interface BodyProps {
     app: App,
-    state: AppState
+    state: AppState,
 }
 
 interface BodyState {
-    installationDir?: string,
-    state: AppState
+    installationDir?: string
 }
 
 class ModalBody extends Component<BodyProps, BodyState> {
     constructor(props: BodyProps) {
         super(props);
-        this.state = {
-            state: this.props.state
-        };
+        this.state = {};
     }
 
     render() {
-        if (this.state.state === 'not-installed') return (
+        if (this.props.state === 'not-installed') return (
             <div className="text-center text-lighter">
                 <span className="fw-bold">{this.props.app.title}</span> is not yet installed.
             </div>
@@ -112,11 +112,6 @@ class ModalBody extends Component<BodyProps, BodyState> {
     protected stateChangeListener?: (event: InstallerEvent) => void;
 
     componentDidMount() {
-        installationProgressManager.addEventListener('update-state', this.stateChangeListener = event => {
-            if (!event.detail.currentState) throw new Error('On update-state: Current state is undefined');
-            this.setState({ state: event.detail.currentState });
-        });
-
         this.update();
     }
 
