@@ -107,8 +107,55 @@ class PlayStateButton extends Component<ContentProps, PlayState> {
     } = {};
 
     componentDidMount() {
+        this.initPlayButton();
+
+        const installBtn = document.getElementById('installBtn');
+        const installationDirInput = document.getElementById('installDirInput');
+        installBtn?.addEventListener('click', () => {
+            if (!installationDirInput) return;
+
+            const path = (installationDirInput as HTMLInputElement).value.trim();
+            if (path.length <= 0) {
+                alert('Please choose installation directory first!');
+                return;
+            }
+
+            DOWNLOADER.isValidInstallationDir(path).then(valid => {
+                if (valid !== null) {
+                    this.getInstallationOptionsModal()?.hide();
+                    this.startInstallation(path);
+                }
+            }).catch(err => {
+                if (err instanceof Error && err.message === 'Operation cancelled.') return;
+                console.error(err);
+            });
+        });
+
+        installationProgressManager.addEventListener('update-state', this.progressListeners['update-state'] = event => {
+            if (!event.detail.currentState) { // cause manual update
+                DOWNLOADER.getAppStatus(this.props.app)
+                    .then(state => this.setState({ state: state }))
+                    .catch(err => console.error('Could not fetch app state:', err));
+            } else this.setState({ state: event.detail.currentState });
+        });
+    }
+
+    componentDidUpdate() {
+        this.initPlayButton();
+    }
+
+    protected oldPlayBtn?: HTMLElement;
+    protected clickListener?: () => void
+    
+    initPlayButton() {
         const playBtn = document.getElementById('playBtn');
-        playBtn?.addEventListener('click', () => {
+        if (!playBtn) return;
+
+        if (this.oldPlayBtn && this.clickListener) this.oldPlayBtn.removeEventListener('click', this.clickListener);
+        this.oldPlayBtn = playBtn;
+
+        playBtn.addEventListener('click', this.clickListener = () => {
+            console.log(this.state.state)
             switch (this.state.state) {
                 case 'not-installed':
                     this.checkValidVersion(() => this.startInstallationOptions());
@@ -163,36 +210,6 @@ class PlayStateButton extends Component<ContentProps, PlayState> {
                 default:
                     break;
             }
-        });
-
-        const installBtn = document.getElementById('installBtn');
-        const installationDirInput = document.getElementById('installDirInput');
-        installBtn?.addEventListener('click', () => {
-            if (!installationDirInput) return;
-
-            const path = (installationDirInput as HTMLInputElement).value.trim();
-            if (path.length <= 0) {
-                alert('Please choose installation directory first!');
-                return;
-            }
-
-            DOWNLOADER.isValidInstallationDir(path).then(valid => {
-                if (valid !== null) {
-                    this.getInstallationOptionsModal()?.hide();
-                    this.startInstallation(path);
-                }
-            }).catch(err => {
-                if (err instanceof Error && err.message === 'Operation cancelled.') return;
-                console.error(err);
-            });
-        });
-
-        installationProgressManager.addEventListener('update-state', this.progressListeners['update-state'] = event => {
-            if (!event.detail.currentState) { // cause manual update
-                DOWNLOADER.getAppStatus(this.props.app)
-                    .then(state => this.setState({ state: state }))
-                    .catch(err => console.error('Could not fetch app state:', err));
-            } else this.setState({ state: event.detail.currentState });
         });
     }
 
