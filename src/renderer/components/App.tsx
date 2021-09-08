@@ -291,7 +291,6 @@ class PackageDownloadToast extends AbstractToastComponent<PackageDownloadToastSt
     protected progressListener?: (event: InstallerEvent) => void;
 
     componentDidMount() {
-        console.log('mount update packages')
         super.componentDidMount();
         installationProgressManager.addEventListener('update-package-progress', this.progressListener = event => {
             if (!event.detail.packageProgress) throw new Error('On update-package-progress: Progress is null');

@@ -13,14 +13,6 @@ import './style/material-icons/material-icons.css'; // material-icons
 import './style/app.scss'; // general application style
 import './img/logo.png';
 
-// Add content security policy tag when in production
-if (!isDevelopment) {
-    const contentPolicyMeta: HTMLMetaElement = document.createElement('meta');
-    contentPolicyMeta.setAttribute('http-equiv', 'Content-Security-Policy');
-    contentPolicyMeta.setAttribute('content', "script-src 'self';");
-    document.head.appendChild(contentPolicyMeta);
-}
-
 // init IPC
 Ipc.initIPC();
 

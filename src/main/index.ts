@@ -65,7 +65,7 @@ async function createMainWindow(): Promise<BrowserWindow> {
     window.on('closed', () => mainWindow = null);
 
     window.once('ready-to-show', () => window.show());
-    
+
     /* webContent events */
 
     window.webContents.on('devtools-opened', () => {
