@@ -21,6 +21,9 @@
     "@types/tar-stream": "^2.2.1",
     "@types/yauzl": "^2.9.2",
     "autoprefixer": "^10.2.6",
+    "babel-loader": "^8.2.2",
+    "bootstrap": "^5.1.1",
+    "bootswatch": "^5.1.1",
     "electron": "^13.1.1",
     "electron-builder": "^22.10.5",
     "electron-webpack": "^2.8.2",
@@ -36,9 +39,6 @@
   },
   "dependencies": {
     "@popperjs/core": "^2.9.2",
-    "babel-loader": "^8.2.2",
-    "bootstrap": "^5.0.1",
-    "bootswatch": "^5.0.1",
     "chokidar": "^3.5.2",
     "conf": "^10.0.2",
     "electron-fetch": "^1.7.3",
@@ -110,6 +110,7 @@
       "files": [
         "!bin/*",
         "!dist/*",
+        "!src/*",
         "!**/node_modules/*/{CHANGELOG.md,README.md,README,readme.md,readme}",
         "!**/node_modules/*/{test,__tests__,tests,powered-test,example,examples}",
         "!**/{.DS_Store,.git,.hg,.svn,CVS,RCS,SCCS,.gitignore,.gitattributes}",
@@ -123,6 +124,7 @@
       "files": [
         "!bin/*",
         "!dist/*",
+        "!src/*",
         "!**/node_modules/*/{CHANGELOG.md,README.md,README,readme.md,readme}",
         "!**/node_modules/*/{test,__tests__,tests,powered-test,example,examples}",
         "!**/{.DS_Store,.git,.hg,.svn,CVS,RCS,SCCS,.gitignore,.gitattributes}",
