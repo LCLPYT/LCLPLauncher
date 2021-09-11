@@ -11,7 +11,7 @@ import { PostActionHandle, PostActionWrapper, ActionFactory, ArtifactActionArgum
 import { ArtifactTrackerVariables } from "./tracker/ArtifactTracker";
 import { AppTracker } from "./tracker/AppTracker";
 import * as semver from 'semver';
-import { getAppVersion } from "../../common/utils/env";
+import { getAppVersion } from "../utils/env";
 import { DependencyFragment } from "../types/Dependency";
 import { resolveUrl } from "./urlResolver";
 import { getBackendHost } from "../../common/utils/settings";
@@ -53,7 +53,7 @@ export async function getAppState(app: App): Promise<AppState> {
 
     const installation = await fetchInstallation(app);
 
-    const currentAppVersion = getAppVersion();
+    const currentAppVersion = await getAppVersion();
     if (!currentAppVersion) throw new Error('Could not determine app version.');
     if (!semver.satisfies(currentAppVersion, installation.launcherVersion)) return 'outdated-launcher';
 
@@ -98,15 +98,15 @@ async function fetchAppInfo(app: App): Promise<AppInfo> {
     return appInfo;
 }
 
-function isAppInfoVersionValid(info: AppInfo) {
-    const currentAppVersion = getAppVersion();
+async function isAppInfoVersionValid(info: AppInfo) {
+    const currentAppVersion = await getAppVersion();
     if (!currentAppVersion) throw new Error('Could not determine app version.');
     return semver.satisfies(currentAppVersion, info.launcherVersion);
 }
 
 async function fetchInstallation(app: App): Promise<Installation> {
     const appInfo = await fetchAppInfo(app);
-    if (!isAppInfoVersionValid(appInfo)) throw new Error(`The app '${app.key}' requires launcher version ${appInfo.launcherVersion}`);
+    if (!await isAppInfoVersionValid(appInfo)) throw new Error(`The app '${app.key}' requires launcher version ${appInfo.launcherVersion}`);
 
     if (!(os.platform() in appInfo.platforms)) throw new Error(`Current platform '${os.platform()}' is not supported by the app '${app.key}'.`);
     const platformInfo = appInfo.platforms[os.platform()];
@@ -128,7 +128,7 @@ async function fetchInstallation(app: App): Promise<Installation> {
 
 export async function isInstallationLauncherVersionValid(app: App): Promise<boolean> {
     const installation = await fetchInstallation(app);
-    const currentAppVersion = getAppVersion();
+    const currentAppVersion = await getAppVersion();
     if (!currentAppVersion) throw new Error('Could not determine current launcher version.');
     return semver.satisfies(currentAppVersion, installation.launcherVersion);
 }
@@ -252,9 +252,11 @@ export class Installer {
         this.installationDirectory = installationDirectory;
         this.tmpDir = Path.resolve(this.installationDirectory, '.tmp');
         this.installation = installer;
+    }
 
+    public async validateVersion() {
         if (this.installation.launcherVersion) {
-            const currentVersion = getAppVersion();
+            const currentVersion = await getAppVersion();
             if(!currentVersion) throw new Error(`Could not determine current launcher version. This is needed because app '${this.app.id}' required launcher version '${this.installation.launcherVersion}'`);
             if(!semver.satisfies(currentVersion, this.installation.launcherVersion))
                 throw new Error(`Current launcher version '${currentVersion}' does not satisfy app requirement of '${this.installation.launcherVersion}'`);
@@ -262,6 +264,8 @@ export class Installer {
     }
 
     public async init() {
+        await this.validateVersion();
+        
         const reader = new (AppTracker.Reader.getConstructor())(this.app.id, this.getAppTrackerVars());
         if (!await reader.doesFileExist()) return;
 

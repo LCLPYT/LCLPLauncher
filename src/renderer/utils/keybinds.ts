@@ -1,4 +1,4 @@
-import { remote } from 'electron';
+import { UTILITIES } from './ipc';
 
 const pressedKeys: PressedKey[] = [];
 
@@ -8,15 +8,13 @@ export function registerKeybinds() {
     document.addEventListener('keyup', event => {
         const key = event.key.toUpperCase();
         if (key === 'I' && isKeyDown('Control') && isKeyDown('Shift')) {
-            remote.getCurrentWindow().webContents.toggleDevTools();
             pressedKeys.length = 0; // focus is lost, so clear pressedKeys manually
+            UTILITIES.toggleDevTools();
         } else if (key === 'F5' || (key === 'R' && isKeyDown('Control'))) {
             location.reload();
             pressedKeys.length = 0; // focus is lost, so clear pressedKeys manually
         } else if (key === 'F11') {
-            const win = remote.getCurrentWindow();
-            if(win.isFullScreen()) win.setFullScreen(false);
-            else win.setFullScreen(true);
+            UTILITIES.toggleFullScreen();
         }
     });
 }

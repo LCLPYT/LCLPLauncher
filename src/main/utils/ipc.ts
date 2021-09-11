@@ -1,4 +1,4 @@
-import { dialog, ipcMain } from "electron";
+import { app, dialog, ipcMain } from "electron";
 import { autoUpdater, ProgressInfo } from "electron-updater";
 import { IpcMainEvent } from "electron/main";
 import App from "../../common/types/App";
@@ -188,7 +188,7 @@ export const DOWNLOADER = registerHandler(new class extends IPCActionHandler {
     }
 }('downloader'));
 
-registerHandler(new class extends IPCActionHandler {
+export const UTILITIES = registerHandler(new class extends IPCActionHandler {
     protected onAction(action: string, event: IpcActionEvent, args: any[]): void {
         switch(action) {
             case ACTIONS.utilities.chooseFile:
@@ -205,11 +205,51 @@ registerHandler(new class extends IPCActionHandler {
                 }
                 break;
             case ACTIONS.utilities.exitApp:
+                app.exit();
+                break;
+            case ACTIONS.utilities.closeWindow:
                 getMainWindow()?.close();
+                break;
+            case ACTIONS.utilities.maximizeWindow:
+                getMainWindow()?.maximize();
+                break;
+            case ACTIONS.utilities.unmaximizeWindow:
+                getMainWindow()?.unmaximize();
+                break;
+            case ACTIONS.utilities.minimizeWindow:
+                getMainWindow()?.minimize();
+                break;
+            case ACTIONS.utilities.isWindowMaximized:
+                const mainWindow = getMainWindow();
+                if (!mainWindow) event.reply(null);
+                else event.reply(mainWindow.isMaximized());
+                break;
+            case ACTIONS.utilities.getAppVersion:
+                event.reply(app.getVersion());
+                break;
+            case ACTIONS.utilities.removeAllListeners:
+                getMainWindow()?.removeAllListeners();
+                break;
+            case ACTIONS.utilities.getAppPath:
+                event.reply(app.getAppPath());
+                break;
+            case ACTIONS.utilities.toggleDevTools:
+                getMainWindow()?.webContents.toggleDevTools();
+                break;
+            case ACTIONS.utilities.toggleFullScreen:
+                const win = getMainWindow();
+                if (win) {
+                    if (win.isFullScreen()) win.setFullScreen(false);
+                    else win.setFullScreen(true);
+                }
                 break;
             default:
                 throw new Error(`Action '${action}' not implemented.`);
         }
+    }
+
+    public setMaximizable(maximizable: boolean) {
+        this.sendAction(ACTIONS.utilities.setMaximizable, maximizable);
     }
 }('utilities'));
 

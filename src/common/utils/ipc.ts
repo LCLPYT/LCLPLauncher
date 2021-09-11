@@ -46,7 +46,18 @@ export const ACTIONS = {
     },
     utilities: {
         chooseFile: 'choose-file',
-        exitApp: 'exit-app'
+        exitApp: 'exit-app',
+        setMaximizable: 'set-maximizable',
+        closeWindow: 'close-window',
+        maximizeWindow: 'maximize-window',
+        unmaximizeWindow: 'unmaximize-window',
+        minimizeWindow: 'minimize-window',
+        isWindowMaximized: 'is-window-maximized',
+        getAppVersion: 'get-app-version',
+        removeAllListeners: 'remove-all-listeners',
+        getAppPath: 'get-app-path',
+        toggleDevTools: 'toggle-dev-tools',
+        toggleFullScreen: 'toggle-full-screen'
     },
     toasts: {
         addToast: 'add-toast',

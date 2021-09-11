@@ -1,5 +1,7 @@
 import React, { Component } from 'react';
 import logo from '../img/logo.svg';
+import { UTILITIES } from '../utils/ipc';
+import { WindowEvent, windowManager } from '../utils/windowEvents';
 
 interface Props {
     maximizable?: boolean
@@ -56,6 +58,62 @@ class Titlebar extends Component<Props, State> {
                 </div>
             </div>
         );
+    }
+
+    protected windowListeners: {
+        [type: string]: (event: WindowEvent) => void
+    } = {};
+
+    componentDidMount() {
+        windowManager.addEventListener('maximizable-change', this.windowListeners['maximizable-change'] = event => {
+            if (event.detail.maximizable === undefined) throw new Error('Maximizable is undefined');
+            this.setState({ maximizeButton: event.detail.maximizable })
+        });
+
+        // Make minimise/maximise/restore/close buttons work when they are clicked
+        const minButton = document.getElementById('min-button');
+        const restoreButton = document.getElementById('restore-button');
+        const closeButton = document.getElementById('close-button');
+
+        minButton?.addEventListener('click', () => UTILITIES.minimizeWindow());
+        restoreButton?.addEventListener('click', () => UTILITIES.unmaximizeWindow());
+        closeButton?.addEventListener('click', () => UTILITIES.closeWindow());
+
+        // Toggle maximise/restore buttons when maximisation/unmaximisation occurs
+        toggleMaxRestoreButtons();
+        window.addEventListener('resize', () => toggleMaxRestoreButtons());
+
+        function toggleMaxRestoreButtons() {
+            UTILITIES.isWindowMaximized().then(maximized => {
+                if (maximized === null) return;
+                else if (maximized) document.body.classList.add('maximized');
+                else document.body.classList.remove('maximized');
+            });
+        }
+
+        this.update();
+    }
+
+    componentDidUpdate() {
+        this.update();
+    }
+
+    componentWillUnmount() {
+        Object.entries(this.windowListeners).forEach(([type, listener]) => {
+            windowManager.removeEventListener(type, listener);
+        });
+    }
+
+    protected oldMaxButton?: HTMLElement;
+    protected maxListener?: () => void;
+
+    update() {
+        const maxButton = document.getElementById('max-button');
+        if (maxButton) {
+            if (this.maxListener && this.oldMaxButton) this.oldMaxButton.removeEventListener('click', this.maxListener);
+            this.oldMaxButton = maxButton;
+            maxButton.addEventListener('click', this.maxListener = () => UTILITIES.maximizeWindow());
+        }
     }
 }
 

@@ -1,5 +1,5 @@
 import { WebContents } from "electron";
-import { isDevelopment } from './env';
+import { isDevelopment } from "./env";
 
 export function isExternalResource(url: string, webContents: WebContents): boolean {
     const current = webContents.getURL();

@@ -8,6 +8,7 @@ import { ACTIONS, GenericIPCActionHandler, GenericIPCHandler } from "../../commo
 import { updateInstallationProgress, updateInstallationState, updatePackageDownloadProgress } from "./downloads";
 import { addToast, removeToast } from "./toasts";
 import { postUpdateError, postUpdateProgress, postUpdateState } from "./updater";
+import { setWindowMaximizable } from "./windowEvents";
 
 abstract class IPCActionHandler extends GenericIPCActionHandler<IpcRendererEvent, IpcRendererEvent> {
     protected getIpcEvent(event: IpcRendererEvent): IpcRendererEvent {
@@ -361,6 +362,21 @@ export const UTILITIES = registerHandler(new class extends IPCActionHandler {
         reject: (error: any) => void
     }
 
+    protected isWindowMaximizedCB: {
+        resolve: (maximized: boolean | null) => void,
+        reject: (error: any) => void
+    }[] = [];
+
+    protected getAppVersionCB: {
+        resolve: (version: string) => void,
+        reject: (error: any) => void
+    }[] = [];
+
+    protected getAppPathCB: {
+        resolve: (path: string) => void,
+        reject: (error: any) => void
+    }[] = [];
+
     protected onAction(action: string, _event: Electron.IpcRendererEvent, args: any[]): void {
         switch (action) {
             case ACTIONS.utilities.chooseFile:
@@ -372,6 +388,34 @@ export const UTILITIES = registerHandler(new class extends IPCActionHandler {
                     else this.chooseFileCB.resolve(null)
                     this.chooseFileCB = undefined;
                 } else console.warn('No callback defined for', ACTIONS.utilities.chooseFile);
+                break;
+            case ACTIONS.utilities.setMaximizable:
+                if (args.length < 1) throw new Error('Maximizable argument does not exist.');
+                setWindowMaximizable(args[0]);
+                break;
+            case ACTIONS.utilities.isWindowMaximized:
+                if (args.length < 1) throw new Error('Maximized argument does not exist.');
+                if (this.isWindowMaximizedCB) {
+                    const maximized: boolean | null = args[0];
+                    this.isWindowMaximizedCB.forEach(cb => cb.resolve(maximized));
+                    this.isWindowMaximizedCB = [];
+                } else console.warn('No callback defined for', ACTIONS.utilities.isWindowMaximized);
+                break;
+            case ACTIONS.utilities.getAppVersion:
+                if (args.length < 1) throw new Error('Version argument does not exist.');
+                if (this.getAppVersionCB) {
+                    const version: string = args[0];
+                    this.getAppVersionCB.forEach(cb => cb.resolve(version));
+                    this.getAppVersionCB = [];
+                } else console.warn('No callback defined for', ACTIONS.utilities.getAppVersion);
+                break;
+            case ACTIONS.utilities.getAppPath:
+                if (args.length < 1) throw new Error('Path argument does not exist.');
+                if (this.getAppPathCB) {
+                    const path: string = args[0];
+                    this.getAppPathCB.forEach(cb => cb.resolve(path));
+                    this.getAppPathCB = [];
+                } else console.warn('No callback defined for', ACTIONS.utilities.getAppPath);
                 break;
             default:
                 throw new Error(`Action '${action}' not implemented.`);
@@ -391,6 +435,64 @@ export const UTILITIES = registerHandler(new class extends IPCActionHandler {
 
     public exitApp() {
         this.sendAction(ACTIONS.utilities.exitApp);
+    }
+
+    public closeWindow() {
+        this.sendAction(ACTIONS.utilities.closeWindow);
+    }
+
+    public maximizeWindow() {
+        this.sendAction(ACTIONS.utilities.maximizeWindow);
+    }
+
+    public unmaximizeWindow() {
+        this.sendAction(ACTIONS.utilities.unmaximizeWindow);
+    }
+
+    public minimizeWindow() {
+        this.sendAction(ACTIONS.utilities.minimizeWindow);
+    }
+
+    public isWindowMaximized(): Promise<boolean | null> {
+        return new Promise((resolve, reject) => {
+            this.isWindowMaximizedCB.push({
+                resolve: maximized => resolve(maximized),
+                reject: err => reject(err)
+            });
+            if (this.isWindowMaximizedCB.length === 1) this.sendAction(ACTIONS.utilities.isWindowMaximized);
+        });
+    }
+
+    public getAppVersion(): Promise<string> {
+        return new Promise((resolve, reject) => {
+            this.getAppVersionCB.push({
+                resolve: version => resolve(version),
+                reject: err => reject(err)
+            });
+            if (this.getAppVersionCB.length === 1) this.sendAction(ACTIONS.utilities.getAppVersion);
+        });
+    }
+
+    public removeAllListeners() {
+        this.sendAction(ACTIONS.utilities.removeAllListeners);
+    }
+
+    public getAppPath(): Promise<string> {
+        return new Promise((resolve, reject) => {
+            this.getAppPathCB.push({
+                resolve: path => resolve(path),
+                reject: err => reject(err)
+            });
+            if (this.getAppPathCB.length === 1) this.sendAction(ACTIONS.utilities.getAppPath);
+        });
+    }
+
+    public toggleDevTools() {
+        this.sendAction(ACTIONS.utilities.toggleDevTools);
+    }
+
+    public toggleFullScreen() {
+        this.sendAction(ACTIONS.utilities.toggleFullScreen);
     }
     
 }('utilities'));

@@ -1,11 +1,12 @@
 import { BrowserWindow } from "electron";
 import { autoUpdater, ProgressInfo } from "electron-updater";
 import UpdateCheckResult from "../../common/types/UpdateCheckResult";
-import { getAppVersion, isDevelopment } from "../../common/utils/env";
+import { getAppVersion } from "./env";
 import { isWindowReady } from "./window";
 import * as semver from 'semver';
-import { UPDATER } from "./ipc";
+import { UPDATER, UTILITIES } from "./ipc";
 import fetch, { Headers } from "electron-fetch";
+import { isDevelopment } from "../../common/utils/env";
 
 let updateChecking = false;
 let updateCheckResult: UpdateCheckResult | undefined;
@@ -31,6 +32,8 @@ export function freeWindow(window: BrowserWindow) {
     window.setMinimumSize(800, 600);
     window.setTitle('LCLPLauncher');
     window.center();
+
+    UTILITIES.setMaximizable(true);
 }
 
 export function checkForUpdates(windowSupplier: () => BrowserWindow | null) {
@@ -47,7 +50,7 @@ export function checkForUpdates(windowSupplier: () => BrowserWindow | null) {
                 headers: headers
             }).then(resp => resp.json())
                 .then(resp => {
-                    const info = <LauncherInfo> resp;
+                    const info = <LauncherInfo>resp;
                     console.log('Minimum launcher version fetched: ', info.minVersion);
 
                     const currentAppVersion = getAppVersion();

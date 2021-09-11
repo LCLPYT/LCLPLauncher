@@ -2,10 +2,20 @@ import React, { Component } from 'react';
 import { NavLink } from 'react-router-dom';
 import { Offcanvas } from 'bootstrap';
 import logo from '../img/logo.svg';
-import { getAppVersion, isDevelopment } from '../../common/utils/env';
 import { UTILITIES } from '../utils/ipc';
+import { isDevelopment } from '../../common/utils/env';
+import { getAppVersion } from '../utils/env';
 
-class Menubar extends Component {
+interface State {
+    version?: string
+}
+
+class Menubar extends Component<{}, State> {
+    constructor(props: {}) {
+        super(props);
+        this.state = {};
+    }
+
     render() {
         return (
             <>
@@ -25,7 +35,7 @@ class Menubar extends Component {
                         <div className="d-flex align-items-center">
                             <img src={logo} alt="Logo" className="me-2" width="40px" height="40px" />
                             <h5 className="offcanvas-title" id="sideMenuLabel">LCLPLauncher</h5>
-                            <span className="badge bg-secondary px-1 ms-1 mt-1">v{getAppVersion()}</span>
+                            <span className="badge bg-secondary px-1 ms-1 mt-1">v{this.state.version ? this.state.version : '?'}</span>
                             {isDevelopment ? (<span className="badge bg-warning px-1 ms-1 mt-1">dev</span>) : ''}
                         </div>
                         <button type="button" className="btn-close text-reset" data-bs-dismiss="offcanvas" aria-label="Close"></button>
@@ -51,6 +61,8 @@ class Menubar extends Component {
     }
 
     componentDidMount() {
+        getAppVersion().then(version => this.setState({ version: version }));
+
         const sideMenu = document.getElementById('sideMenu');
         sideMenu?.addEventListener('show.bs.offcanvas', () => {
             const elements = document.querySelectorAll('.dragarea');

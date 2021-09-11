@@ -40,8 +40,7 @@ async function createMainWindow(): Promise<BrowserWindow> {
     const window = new BrowserWindow({
         webPreferences: {
             nodeIntegration: true,
-            contextIsolation: false,
-            enableRemoteModule: true
+            contextIsolation: false
         },
         show: false,
         frame: false,
