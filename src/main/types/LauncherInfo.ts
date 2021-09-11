@@ -1,0 +1,3 @@
+type LauncherInfo = {
+    minVersion: string
+}

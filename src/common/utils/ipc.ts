@@ -45,10 +45,19 @@ export const ACTIONS = {
         isLauncherInstallerVersionValid: 'is-launcher-installer-version-valid'
     },
     utilities: {
-        chooseFile: 'choose-file'
+        chooseFile: 'choose-file',
+        exitApp: 'exit-app'
     },
     toasts: {
         addToast: 'add-toast',
         removeToast: 'remove-toast'
+    },
+    updater: {
+        sendUpdateState: 'send-update-state',
+        isUpdateChecking: 'is-update-checking',
+        startUpdate: 'start-update',
+        skipUpdate: 'skip-update',
+        sendError: 'send-error',
+        sendProgress: 'send-progress'
     }
 }

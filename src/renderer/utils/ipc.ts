@@ -3,9 +3,11 @@ import { IpcRendererEvent } from "electron/renderer";
 import App from "../../common/types/App";
 import AppDependency from "../../common/types/AppDependency";
 import AppState from "../../common/types/AppState";
+import UpdateCheckResult from "../../common/types/UpdateCheckResult";
 import { ACTIONS, GenericIPCActionHandler, GenericIPCHandler } from "../../common/utils/ipc";
 import { updateInstallationProgress, updateInstallationState, updatePackageDownloadProgress } from "./downloads";
 import { addToast, removeToast } from "./toasts";
+import { postUpdateError, postUpdateProgress, postUpdateState } from "./updater";
 
 abstract class IPCActionHandler extends GenericIPCActionHandler<IpcRendererEvent, IpcRendererEvent> {
     protected getIpcEvent(event: IpcRendererEvent): IpcRendererEvent {
@@ -386,6 +388,10 @@ export const UTILITIES = registerHandler(new class extends IPCActionHandler {
             this.sendAction(ACTIONS.utilities.chooseFile, options);
         });
     }
+
+    public exitApp() {
+        this.sendAction(ACTIONS.utilities.exitApp);
+    }
     
 }('utilities'));
 
@@ -405,3 +411,76 @@ export const TOASTS = registerHandler(new class extends IPCActionHandler {
         }
     }
 }('toasts'));
+
+export const UPDATER = registerHandler(new class extends IPCActionHandler {
+    protected isUpdateCheckingCB: {
+        resolve: (state: boolean, result: UpdateCheckResult | undefined) => void,
+        reject: (error: any) => void
+    }[] = [];
+
+    protected startUpdateCB?: {
+        resolve: () => void,
+        reject: (error: any) => void
+    };
+
+    protected onAction(action: string, _event: Electron.IpcRendererEvent, args: any[]): void {
+        switch (action) {
+            case ACTIONS.updater.sendUpdateState:
+                if (args.length < 1) throw new Error('Update state argument does not exist.');
+                postUpdateState(args[0]);
+                break;
+            case ACTIONS.updater.isUpdateChecking:
+                if (args.length < 2) throw new Error('Update checking arguments do not exist.');
+                if (this.isUpdateCheckingCB) {
+                    const checking: boolean = args[0];
+                    const result: UpdateCheckResult | undefined = args[1];
+                    this.isUpdateCheckingCB.forEach(cb => cb.resolve(checking, result));
+                    this.isUpdateCheckingCB = [];
+                } else console.warn('No callback defined for', ACTIONS.updater.isUpdateChecking);
+                break;
+            case ACTIONS.updater.startUpdate:
+                if (args.length < 1) throw new Error('Error argument does not exist.');
+                if (this.startUpdateCB) {
+                    const err = args[0];
+                    if (err === null) this.startUpdateCB.resolve();
+                    else this.startUpdateCB.reject(err);
+                } else console.warn('No callback defined for', ACTIONS.updater.startUpdate);
+                break;
+            case ACTIONS.updater.sendError:
+                if (args.length < 1) throw new Error('Error argument does not exist.');
+                postUpdateError(args[0]);
+                break;
+            case ACTIONS.updater.sendProgress:
+                if (args.length < 1) throw new Error('Progress info argument does not exist.');
+                postUpdateProgress(args[0]);
+                break;
+            default:
+                throw new Error(`Action '${action}' not implemented.`);
+        }
+    }
+
+    public isUpdateChecking(): Promise<[boolean, UpdateCheckResult | undefined]> {
+        return new Promise((resolve, reject) => {
+            this.isUpdateCheckingCB.push({
+                resolve: (checking, result) => resolve([checking, result]),
+                reject: err => reject(err)
+            });
+            if (this.isUpdateCheckingCB.length === 1) this.sendAction(ACTIONS.updater.isUpdateChecking);
+        });
+    }
+
+    public skipUpdate() {
+        this.sendAction(ACTIONS.updater.skipUpdate);
+    }
+
+    public startUpdate(): Promise<boolean> {
+        if (this.startUpdateCB) return Promise.resolve(false);
+        return new Promise((resolve, reject) => {
+            this.startUpdateCB = {
+                resolve: () => resolve(true),
+                reject: err => reject(err)
+            }
+            this.sendAction(ACTIONS.updater.startUpdate);
+        });
+    }
+}('updater'));

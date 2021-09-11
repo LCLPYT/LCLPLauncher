@@ -1,23 +1,42 @@
 import React, { Component } from 'react';
 import logo from '../img/logo.svg';
 
-class Titlebar extends Component {
+interface Props {
+    maximizable?: boolean
+}
+
+interface State {
+    maximizeButton: boolean
+}
+
+class Titlebar extends Component<Props, State> {
+    constructor(props: Props) {
+        super(props);
+        this.state = {
+            maximizeButton: this.props.maximizable !== undefined ? this.props.maximizable : false
+        };
+    }
+
     render() {
         return (
-            <div className='dragarea' id='drag-region'>
+            <div className="dragarea" id="drag-region">
                 <div id="window-title">
-                    <img src={ logo } alt="Logo" />
+                    <img src={logo} alt="Logo" />
                     <span>LCLPLauncher</span>
                 </div>
-                <div id='window-controls'>
-                    <div className="button" id="min-button">
+                <div id="window-controls">
+                    {
+                        this.state.maximizeButton ? (
+                            <div className="button" id="max-button">
+                                <svg width="10" height="10" viewBox="0 0 10 10">
+                                    <path d="m10-1.6667e-6v10h-10v-10zm-1.001 1.001h-7.998v7.998h7.998z" strokeWidth=".25" />
+                                </svg>
+                            </div>
+                        ) : undefined
+                    }
+                    <div className={`button${!this.state.maximizeButton ? ' offset' : ''}`} id="min-button">
                         <svg width="11" height="1" viewBox="0 0 11 1">
                             <path d="m11 0v1h-11v-1z" strokeWidth=".26208" />
-                        </svg>
-                    </div>
-                    <div className="button" id="max-button">
-                        <svg width="10" height="10" viewBox="0 0 10 10">
-                            <path d="m10-1.6667e-6v10h-10v-10zm-1.001 1.001h-7.998v7.998h7.998z" strokeWidth=".25" />
                         </svg>
                     </div>
                     <div className="button" id="restore-button">

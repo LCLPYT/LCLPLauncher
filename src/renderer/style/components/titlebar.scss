@@ -87,7 +87,12 @@
 }
 
 #min-button {
-    grid-column: 1;
+    &:not(.offset) {
+        grid-column: 1;
+    }
+    &.offset {
+        grid-column: 2;
+    }
 }
 
 #max-button, #restore-button {

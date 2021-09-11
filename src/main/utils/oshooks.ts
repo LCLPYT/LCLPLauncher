@@ -74,9 +74,12 @@ export type OSDependantSupplier<Res> = {
     [platform: string]: Res
 };
 
-export function chooseForPlatform<Res>(platformMap: OSDependantSupplier<Res>): Res {
+export function chooseForPlatform<Res>(platformMap: OSDependantSupplier<Res>, defaultValue?: Res): Res {
     const currentPlatform = os.platform();
-    if (!(currentPlatform in platformMap)) throw new Error(`Platform map does not contain a mapping for platform '${currentPlatform}'`);
+    if (!(currentPlatform in platformMap)) {
+        if (defaultValue) return defaultValue;
+        else throw new Error(`Platform map does not contain a mapping for platform '${currentPlatform}'`);
+    }
     return platformMap[currentPlatform];
 }
 

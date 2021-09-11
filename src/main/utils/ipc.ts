@@ -1,9 +1,12 @@
 import { dialog, ipcMain } from "electron";
+import { autoUpdater, ProgressInfo } from "electron-updater";
 import { IpcMainEvent } from "electron/main";
 import App from "../../common/types/App";
 import AppState from "../../common/types/AppState";
 import DownloadProgress, { PackageDownloadProgress } from "../../common/types/DownloadProgress";
 import Toast from "../../common/types/Toast";
+import UpdateCheckResult from "../../common/types/UpdateCheckResult";
+import { isDevelopment } from "../../common/utils/env";
 import { ACTIONS, GenericIPCActionHandler, GenericIPCHandler } from "../../common/utils/ipc";
 import { getAppState, validateInstallationDir, startInstallationProcess, getUninstalledDependencies, isInstallationLauncherVersionValid } from "../downloader/downloader";
 import { getInstallationDirectory } from "../downloader/installedApps";
@@ -11,6 +14,7 @@ import { uninstallApp } from "../downloader/uninstall";
 import { getOrCreateDefaultInstallationDir } from "./fshelper";
 import { addToLibary, getLibraryApps, isInLibrary } from "./library";
 import { startApp, stopApp } from "./startup";
+import { freeWindow, getUpdateCheckResult, isUpdateChecking } from "./updater";
 import { getMainWindow } from "./window";
 
 class IpcActionEvent {
@@ -200,6 +204,9 @@ registerHandler(new class extends IPCActionHandler {
                         .catch(err => event.reply(null, err));
                 }
                 break;
+            case ACTIONS.utilities.exitApp:
+                getMainWindow()?.close();
+                break;
             default:
                 throw new Error(`Action '${action}' not implemented.`);
         }
@@ -224,3 +231,48 @@ export const TOASTS = registerHandler(new class extends IPCActionHandler {
     }
 
 }('toasts'));
+
+export const UPDATER = registerHandler(new class extends IPCActionHandler {
+    protected onAction(action: string, event: IpcActionEvent): void {
+        switch(action) {
+            case ACTIONS.updater.isUpdateChecking:
+                event.reply(isUpdateChecking(), getUpdateCheckResult());
+                break;
+            case ACTIONS.updater.skipUpdate:
+                const mainWindow = getMainWindow();
+                if (!mainWindow) throw new Error('Could not find main window.');
+
+                freeWindow(mainWindow);
+                this.sendUpdateState({ updateAvailable: false }); // continue to main window
+                break;
+            case ACTIONS.updater.skipUpdate:
+                this.sendUpdateState({ updateAvailable: false }); // continue to main window
+                break;
+            case ACTIONS.updater.startUpdate:
+                try {
+                    if (isDevelopment) event.reply(null);
+                    else {
+                        autoUpdater.downloadUpdate();
+                        event.reply(null);
+                    }
+                } catch(err) {
+                    event.reply(err);
+                }
+                break;
+            default:
+                throw new Error(`Action '${action}' not implemented.`);
+        }
+    }
+
+    public sendUpdateState(state: UpdateCheckResult) {
+        this.sendAction(ACTIONS.updater.sendUpdateState, state);
+    }
+
+    public sendUpdateError(err: any) {
+        this.sendAction(ACTIONS.updater.sendError, err);
+    }
+
+    public sendUpdateProgress(progress: ProgressInfo) {
+        this.sendAction(ACTIONS.updater.sendProgress, progress);
+    }
+}('updater'));

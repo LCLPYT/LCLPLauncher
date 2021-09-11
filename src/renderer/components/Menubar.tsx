@@ -1,9 +1,9 @@
 import React, { Component } from 'react';
 import { NavLink } from 'react-router-dom';
-import { closeCurrentWindow } from '../utils/app';
 import { Offcanvas } from 'bootstrap';
 import logo from '../img/logo.svg';
 import { getAppVersion, isDevelopment } from '../../common/utils/env';
+import { UTILITIES } from '../utils/ipc';
 
 class Menubar extends Component {
     render() {
@@ -79,7 +79,7 @@ class Menubar extends Component {
         });
 
         const menuCloseBtn = document.getElementById('menuCloseBtn');
-        menuCloseBtn?.addEventListener('click', () => closeCurrentWindow());
+        menuCloseBtn?.addEventListener('click', () => UTILITIES.exitApp());
     }
 }
 
