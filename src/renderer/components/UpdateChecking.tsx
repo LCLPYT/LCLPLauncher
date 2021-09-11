@@ -7,7 +7,8 @@ import { UpdaterEvent, updaterManager } from '../utils/updater';
 import LoadingSpinner from './utility/LoadingSpinner';
 
 interface Props {
-    result?: UpdateCheckResult
+    result?: UpdateCheckResult,
+    error?: any
 }
 
 interface State {
@@ -21,7 +22,8 @@ class UpdateChecking extends Component<Props, State> {
     constructor(props: Props) {
         super(props);
         this.state = {
-            data: this.props.result
+            data: this.props.result,
+            error: this.props.error
         };
     }
 
@@ -34,7 +36,7 @@ class UpdateChecking extends Component<Props, State> {
                     Yet, if that doesn't help, feel free to <a className="cursor-pointer" href="https://github.com/LCLPYT/LCLPLauncher/issues">contact us</a>.
                 </div>
                 <div className="mt-2 p-2 bg-dark rounded d-flex align-items-center">
-                    <code>
+                    <code className="w-100 text-wrap">
                         {this.state.error instanceof Error ? this.state.error.stack : `${this.state.error}`}
                     </code>
                 </div>

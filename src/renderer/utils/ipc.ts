@@ -430,11 +430,13 @@ export const UPDATER = registerHandler(new class extends IPCActionHandler {
                 postUpdateState(args[0]);
                 break;
             case ACTIONS.updater.isUpdateChecking:
-                if (args.length < 2) throw new Error('Update checking arguments do not exist.');
+                if (args.length < 3) throw new Error('Update checking arguments do not exist.');
                 if (this.isUpdateCheckingCB) {
                     const checking: boolean = args[0];
                     const result: UpdateCheckResult | undefined = args[1];
-                    this.isUpdateCheckingCB.forEach(cb => cb.resolve(checking, result));
+                    const err = args[2];
+                    if (err) this.isUpdateCheckingCB.forEach(cb => cb.reject(err));
+                    else this.isUpdateCheckingCB.forEach(cb => cb.resolve(checking, result));
                     this.isUpdateCheckingCB = [];
                 } else console.warn('No callback defined for', ACTIONS.updater.isUpdateChecking);
                 break;

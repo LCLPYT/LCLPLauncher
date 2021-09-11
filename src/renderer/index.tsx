@@ -55,10 +55,13 @@ document.body.insertBefore(toolbarDiv, document.body.firstChild);
 ReactDOM.render(<Titlebar maximizable={false} />, toolbarDiv);
 
 Ipc.UPDATER.isUpdateChecking().then(checkingResult => {
-    if (checkingResult[0] || checkingResult[1]) {
+    if (checkingResult[0] || (checkingResult[1] && checkingResult[1].updateAvailable)) {
         ReactDOM.render(<UpdateChecking result={checkingResult[1]} />, document.getElementById('app'));
     } else ReactDOM.render(<App />, document.getElementById('app'));
-}).catch(err => console.error('Could not fetch whether currently update-checking:', err));
+}).catch(err => {
+    console.error('Could not fetch whether currently update-checking:', err);
+    ReactDOM.render(<UpdateChecking error={err} />, document.getElementById('app'));
+});
 
 updaterManager.addEventListener('update-state', event => {
     if (!event.detail.state) throw new Error('State is undefined');

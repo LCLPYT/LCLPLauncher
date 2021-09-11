@@ -3,109 +3,19 @@ process.env['NODE_' + 'ENV'] = process.env.NODE_ENV;
 
 import { app, shell, BrowserWindow, nativeTheme, nativeImage } from 'electron'
 import * as path from 'path'
-import { getAppVersion, isDevelopment } from '../common/utils/env';
+import { isDevelopment } from '../common/utils/env';
 import * as Database from './database/database';
 import * as Ipc from './utils/ipc';
 import { isExternalResource } from '../common/utils/urls';
 import { customWords } from './utils/dictionary';
-import { setMainWindow } from './utils/window';
+import { setMainWindow, setWindowReady } from './utils/window';
 import { Settings } from '../common/utils/settings';
 
 import logoData from '../renderer/img/logo.png';
-import { autoUpdater, ProgressInfo } from 'electron-updater';
-import { freeWindow, setUpdateChecking, setUpdateCheckResult } from './utils/updater';
-import UpdateCheckResult from '../common/types/UpdateCheckResult';
-import * as semver from 'semver';
-import fetch, { Headers } from 'electron-fetch';
+import { checkForUpdates, notifyWindowReady } from './utils/updater';
 
 // auto update
-let updateState: UpdateCheckResult | undefined;
-if (!isDevelopment) {
-    autoUpdater.autoDownload = false;
-    autoUpdater.on('update-available', () => {
-        console.log('Update available. Checking for minimum launcher version...');
-
-        const headers = new Headers();
-        headers.append('pragma', 'no-cache');
-        headers.append('cache-control', 'no-cache');
-
-        fetch('https://lclpnet.work/api/lclplauncher/info', {
-            headers: headers
-        }).then(resp => resp.json())
-            .then(resp => {
-                const info = <LauncherInfo>resp;
-                console.log('Minimum launcher version fetched: ', info.minVersion);
-
-                const currentAppVersion = getAppVersion();
-                if (!currentAppVersion) {
-                    console.error('Could not determine app version.');
-                    updateState = { updateAvailable: true };
-                    setUpdateCheckResult(updateState);
-                    setUpdateChecking(false);
-                    if (windowReady) sendUpdateAvailability();
-                    return;
-                }
-
-                updateState = {
-                    updateAvailable: true,
-                    mandatory: !semver.gte(currentAppVersion, info.minVersion)
-                };
-                setUpdateChecking(false);
-                setUpdateCheckResult(updateState);
-                if (windowReady) sendUpdateAvailability();
-            })
-            .catch(err => {
-                console.error('Could not fetch launcher info:', err);
-                updateState = { updateAvailable: true };
-                setUpdateChecking(false);
-                setUpdateCheckResult(updateState);
-                if (windowReady) sendUpdateAvailability();
-            })
-    });
-    autoUpdater.on('update-not-available', () => {
-        console.log('No update available; already up-to-date.');
-        updateState = {
-            updateAvailable: false,
-            mandatory: true
-        };
-        setUpdateChecking(false);
-        setUpdateCheckResult(updateState);
-        if (windowReady) sendUpdateAvailability();
-    });
-    autoUpdater.on('error', err => {
-        console.error('Error while updating:', err);
-        if (mainWindow) {
-            mainWindow.setSize(440, 180);
-            mainWindow.center();
-        }
-        Ipc.UPDATER.sendUpdateError(err);
-    });
-    autoUpdater.on('checking-for-update', () => console.log('Checking for updates...'));
-    autoUpdater.on('download-progress', (progress: ProgressInfo) => Ipc.UPDATER.sendUpdateProgress(progress));
-    autoUpdater.on('update-downloaded', () => autoUpdater.quitAndInstall());
-    setUpdateChecking(true);
-    autoUpdater.checkForUpdates();
-} else {
-    /*setUpdateChecking(true);
-    setTimeout(() => {
-        /*if (mainWindow) {
-            mainWindow.setSize(440, 180);
-            mainWindow.center();
-        }
-        Ipc.UPDATER.sendUpdateError(new Error('Controlled error'));*/
-    /*updateState = {
-        updateAvailable: true,
-        mandatory: true
-    };
-    setUpdateChecking(false);
-    setUpdateCheckResult(updateState);
-    if (windowReady) sendUpdateAvailability();
-}, 5000)*/
-    updateState = {
-        updateAvailable: false
-    };
-    setUpdateCheckResult(updateState);
-}
+checkForUpdates(() => mainWindow);
 
 // init settings
 Settings.init();
@@ -118,7 +28,6 @@ Ipc.initIPC();
 
 // global reference to mainWindow (necessary to prevent window from being garbage collected)
 let mainWindow: BrowserWindow | null;
-let windowReady = false;
 
 /**
  * Creates the main window of the application.
@@ -162,8 +71,8 @@ async function createMainWindow(): Promise<BrowserWindow> {
 
     window.once('ready-to-show', () => {
         window.show();
-        windowReady = true;
-        if (updateState !== undefined) sendUpdateAvailability();
+        setWindowReady(true);
+        notifyWindowReady(() => mainWindow);
     });
 
     /* webContent events */
@@ -219,17 +128,3 @@ app.on('activate', () => {
         });
     }
 });
-
-function sendUpdateAvailability() {
-    if (!updateState) return;
-
-    if (mainWindow) {
-        if (updateState.updateAvailable) {
-            mainWindow.setTitle('LCLPLauncher - Update available');
-            mainWindow.setSize(440, 155);
-            mainWindow.center();
-        } else freeWindow(mainWindow);
-    }
-
-    Ipc.UPDATER.sendUpdateState(updateState);
-}

@@ -14,7 +14,7 @@ import { uninstallApp } from "../downloader/uninstall";
 import { getOrCreateDefaultInstallationDir } from "./fshelper";
 import { addToLibary, getLibraryApps, isInLibrary } from "./library";
 import { startApp, stopApp } from "./startup";
-import { freeWindow, getUpdateCheckResult, isUpdateChecking } from "./updater";
+import { freeWindow, getUpdateCheckResult, getUpdateError, isUpdateChecking } from "./updater";
 import { getMainWindow } from "./window";
 
 class IpcActionEvent {
@@ -236,7 +236,7 @@ export const UPDATER = registerHandler(new class extends IPCActionHandler {
     protected onAction(action: string, event: IpcActionEvent): void {
         switch(action) {
             case ACTIONS.updater.isUpdateChecking:
-                event.reply(isUpdateChecking(), getUpdateCheckResult());
+                event.reply(isUpdateChecking(), getUpdateCheckResult(), getUpdateError());
                 break;
             case ACTIONS.updater.skipUpdate:
                 const mainWindow = getMainWindow();
