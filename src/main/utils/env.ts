@@ -5,3 +5,7 @@ export function getAppVersion(): string | undefined {
     if (isDevelopment) return process.env.npm_package_version;
     else return app.getVersion();
 }
+
+export function isRunningAsAppImage() {
+    return !!process.env.APPIMAGE;
+}
