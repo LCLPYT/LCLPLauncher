@@ -4,15 +4,16 @@ import { IpcMainEvent } from "electron/main";
 import App from "../../common/types/App";
 import AppState from "../../common/types/AppState";
 import DownloadProgress, { PackageDownloadProgress } from "../../common/types/DownloadProgress";
+import InstallationInputResult from "../../common/types/InstallationInputResult";
 import Toast from "../../common/types/Toast";
 import UpdateCheckResult from "../../common/types/UpdateCheckResult";
 import { isDevelopment } from "../../common/utils/env";
 import { ACTIONS, GenericIPCActionHandler, GenericIPCHandler } from "../../common/utils/ipc";
-import { getAppState, validateInstallationDir, startInstallationProcess, getUninstalledDependencies, isInstallationLauncherVersionValid } from "../downloader/downloader";
+import { getAppState, validateInstallationDir, startInstallationProcess, getUninstalledDependencies, isInstallationLauncherVersionValid, fetchAdditionalInputs } from "../downloader/downloader";
 import { getInstallationDirectory } from "../downloader/installedApps";
 import { uninstallApp } from "../downloader/uninstall";
 import { isRunningAsAppImage } from "./env";
-import { getOrCreateDefaultInstallationDir } from "./fshelper";
+import { exists, getOrCreateDefaultInstallationDir } from "./fshelper";
 import { addToLibary, getLibraryApps, isInLibrary } from "./library";
 import { isPlatform } from "./oshooks";
 import { startApp, stopApp } from "./startup";
@@ -119,8 +120,8 @@ export const DOWNLOADER = registerHandler(new class extends IPCActionHandler {
     protected onAction(action: string, event: IpcActionEvent, args: any[]): void {
         switch(action) {
             case ACTIONS.downloader.startInstallationProcess:
-                if(args.length < 2) throw new Error('App, installation directory arguments are missing');
-                startInstallationProcess(<App> args[0], <string> args[1])
+                if(args.length < 3) throw new Error('App, installation directory, input map arguments are missing');
+                startInstallationProcess(args[0], args[1], args[2])
                     .then(() => event.reply(true))
                     .catch(err => {
                         console.error('Error in installation process:', err);
@@ -170,6 +171,22 @@ export const DOWNLOADER = registerHandler(new class extends IPCActionHandler {
                 if (args.length < 1) throw new Error('App argument is missing');
                 isInstallationLauncherVersionValid(args[0])
                     .then(valid => event.reply(valid))
+                    .catch(err => event.reply(null, err));
+                break;
+            case ACTIONS.downloader.getAdditionalInputs:
+                if (args.length < 2) throw new Error('App and installation dir arguments are missing');
+                const map = new Map<string, string>(); // read from storage
+                fetchAdditionalInputs(args[0], args[1], map)
+                    .then(inputs => {
+                        const mapObj: {
+                            [key: string]: string
+                        } = {};
+                        Array.from(map.entries()).forEach(([key, value]) => mapObj[key] = value)
+                        event.reply(<InstallationInputResult>{
+                            inputs: inputs,
+                            map: mapObj
+                        });
+                    })
                     .catch(err => event.reply(null, err));
                 break;
             default:
@@ -244,6 +261,12 @@ export const UTILITIES = registerHandler(new class extends IPCActionHandler {
                     if (win.isFullScreen()) win.setFullScreen(false);
                     else win.setFullScreen(true);
                 }
+                break;
+            case ACTIONS.utilities.doesFileExist:
+                if (args.length < 1) throw new Error('File argument does not exist.');
+                exists(args[0])
+                    .then(exists => event.reply(args[0], exists))
+                    .catch(err => event.reply(args[0], null, err));
                 break;
             default:
                 throw new Error(`Action '${action}' not implemented.`);

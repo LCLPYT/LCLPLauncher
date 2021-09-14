@@ -16,7 +16,7 @@ class InstallationOptionsModal extends Component<{ app: App }> {
                             <div className="mb-1">
                                 <label htmlFor="installDirInput" className="form-label text-lighter">Installation directory</label>
                                 <div className="input-group mb-1 custom-input-wrapper" aria-describedby="installDirHelp">
-                                    <input type="string" className="form-control custom-input text-lighter" id="installDirInput" placeholder="Installation directory..." aria-describedby="fileSelectorButton" />
+                                    <input type="text" className="form-control custom-input text-lighter" id="installDirInput" placeholder="Installation directory..." aria-describedby="fileSelectorButton" />
                                     <button id="fileSelectorButton" className="input-group-text custom-input">Choose folder...</button>
                                 </div>
                                 <div id="installDirHelp" className="form-text">Choose a directory in which LCLPLauncher should install the app into.</div>

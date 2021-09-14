@@ -25,8 +25,10 @@ import { createReader } from "./tracker/ArtifactTrackers";
 import { Dependencies } from "./dependencies";
 import AppInfo from "../types/AppInfo";
 import { isAppRunning } from "../utils/runningApps";
+import { CompiledInstallationInput } from "../../common/types/InstallationInput";
+import { compileAdditionalInputs } from "./inputs";
 
-const queue: [app: App, dir: string, callback: (err: any) => void][] = [];
+const queue: [App, string, Map<string, string>, (err: any) => void][] = [];
 let currentInstaller: Installer | null = null;
 let currentPreinstalling = false;
 let currentIsUpdating = false;
@@ -60,6 +62,12 @@ export async function getAppState(app: App): Promise<AppState> {
     const installer = await createAndPrepareInstaller(app, installedApp.path, installation)
     
     return installer.isUpToDate() ? 'ready-to-play' : 'needs-update'; // TODO maybe enable users to play with outdated launcher versions
+}
+
+export async function fetchAdditionalInputs(app: App, installationDir: string, map: Map<string, string>): Promise<CompiledInstallationInput[]> {
+    const installation = await fetchInstallation(app);
+    if (!installation.inputs) return [];
+    else return await compileAdditionalInputs(installation.inputs, installationDir, map);
 }
 
 export async function validateInstallationDir(dir: string) {
@@ -138,12 +146,12 @@ export async function getUninstalledDependencies(app: App) {
     return installation && installation.dependencies ? await Dependencies.getUninstalledDependencies(installation.dependencies) : [];
 }
 
-export async function startInstallationProcess(app: App, installationDir: string) {
+export async function startInstallationProcess(app: App, installationDir: string, map: Map<string, string>) {
     queueBatchLength++;
 
     if (currentInstaller) {
         await new Promise<void>((resolve, reject) => {
-            queue.push([app, installationDir, err => {
+            queue.push([app, installationDir, map, err => {
                 if (err) reject(err);
                 else resolve();
             }]);
@@ -152,6 +160,8 @@ export async function startInstallationProcess(app: App, installationDir: string
     }
 
     console.log(`Starting installation process of '${app.title}'...`);
+
+    console.log(map);
 
     const installation = await fetchInstallation(app);
 
@@ -195,12 +205,12 @@ export async function startInstallationProcess(app: App, installationDir: string
             const next = queue.splice(0, 1);
             if (next.length !== 1) throw new Error('Next item could not be determined');
     
-            const [nextApp, nextInstallDir, callback] = next[0];
+            const [nextApp, nextInstallDir, nextMap, callback] = next[0];
             queueBatchPosition++;
     
             // start next installation process, and notify the queued promise on completion.
             // do not wait in this installation's promise, since this installation process is done.
-            startInstallationProcess(nextApp, nextInstallDir)
+            startInstallationProcess(nextApp, nextInstallDir, nextMap)
                 .then(() => callback(undefined)) // no error
                 .catch(err => callback(err));
         } else {
@@ -279,7 +289,7 @@ export class Installer {
 
     public async validateVersion() {
         if (this.installation.launcherVersion) {
-            const currentVersion = await getAppVersion();
+            const currentVersion = getAppVersion();
             if(!currentVersion) throw new Error(`Could not determine current launcher version. This is needed because app '${this.app.id}' required launcher version '${this.installation.launcherVersion}'`);
             if(!semver.satisfies(currentVersion, this.installation.launcherVersion))
                 throw new Error(`Current launcher version '${currentVersion}' does not satisfy app requirement of '${this.installation.launcherVersion}'`);

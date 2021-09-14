@@ -3,6 +3,7 @@ import { IpcRendererEvent } from "electron/renderer";
 import App from "../../common/types/App";
 import AppDependency from "../../common/types/AppDependency";
 import AppState from "../../common/types/AppState";
+import InstallationInputResult from "../../common/types/InstallationInputResult";
 import UpdateCheckResult from "../../common/types/UpdateCheckResult";
 import { ACTIONS, GenericIPCActionHandler, GenericIPCHandler } from "../../common/utils/ipc";
 import { updateInstallationProgress, updateInstallationState, updatePackageDownloadProgress } from "./downloads";
@@ -175,6 +176,10 @@ export const DOWNLOADER = registerHandler(new class extends IPCActionHandler {
         resolve: (valid: boolean) => void,
         reject: (error: any) => void
     }
+    protected getAdditionalInputsCB?: {
+        resolve: (result: InstallationInputResult) => void,
+        reject: (error: any) => void
+    }
 
     protected onAction(action: string, _event: Electron.IpcRendererEvent, args: any[]): void {
         switch (action) {
@@ -264,19 +269,27 @@ export const DOWNLOADER = registerHandler(new class extends IPCActionHandler {
                     this.isLauncherInstallerVersionValidCB = undefined;
                 } else console.warn('No callback defined for', ACTIONS.downloader.isLauncherInstallerVersionValid);
                 break;
+            case ACTIONS.downloader.getAdditionalInputs:
+                if (args.length < 1) throw new Error('Result argument is missing.');
+                if (this.getAdditionalInputsCB) {
+                    if (args.length >= 2) this.getAdditionalInputsCB.reject(args[1]);
+                    else this.getAdditionalInputsCB.resolve(args[0]);
+                    this.getAdditionalInputsCB = undefined;
+                } else console.warn('No callback defined for', ACTIONS.downloader.getAdditionalInputs);
+                break;
             default:
                 throw new Error(`Action '${action}' not implemented.`);
         }
     }
 
-    public startInstallationProcess(app: App, installationDir: string): Promise<boolean | null> {
+    public startInstallationProcess(app: App, installationDir: string, map: Map<string, string>): Promise<boolean | null> {
         if(this.startInstallationProcessCB) return Promise.resolve(null);
         return new Promise((resolve, reject) => {
             this.startInstallationProcessCB = {
                 resolve: success => resolve(success),
                 reject: error => reject(error)
             };
-            this.sendAction(ACTIONS.downloader.startInstallationProcess, app, installationDir);
+            this.sendAction(ACTIONS.downloader.startInstallationProcess, app, installationDir, map);
         });
     }
 
@@ -354,6 +367,17 @@ export const DOWNLOADER = registerHandler(new class extends IPCActionHandler {
             this.sendAction(ACTIONS.downloader.isLauncherInstallerVersionValid, app);
         });
     }
+
+    public getAdditionalInputs(app: App, installationDir: string): Promise<InstallationInputResult | null> {
+        if (this.getAdditionalInputsCB) return Promise.resolve(null);
+        return new Promise((resolve, reject) => {
+            this.getAdditionalInputsCB = {
+                resolve: result => resolve(result),
+                reject: err => reject(err)
+            };
+            this.sendAction(ACTIONS.downloader.getAdditionalInputs, app, installationDir);
+        });
+    }
 }('downloader'));
 
 export const UTILITIES = registerHandler(new class extends IPCActionHandler {
@@ -376,6 +400,11 @@ export const UTILITIES = registerHandler(new class extends IPCActionHandler {
         resolve: (path: string) => void,
         reject: (error: any) => void
     }[] = [];
+
+    protected doesFileExistCB: Map<string, {
+        resolve: (exists: boolean) => void,
+        reject: (error: any) => void
+    }[]> = new Map();
 
     protected onAction(action: string, _event: Electron.IpcRendererEvent, args: any[]): void {
         switch (action) {
@@ -416,6 +445,16 @@ export const UTILITIES = registerHandler(new class extends IPCActionHandler {
                     this.getAppPathCB.forEach(cb => cb.resolve(path));
                     this.getAppPathCB = [];
                 } else console.warn('No callback defined for', ACTIONS.utilities.getAppPath);
+                break;
+            case ACTIONS.utilities.doesFileExist:
+                if (args.length < 2) throw new Error('File, existence argument does not exist.');
+                const callbacks = this.doesFileExistCB.get(args[0]);
+                if (!callbacks) throw new Error('Callback storage does not exist.');
+
+                if (args.length >= 3) callbacks.forEach(cb => cb.reject(args[2]));
+                else callbacks.forEach(cb => cb.resolve(args[1]));
+
+                this.doesFileExistCB.delete(args[0]);
                 break;
             default:
                 throw new Error(`Action '${action}' not implemented.`);
@@ -493,6 +532,21 @@ export const UTILITIES = registerHandler(new class extends IPCActionHandler {
 
     public toggleFullScreen() {
         this.sendAction(ACTIONS.utilities.toggleFullScreen);
+    }
+
+    public doesFileExist(file: string): Promise<boolean> {
+        return new Promise((resolve, reject) => {
+            if (!this.doesFileExistCB.has(file)) this.doesFileExistCB.set(file, []);
+            const callbacks = this.doesFileExistCB.get(file);
+            if (!callbacks) throw new Error(`Callbacks storage not found for '${file}'`);
+
+            callbacks.push({
+                resolve: exists => resolve(exists),
+                reject: err => reject(err)
+            });
+
+            if (callbacks.length === 1) this.sendAction(ACTIONS.utilities.doesFileExist, file);
+        });
     }
     
 }('utilities'));

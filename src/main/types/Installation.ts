@@ -1,9 +1,11 @@
+import InstallationInput from "../../common/types/InstallationInput";
 import { DependencyDescriptor } from "./Dependency";
 
 type Installation = {
     version: string,
     versionInt: number,
     launcherVersion: string,
+    inputs?: InstallationInput[],
     dependencies?: DependencyDescriptor[],
     artifacts?: Artifact[],
     finalize?: PostAction[],

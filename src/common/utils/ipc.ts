@@ -42,7 +42,8 @@ export const ACTIONS = {
         updatePackageDownloadProgress: 'update-package-download-progress',
         uninstall: 'uninstall',
         getUninstalledDependencies: 'get-uninstalled-dependencies',
-        isLauncherInstallerVersionValid: 'is-launcher-installer-version-valid'
+        isLauncherInstallerVersionValid: 'is-launcher-installer-version-valid',
+        getAdditionalInputs: 'get-additional-inputs'
     },
     utilities: {
         chooseFile: 'choose-file',
@@ -57,7 +58,8 @@ export const ACTIONS = {
         removeAllListeners: 'remove-all-listeners',
         getAppPath: 'get-app-path',
         toggleDevTools: 'toggle-dev-tools',
-        toggleFullScreen: 'toggle-full-screen'
+        toggleFullScreen: 'toggle-full-screen',
+        doesFileExist: 'does-file-exist'
     },
     toasts: {
         addToast: 'add-toast',

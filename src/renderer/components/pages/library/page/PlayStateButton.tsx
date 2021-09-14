@@ -3,13 +3,16 @@ import React, { Component } from 'react';
 import App from "../../../../../common/types/App";
 import AppState from "../../../../../common/types/AppState";
 import DownloadProgress, { PackageDownloadProgress } from "../../../../../common/types/DownloadProgress";
+import { CompiledInstallationInput } from '../../../../../common/types/InstallationInput';
 import { setDependencies } from '../../../../utils/dependencies';
 import { installationProgressManager, InstallerEvent } from '../../../../utils/downloads';
 import { DOWNLOADER, LIBRARY } from '../../../../utils/ipc';
 import LoadingSpinner from '../../../utility/LoadingSpinner';
+import AdditionalInputModal from './AdditionalInputModal';
 
 interface ContentProps {
-    app: App
+    app: App,
+    currentDialogSetter: (dialogId: string, dialog: JSX.Element | undefined) => void
 }
 
 interface PlayState {
@@ -123,7 +126,7 @@ class PlayStateButton extends Component<ContentProps, PlayState> {
             DOWNLOADER.isValidInstallationDir(path).then(valid => {
                 if (valid !== null) {
                     this.getInstallationOptionsModal()?.hide();
-                    this.startInstallation(path);
+                    this.fetchInputs(path);
                 }
             }).catch(err => {
                 if (err instanceof Error && err.message === 'Operation cancelled.') return;
@@ -239,34 +242,61 @@ class PlayStateButton extends Component<ContentProps, PlayState> {
     }
 
     startUpdate() {
-        DOWNLOADER.getUninstalledDependencies(this.props.app).then(uninstalledDeps => {
-            if (!uninstalledDeps) return;
-            if (uninstalledDeps.length > 0) {
-                setDependencies(uninstalledDeps, true, () => this.startActualUpdate());
-            } else this.startActualUpdate();
-        }).catch(err => console.error(err));
-    }
-
-    startActualUpdate() {
         DOWNLOADER.getInstallationDir(this.props.app).then(installationDir => {
             if (installationDir === undefined) this.updateStatus(); // installation dir got deleted since last state check
-            else if (installationDir !== null) this.startActualInstallation(installationDir);
+            else this.fetchInputs(installationDir);
         }).catch(err => console.error('Could not fetch installation directory:', err));
     }
 
-    startInstallation(installationDir: string) {
+    protected cachedInstallationDir?: string;
+    protected additionalInputs?: CompiledInstallationInput[];
+    protected map?: Map<string, string>;
+
+    fetchInputs(installationDir: string) {
+        this.cachedInstallationDir = installationDir;
+        DOWNLOADER.getAdditionalInputs(this.props.app, installationDir).then(result => {
+            if (result === null) return; // called twice
+            this.additionalInputs = result.inputs
+            this.map = new Map<string, string>(Object.entries(result.map));
+            this.askNextInput();
+        }).catch(err => console.error('Could not fetch additional inputs:', err));
+    }
+
+    askNextInput() {
+        if (!this.additionalInputs || this.additionalInputs.length <= 0) {
+            this.askForDependencies();
+            return;
+        }
+
+        if (!this.map) throw new Error('Input map is undefined');
+
+        const removed = this.additionalInputs.splice(0, 1);
+        if (removed.length !== 1) throw new Error('There must be only one removed element.');
+
+        const dialog = <AdditionalInputModal input={removed[0]} map={this.map} next={() => this.askNextInput()} />;
+        this.props.currentDialogSetter(`inmod_${removed[0].id}`, dialog);
+    }
+
+    askForDependencies() {
+        if (!this.cachedInstallationDir) throw new Error('Installation dir unknown.');
+        const installationDir = this.cachedInstallationDir;
+        this.cachedInstallationDir = undefined;
+        const map = this.map;
+        if (!map) throw new Error('Input map is undefined.');
+        this.map = undefined;
+
         DOWNLOADER.getUninstalledDependencies(this.props.app).then(uninstalledDeps => {
             if (!uninstalledDeps) return;
             if (uninstalledDeps.length > 0) {
-                setDependencies(uninstalledDeps, true, () => this.startActualInstallation(installationDir));
-            } else this.startActualInstallation(installationDir);
+                setDependencies(uninstalledDeps, true, () => this.startActualInstallation(installationDir, map));
+            } else this.startActualInstallation(installationDir, map);
         }).catch(err => console.error(err));
     }
 
-    startActualInstallation(installationDir: string) {
+    startActualInstallation(installationDir: string, map: Map<string, string>) {
         console.info(`Starting installation process of '${this.props.app.title}'...`);
 
-        DOWNLOADER.startInstallationProcess(this.props.app, installationDir).then(success => {
+        DOWNLOADER.startInstallationProcess(this.props.app, installationDir, map).then(success => {
             if (success === null) return; // Button clicked while installation process is running
             if (success) {
                 console.info(`Installation of '${this.props.app.title}' has finished successfully.`);

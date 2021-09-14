@@ -65,6 +65,8 @@ interface ContentProps {
 
 interface ContentState {
     titleBranding?: string;
+    currentDialog?: JSX.Element,
+    currentDialogId?: string
 }
 
 class Content extends Component<ContentProps, ContentState> {
@@ -72,7 +74,7 @@ class Content extends Component<ContentProps, ContentState> {
 
     constructor(props: ContentProps) {
         super(props);
-        this.state = {} as ContentState;
+        this.state = {};
         this.loadTitleImage();
         this.feedRef = React.createRef();
     }
@@ -89,7 +91,7 @@ class Content extends Component<ContentProps, ContentState> {
                     </div>
                     <div className="foreground-container separator-border-dark-top">
                         <div id="playBar" className="px-4 d-flex align-items-center text-lighter separator-border-dark-bottom sticky-top">
-                            <PlayStateButton app={this.props.app} />
+                            <PlayStateButton app={this.props.app} currentDialogSetter={(dialogId, dialog) => this.setCurrentDialog(dialogId, dialog)} />
                             <Link id="shopPageLink" to={`/library/store/app/${this.props.app.key}`} className="d-flex align-items-center navigation-link-color-dimmed no-underline cursor-pointer">
                                 <span className="material-icons">shopping_bag</span>
                             </Link>
@@ -108,8 +110,16 @@ class Content extends Component<ContentProps, ContentState> {
                 <InstallationOptionsModal app={this.props.app} />
                 <AppSettingsModal app={this.props.app} />
                 <DependenciesAlertModal app={this.props.app} />
+                {this.state.currentDialog ? this.state.currentDialog : undefined}
             </div>
         );
+    }
+
+    setCurrentDialog(dialogId: string, dialog: JSX.Element | undefined) {
+        this.setState({
+            currentDialogId: dialogId,
+            currentDialog: dialog
+        });
     }
 
     scrollListener?: () => void;
@@ -146,8 +156,12 @@ class Content extends Component<ContentProps, ContentState> {
         }
     }
 
-    componentDidUpdate() {
+    componentDidUpdate(_prevProps: ContentProps, prevState: ContentState) {
         this.onResize();
+        if (this.state.currentDialog !== prevState.currentDialog && this.state.currentDialogId) {
+            const modal = document.getElementById(this.state.currentDialogId);
+            if (modal) new Modal(modal).show();
+        }
     }
 
     componentWillUnmount() {
