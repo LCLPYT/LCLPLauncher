@@ -155,7 +155,6 @@ class PlayStateButton extends Component<ContentProps, PlayState> {
         this.oldPlayBtn = playBtn;
 
         playBtn.addEventListener('click', this.clickListener = () => {
-            console.log(this.state.state)
             switch (this.state.state) {
                 case 'not-installed':
                     this.checkValidVersion(() => this.startInstallationOptions());
@@ -275,7 +274,10 @@ class PlayStateButton extends Component<ContentProps, PlayState> {
             } else {
                 console.error(`Could not complete installation process of '${this.props.app.title}'.`);
             }
-        }).catch(error => console.error('Could not finish the installation process:', error));
+        }).catch(error => {
+            console.error('Could not finish the installation process:', error)
+            this.updateStatus();
+        });
     }
 }
 

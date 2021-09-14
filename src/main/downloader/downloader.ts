@@ -53,7 +53,7 @@ export async function getAppState(app: App): Promise<AppState> {
 
     const installation = await fetchInstallation(app);
 
-    const currentAppVersion = await getAppVersion();
+    const currentAppVersion = getAppVersion();
     if (!currentAppVersion) throw new Error('Could not determine app version.');
     if (!semver.satisfies(currentAppVersion, installation.launcherVersion)) return 'outdated-launcher';
 
@@ -99,7 +99,7 @@ async function fetchAppInfo(app: App): Promise<AppInfo> {
 }
 
 async function isAppInfoVersionValid(info: AppInfo) {
-    const currentAppVersion = await getAppVersion();
+    const currentAppVersion = getAppVersion();
     if (!currentAppVersion) throw new Error('Could not determine app version.');
     return semver.satisfies(currentAppVersion, info.launcherVersion);
 }
@@ -128,7 +128,7 @@ async function fetchInstallation(app: App): Promise<Installation> {
 
 export async function isInstallationLauncherVersionValid(app: App): Promise<boolean> {
     const installation = await fetchInstallation(app);
-    const currentAppVersion = await getAppVersion();
+    const currentAppVersion = getAppVersion();
     if (!currentAppVersion) throw new Error('Could not determine current launcher version.');
     return semver.satisfies(currentAppVersion, installation.launcherVersion);
 }
@@ -184,16 +184,52 @@ export async function startInstallationProcess(app: App, installationDir: string
         path: installationDir
     });
 
+    function resetInstallation() {
+        currentInstaller = null;
+        currentIsUpdating = false;
+        TOASTS.removeToast(toastId);
+    }
+
+    function beginNextInstallation() {
+        if (queue.length > 0) {
+            const next = queue.splice(0, 1);
+            if (next.length !== 1) throw new Error('Next item could not be determined');
+    
+            const [nextApp, nextInstallDir, callback] = next[0];
+            queueBatchPosition++;
+    
+            // start next installation process, and notify the queued promise on completion.
+            // do not wait in this installation's promise, since this installation process is done.
+            startInstallationProcess(nextApp, nextInstallDir)
+                .then(() => callback(undefined)) // no error
+                .catch(err => callback(err));
+        } else {
+            queueBatchLength = 0;
+            queueBatchPosition = 0;
+        }
+    }
+
     const installer = await createAndPrepareInstaller(app, installationDir, installation);
     installer.dependencyStructure = dependencyStructure;
     currentInstaller = installer;
-    await installer.startDownloading();
+    try {
+        await installer.startDownloading();
+    } catch(err) {
+        resetInstallation();
 
-    currentInstaller = null;
+        TOASTS.addToast({
+            id: TOASTS.getNextToastId(),
+            icon: 'error',
+            title: 'Installation failed',
+            type: ToastType.TEXT,
+            detail: `'${app.title}' could not be installed because of an unexpected error.`
+        });
+        beginNextInstallation();
+        throw err;
+    }
+
+    resetInstallation();
     console.log(`Installation of '${app.title}' finished successfully.`);
-
-    currentIsUpdating = false;
-    TOASTS.removeToast(toastId);
 
     // provide finish notification
     TOASTS.addToast({
@@ -205,22 +241,7 @@ export async function startInstallationProcess(app: App, installationDir: string
     });
 
     // start next queue item, if there is one
-    if (queue.length > 0) {
-        const next = queue.splice(0, 1);
-        if (next.length !== 1) throw new Error('Next item could not be determined');
-
-        const [nextApp, nextInstallDir, callback] = next[0];
-        queueBatchPosition++;
-
-        // start next installation process, and notify the queued promise on completion.
-        // do not wait in this installation's promise, since this installation process is done.
-        startInstallationProcess(nextApp, nextInstallDir)
-            .then(() => callback(undefined)) // no error
-            .catch(err => callback(err));
-    } else {
-        queueBatchLength = 0;
-        queueBatchPosition = 0;
-    }
+    beginNextInstallation();
 }
 
 async function createAndPrepareInstaller(app: App, installationDir: string, installation: Installation): Promise<Installer> {
@@ -246,6 +267,8 @@ export class Installer {
     protected installedVersion?: AppTracker.Header;
     protected downloadReady = false;
     public dependencyStructure?: DependencyFragment[];
+    protected rejectFunction?: (err: any) => void;
+    protected currentDownloader?: Downloader;
 
     constructor(app: App, installationDirectory: string, installer: Installation) {
         this.app = app;
@@ -301,23 +324,29 @@ export class Installer {
         this.active = true;
         this.totalBytes = 0;
 
-        const needsUpdate = !this.isUpToDate();
-        if (needsUpdate) {
-            console.log('Updates found. Downloading...');
+        await new Promise<void>(async (resolve, reject) => {
+            this.rejectFunction = err => reject(err);
 
-            this.downloadQueue.forEach(artifact => this.totalBytes += Math.max(0, artifact.size));
-            await this.downloadNextArtifact();
-        } else console.log('Everything is already up-to-date.');
+            const needsUpdate = !this.isUpToDate();
+            if (needsUpdate) {
+                console.log('Updates found. Downloading...');
+    
+                this.downloadQueue.forEach(artifact => this.totalBytes += Math.max(0, artifact.size));
+                await this.downloadNextArtifact();
+            } else console.log('Everything is already up-to-date.');
+    
+            console.log('Finalizing...');
+            this.enqueueFinalization();
+            await this.completePostActions();
+            console.log('Finalization complete.');
+    
+            if (needsUpdate) await this.writeTracker();
+    
+            await this.writeStartup();
+            await this.cleanUp();
 
-        console.log('Finalizing...');
-        this.enqueueFinalization();
-        await this.completePostActions();
-        console.log('Finalization complete.');
-
-        if (needsUpdate) await this.writeTracker();
-
-        await this.writeStartup();
-        await this.cleanUp();
+            resolve();
+        });
     }
 
     protected async writeTracker() {
@@ -426,7 +455,9 @@ export class Installer {
         });
 
         console.log(`Downloading '${url}'...`);
+        this.currentDownloader = downloader;
         await downloader.download();
+        this.currentDownloader = undefined;
         console.log(`Downloaded '${url}'.`);
 
         const downloadedPath = downloadedName ? Path.resolve(dir, downloadedName) : null;
@@ -489,7 +520,7 @@ export class Installer {
         this.currentPostAction = action.handle;
         this.actionQueue.splice(0, 1); // remove it from the queue
 
-        await action.handle.call(action.argument); // wait for the action to complete
+        await action.handle.call(action.argument).catch(err => this.failInstallation(err)); // wait for the action to complete
         this.currentPostAction = null;
         this.actionWorkerActive = false;
         this.doNextPostAction(); // start next post action, but do not wait for it to finish, so the causing artifact gets finished. 
@@ -513,6 +544,18 @@ export class Installer {
                 this.doNextPostAction(); // start the post action worker, if it somehow died
             }
         });
+    }
+
+    protected failInstallation(err: any) {
+        this.cancelInstallation();
+        if (this.rejectFunction) this.rejectFunction(err);
+    }
+
+    protected cancelInstallation() {
+        if (this.currentDownloader) this.currentDownloader.cancel();
+        this.actionQueue = []; // clear post action queue
+        this.currentPostAction = null;
+        this.actionWorkerActive = false;
     }
 
     protected async cleanUp() {

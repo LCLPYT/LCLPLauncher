@@ -4,7 +4,7 @@ import * as Path from 'path';
 import * as fs from 'fs';
 import { osHandler } from "../../../utils/oshooks";
 import { parseProfilesFromJson } from "../../../types/MCLauncherProfiles";
-import { backupFile } from "../../../utils/fshelper";
+import { backupFile, exists } from "../../../utils/fshelper";
 
 export namespace UninstallMCProfile {
     export class Writer extends UninstallTracker.Writer {
@@ -44,6 +44,7 @@ export namespace UninstallMCProfile {
             console.log(`Removing launcher profile '${this.profileId}'...`);
 
             const profilesFile = Path.resolve(osHandler.getMinecraftDir(), 'launcher_profiles.json');
+            if (!exists(profilesFile)) return; // profiles files does not exist
             const jsonContent = await fs.promises.readFile(profilesFile, 'utf8');
             const launcherProfiles = parseProfilesFromJson(jsonContent);
 

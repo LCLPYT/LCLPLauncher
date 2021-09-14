@@ -189,6 +189,8 @@ export namespace ActionFactory {
             super(async (arg) => {
                 console.log(`Adding launcher profile '${options.name}'...`);
                 const profilesFile = Path.resolve(osHandler.getMinecraftDir(), 'launcher_profiles.json');
+                if (!exists(profilesFile)) throw new Error('Profiles file does not exist');
+
                 const jsonContent = await fs.promises.readFile(profilesFile, 'utf8');
                 const launcherProfiles = parseProfilesFromJson(jsonContent);
 
@@ -236,6 +238,8 @@ export namespace ActionFactory {
                 console.log(`Preparing launcher profile '${options.id}'...`);
 
                 const profilesFile = Path.resolve(osHandler.getMinecraftDir(), 'launcher_profiles.json');
+                if (!exists(profilesFile)) throw new Error('Profiles file does not exist');
+
                 const jsonContent = await fs.promises.readFile(profilesFile, 'utf8');
                 const launcherProfiles = parseProfilesFromJson(jsonContent);
     
@@ -300,6 +304,7 @@ export namespace ActionFactory {
                 console.log('Minecraft Forge installed successfully.');
 
                 const versionDir = Path.join(osHandler.getMinecraftDir(), 'versions', versionId);
+                if (!exists(versionDir)) throw new Error('Minecraft versions directory was not found.');
 
                 const tracker = new (ExistingFileTracker.Writer.getConstructor())(arg.artifact.id, arg.app.id, arg.trackerVars)
                 tracker.trackSinglePath(versionDir);
