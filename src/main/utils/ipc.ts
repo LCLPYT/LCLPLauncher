@@ -10,6 +10,7 @@ import UpdateCheckResult from "../../common/types/UpdateCheckResult";
 import { isDevelopment } from "../../common/utils/env";
 import { ACTIONS, GenericIPCActionHandler, GenericIPCHandler } from "../../common/utils/ipc";
 import { getAppState, validateInstallationDir, startInstallationProcess, getUninstalledDependencies, isInstallationLauncherVersionValid, fetchAdditionalInputs } from "../downloader/downloader";
+import { readInputMap } from "../downloader/inputs";
 import { getInstallationDirectory } from "../downloader/installedApps";
 import { uninstallApp } from "../downloader/uninstall";
 import { isRunningAsAppImage } from "./env";
@@ -65,10 +66,10 @@ function registerHandler<T extends GenericIPCHandler<IpcMainEvent>>(handler: T) 
 
 registerHandler(new class extends IPCActionHandler {
     protected onAction(action: string, event: IpcActionEvent, args: any[]): void {
-        switch(action) {
+        switch (action) {
             case ACTIONS.library.addAppToLibrary:
-                if(args.length < 1) throw new Error('App argument is missing');
-                addToLibary(<App> args[0])
+                if (args.length < 1) throw new Error('App argument is missing');
+                addToLibary(<App>args[0])
                     .then(() => event.reply(true))
                     .catch(err => {
                         console.error('Error adding library app:', err);
@@ -76,8 +77,8 @@ registerHandler(new class extends IPCActionHandler {
                     });
                 break;
             case ACTIONS.library.isAppInLibrary:
-                if(args.length < 1) throw new Error('App argument is missing');
-                isInLibrary(<App> args[0])
+                if (args.length < 1) throw new Error('App argument is missing');
+                isInLibrary(<App>args[0])
                     .then(inLibrary => event.reply(inLibrary))
                     .catch(err => {
                         console.error('Error checking for library app:', err);
@@ -105,7 +106,7 @@ registerHandler(new class extends IPCActionHandler {
                 if (args.length < 1) throw new Error('App argument is missing');
                 try {
                     event.reply(stopApp(args[0]));
-                } catch(err) {
+                } catch (err) {
                     console.error('Error stopping app:', err);
                     event.reply(err);
                 }
@@ -118,9 +119,9 @@ registerHandler(new class extends IPCActionHandler {
 
 export const DOWNLOADER = registerHandler(new class extends IPCActionHandler {
     protected onAction(action: string, event: IpcActionEvent, args: any[]): void {
-        switch(action) {
+        switch (action) {
             case ACTIONS.downloader.startInstallationProcess:
-                if(args.length < 3) throw new Error('App, installation directory, input map arguments are missing');
+                if (args.length < 3) throw new Error('App, installation directory, input map arguments are missing');
                 startInstallationProcess(args[0], args[1], args[2])
                     .then(() => event.reply(true))
                     .catch(err => {
@@ -129,8 +130,8 @@ export const DOWNLOADER = registerHandler(new class extends IPCActionHandler {
                     });
                 break;
             case ACTIONS.downloader.getAppState:
-                if(args.length < 1) throw new Error('App argument is missing');
-                getAppState(<App> args[0])
+                if (args.length < 1) throw new Error('App argument is missing');
+                getAppState(<App>args[0])
                     .then(state => event.reply(state))
                     .catch(err => {
                         console.error('Error checking app state:', err);
@@ -175,19 +176,15 @@ export const DOWNLOADER = registerHandler(new class extends IPCActionHandler {
                 break;
             case ACTIONS.downloader.getAdditionalInputs:
                 if (args.length < 2) throw new Error('App and installation dir arguments are missing');
-                const map = new Map<string, string>(); // read from storage
-                fetchAdditionalInputs(args[0], args[1], map)
-                    .then(inputs => {
-                        const mapObj: {
-                            [key: string]: string
-                        } = {};
-                        Array.from(map.entries()).forEach(([key, value]) => mapObj[key] = value)
+                const app = args[0];
+                readInputMap(app).then(map => {
+                    fetchAdditionalInputs(app, args[1], map).then(inputs => {
                         event.reply(<InstallationInputResult>{
                             inputs: inputs,
-                            map: mapObj
+                            map: map
                         });
-                    })
-                    .catch(err => event.reply(null, err));
+                    }).catch(err => event.reply(null, err));
+                }).catch(err => console.error('Could not read input map:', err));
                 break;
             default:
                 throw new Error(`Action '${action}' not implemented.`);
@@ -209,10 +206,10 @@ export const DOWNLOADER = registerHandler(new class extends IPCActionHandler {
 
 export const UTILITIES = registerHandler(new class extends IPCActionHandler {
     protected onAction(action: string, event: IpcActionEvent, args: any[]): void {
-        switch(action) {
+        switch (action) {
             case ACTIONS.utilities.chooseFile:
                 if (args.length < 1) throw new Error('Options argument is missing');
-                const options = <Electron.OpenDialogOptions> args[0];
+                const options = <Electron.OpenDialogOptions>args[0];
 
                 const focusedWindow = getMainWindow();
                 if (!focusedWindow) {
@@ -281,7 +278,7 @@ export const UTILITIES = registerHandler(new class extends IPCActionHandler {
 export const TOASTS = registerHandler(new class extends IPCActionHandler {
     protected nextToastId = 0;
 
-    protected onAction(): void {}
+    protected onAction(): void { }
 
     public getNextToastId() {
         return this.nextToastId++;
@@ -299,7 +296,7 @@ export const TOASTS = registerHandler(new class extends IPCActionHandler {
 
 export const UPDATER = registerHandler(new class extends IPCActionHandler {
     protected onAction(action: string, event: IpcActionEvent): void {
-        switch(action) {
+        switch (action) {
             case ACTIONS.updater.isUpdateChecking:
                 event.reply(isUpdateChecking(), getUpdateCheckResult(), getUpdateError());
                 break;
@@ -327,7 +324,7 @@ export const UPDATER = registerHandler(new class extends IPCActionHandler {
                             event.reply(null);
                         }
                     }
-                } catch(err) {
+                } catch (err) {
                     event.reply(err);
                 }
                 break;

@@ -97,6 +97,10 @@
     }
 }
 
+.custom-input.text-lighter {
+    caret-color: $gray-400;
+}
+
 .input-group-text.custom-input {
     border: none;
     background-color: darken($gray-600, 10%);

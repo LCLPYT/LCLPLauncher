@@ -4,6 +4,7 @@ import App from "../../../../../common/types/App";
 import AppState from "../../../../../common/types/AppState";
 import DownloadProgress, { PackageDownloadProgress } from "../../../../../common/types/DownloadProgress";
 import { CompiledInstallationInput } from '../../../../../common/types/InstallationInput';
+import { InputMap } from '../../../../../common/types/InstallationInputResult';
 import { setDependencies } from '../../../../utils/dependencies';
 import { installationProgressManager, InstallerEvent } from '../../../../utils/downloads';
 import { DOWNLOADER, LIBRARY } from '../../../../utils/ipc';
@@ -250,14 +251,14 @@ class PlayStateButton extends Component<ContentProps, PlayState> {
 
     protected cachedInstallationDir?: string;
     protected additionalInputs?: CompiledInstallationInput[];
-    protected map?: Map<string, string>;
+    protected map?: InputMap;
 
     fetchInputs(installationDir: string) {
         this.cachedInstallationDir = installationDir;
         DOWNLOADER.getAdditionalInputs(this.props.app, installationDir).then(result => {
             if (result === null) return; // called twice
             this.additionalInputs = result.inputs
-            this.map = new Map<string, string>(Object.entries(result.map));
+            this.map = result.map;
             this.askNextInput();
         }).catch(err => console.error('Could not fetch additional inputs:', err));
     }
@@ -293,7 +294,7 @@ class PlayStateButton extends Component<ContentProps, PlayState> {
         }).catch(err => console.error(err));
     }
 
-    startActualInstallation(installationDir: string, map: Map<string, string>) {
+    startActualInstallation(installationDir: string, map: InputMap) {
         console.info(`Starting installation process of '${this.props.app.title}'...`);
 
         DOWNLOADER.startInstallationProcess(this.props.app, installationDir, map).then(success => {

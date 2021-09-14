@@ -1,11 +1,12 @@
 import { Modal } from "bootstrap";
 import React, { Component } from "react";
 import { CompiledInstallationInput } from "../../../../../common/types/InstallationInput";
+import { InputMap } from "../../../../../common/types/InstallationInputResult";
 import { UTILITIES } from "../../../../utils/ipc";
 
 interface Props {
     input: CompiledInstallationInput,
-    map: Map<string, string>,
+    map: InputMap,
     next: () => void
 }
 
@@ -98,7 +99,7 @@ class AdditionalInputModal extends Component<Props> {
                     else {
                         const modal = document.getElementById(id);
                         if (modal) Modal.getInstance(modal)?.hide();
-                        this.props.map.set(this.props.input.id, value);
+                        this.props.map[this.props.input.id] = value;
                         this.props.next();
                     }
                 }).catch(err => console.error('Failed to check if directory exists:', err));

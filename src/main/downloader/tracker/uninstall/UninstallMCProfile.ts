@@ -2,7 +2,6 @@ import { withBufferReadMethods, withBufferWriteMethods } from "../../../utils/bu
 import { UninstallTracker } from "./UninstallTracker";
 import * as Path from 'path';
 import * as fs from 'fs';
-import { osHandler } from "../../../utils/oshooks";
 import { parseProfilesFromJson } from "../../../types/MCLauncherProfiles";
 import { backupFile, exists } from "../../../utils/fshelper";
 
@@ -43,7 +42,11 @@ export namespace UninstallMCProfile {
 
             console.log(`Removing launcher profile '${this.profileId}'...`);
 
-            const profilesFile = Path.resolve(osHandler.getMinecraftDir(), 'launcher_profiles.json');
+            if (!this.vars.inputMap) throw new Error('Input map is undefined');
+            const minecraftDir = this.vars.inputMap['minecraftDir']; // universal minecraftDir identifier. Apps using it should always name it this way
+            if (!minecraftDir) return; // do not insist to get minecraft dir, because a previous version could have corruped the input map. Uninstallation should always be possible
+
+            const profilesFile = Path.resolve(minecraftDir, 'launcher_profiles.json');
             if (!exists(profilesFile)) return; // profiles files does not exist
             const jsonContent = await fs.promises.readFile(profilesFile, 'utf8');
             const launcherProfiles = parseProfilesFromJson(jsonContent);

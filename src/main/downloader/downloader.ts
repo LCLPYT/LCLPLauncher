@@ -26,9 +26,10 @@ import { Dependencies } from "./dependencies";
 import AppInfo from "../types/AppInfo";
 import { isAppRunning } from "../utils/runningApps";
 import { CompiledInstallationInput } from "../../common/types/InstallationInput";
-import { compileAdditionalInputs } from "./inputs";
+import { compileAdditionalInputs, readInputMap, writeInputMap } from "./inputs";
+import { InputMap } from "../../common/types/InstallationInputResult";
 
-const queue: [App, string, Map<string, string>, (err: any) => void][] = [];
+const queue: [App, string, InputMap, (err: any) => void][] = [];
 let currentInstaller: Installer | null = null;
 let currentPreinstalling = false;
 let currentIsUpdating = false;
@@ -59,12 +60,13 @@ export async function getAppState(app: App): Promise<AppState> {
     if (!currentAppVersion) throw new Error('Could not determine app version.');
     if (!semver.satisfies(currentAppVersion, installation.launcherVersion)) return 'outdated-launcher';
 
-    const installer = await createAndPrepareInstaller(app, installedApp.path, installation)
+    const inputMap = await readInputMap(app);
+    const installer = await createAndPrepareInstaller(app, installedApp.path, installation, inputMap);
     
     return installer.isUpToDate() ? 'ready-to-play' : 'needs-update'; // TODO maybe enable users to play with outdated launcher versions
 }
 
-export async function fetchAdditionalInputs(app: App, installationDir: string, map: Map<string, string>): Promise<CompiledInstallationInput[]> {
+export async function fetchAdditionalInputs(app: App, installationDir: string, map: InputMap): Promise<CompiledInstallationInput[]> {
     const installation = await fetchInstallation(app);
     if (!installation.inputs) return [];
     else return await compileAdditionalInputs(installation.inputs, installationDir, map);
@@ -146,7 +148,7 @@ export async function getUninstalledDependencies(app: App) {
     return installation && installation.dependencies ? await Dependencies.getUninstalledDependencies(installation.dependencies) : [];
 }
 
-export async function startInstallationProcess(app: App, installationDir: string, map: Map<string, string>) {
+export async function startInstallationProcess(app: App, installationDir: string, map: InputMap) {
     queueBatchLength++;
 
     if (currentInstaller) {
@@ -161,15 +163,13 @@ export async function startInstallationProcess(app: App, installationDir: string
 
     console.log(`Starting installation process of '${app.title}'...`);
 
-    console.log(map);
-
     const installation = await fetchInstallation(app);
 
     let dependencyStructure: DependencyFragment[] | undefined;
     if (installation.dependencies) {
         console.log('Checking dependencies...');
         currentPreinstalling = true;
-        dependencyStructure = await Dependencies.downloadDependencies(installation.dependencies);
+        dependencyStructure = await Dependencies.downloadDependencies(installation.dependencies, map);
         currentPreinstalling = false;
         console.log('Dependencies are now up-to-date.');
     }
@@ -219,7 +219,7 @@ export async function startInstallationProcess(app: App, installationDir: string
         }
     }
 
-    const installer = await createAndPrepareInstaller(app, installationDir, installation);
+    const installer = await createAndPrepareInstaller(app, installationDir, installation, map);
     installer.dependencyStructure = dependencyStructure;
     currentInstaller = installer;
     try {
@@ -254,8 +254,8 @@ export async function startInstallationProcess(app: App, installationDir: string
     beginNextInstallation();
 }
 
-async function createAndPrepareInstaller(app: App, installationDir: string, installation: Installation): Promise<Installer> {
-    const installer = new Installer(app, installationDir, installation);
+async function createAndPrepareInstaller(app: App, installationDir: string, installation: Installation, inputMap: InputMap): Promise<Installer> {
+    const installer = new Installer(app, installationDir, installation, inputMap);
     await installer.init();
     if (installation.artifacts) installation.artifacts.forEach(artifact => installer.addToQueue(artifact));
     await installer.prepare();
@@ -266,6 +266,7 @@ export class Installer {
     public readonly installationDirectory: string;
     public readonly tmpDir: string;
     public readonly app: App;
+    public readonly inputMap: InputMap;
     public readonly installation: Installation;
     protected downloadQueue: Artifact[] = [];
     protected actionQueue: PostActionWrapper<any>[] = [];
@@ -280,11 +281,12 @@ export class Installer {
     protected rejectFunction?: (err: any) => void;
     protected currentDownloader?: Downloader;
 
-    constructor(app: App, installationDirectory: string, installer: Installation) {
+    constructor(app: App, installationDirectory: string, installer: Installation, inputMap: InputMap) {
         this.app = app;
         this.installationDirectory = installationDirectory;
         this.tmpDir = Path.resolve(this.installationDirectory, '.tmp');
         this.installation = installer;
+        this.inputMap = inputMap;
     }
 
     public async validateVersion() {
@@ -352,6 +354,7 @@ export class Installer {
     
             if (needsUpdate) await this.writeTracker();
     
+            await writeInputMap(this.app, this.inputMap);
             await this.writeStartup();
             await this.cleanUp();
 
@@ -499,7 +502,8 @@ export class Installer {
                 result: downloadedPath,
                 app: this.app,
                 trackerVars: this.getArtifactTrackerVars(),
-                dependencyAccessor: new Dependencies.DepedencyAccessor(this.dependencyStructure)
+                dependencyAccessor: new Dependencies.DepedencyAccessor(this.dependencyStructure),
+                inputMap: this.inputMap
             });
         }
 
@@ -512,7 +516,8 @@ export class Installer {
             const handle = ActionFactory.createPostActionHandle(this, action);
             this.enqueuePostAction(handle, {
                 app: this.app,
-                result: this.installationDirectory
+                result: this.installationDirectory,
+                inputMap: this.inputMap
             });
         });
     }

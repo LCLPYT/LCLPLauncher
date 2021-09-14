@@ -48,6 +48,10 @@ export function getAppStartupFile(app: App | number) {
     return Path.join(getInstallerAppDir(app), 'startup.json');
 }
 
+export function getAppInputMapFile(app: App | number) {
+    return Path.join(getInstallerAppDir(app), 'input_map.json');
+}
+
 export function getAppUninstallerDir(appId: number) {
     return Path.join(getInstallerAppDir(appId), 'uninstall');
 }

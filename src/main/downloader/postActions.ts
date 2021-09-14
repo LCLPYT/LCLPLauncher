@@ -8,7 +8,7 @@ import { SingleFileTracker } from "./tracker/SingleFileTracker";
 import { ExtractedArchiveTracker } from "./tracker/ExtractedArchiveTracker";
 import { ArtifactTrackerVariables, TrackerWriter } from "./tracker/ArtifactTracker";
 import App from "../../common/types/App";
-import { chooseForPlatform, doOnPlatformAsync, forPlatform, osHandler } from "../utils/oshooks";
+import { chooseForPlatform, doOnPlatformAsync, forPlatform } from "../utils/oshooks";
 import { parseProfilesFromJson, Profile } from "../types/MCLauncherProfiles";
 import { getBase64DataURL } from "../utils/resources";
 import execa from "execa";
@@ -16,10 +16,12 @@ import { ExistingFileTracker } from "./tracker/ExistingFileTracker";
 import { UninstallMCProfile } from "./tracker/uninstall/UninstallMCProfile";
 import { UninstallTracker } from "./tracker/uninstall/UninstallTracker";
 import { Dependencies } from "./dependencies";
+import { InputMap } from "../../common/types/InstallationInputResult";
 
 export type GeneralActionArgument = {
     app: App;
     result: any;
+    inputMap?: InputMap
 }
 
 export type ArtifactActionArgument = GeneralActionArgument & {
@@ -188,7 +190,12 @@ export namespace ActionFactory {
         constructor(options: AddMCProfilePostAction, child: PostActionHandle<GeneralActionArgument> | null) {
             super(async (arg) => {
                 console.log(`Adding launcher profile '${options.name}'...`);
-                const profilesFile = Path.resolve(osHandler.getMinecraftDir(), 'launcher_profiles.json');
+
+                if (!arg.inputMap) throw new Error('Input map is undefined');
+                const minecraftDir = arg.inputMap['minecraftDir']; // universal minecraftDir identifier. Apps using it should always name it this way
+                if (!minecraftDir) throw new Error(`Input map does not contain an entry for 'minecraftDir'.`);
+
+                const profilesFile = Path.resolve(minecraftDir, 'launcher_profiles.json');
                 if (!exists(profilesFile)) throw new Error('Profiles file does not exist');
 
                 const jsonContent = await fs.promises.readFile(profilesFile, 'utf8');
@@ -234,10 +241,14 @@ export namespace ActionFactory {
 
     class PrepareMCProfileAction extends PostActionHandle<GeneralActionArgument> {
         constructor(options: PrepareMCProfilePostAction, child: PostActionHandle<GeneralActionArgument> | null) {
-            super(async () => {
+            super(async (arg) => {
                 console.log(`Preparing launcher profile '${options.id}'...`);
 
-                const profilesFile = Path.resolve(osHandler.getMinecraftDir(), 'launcher_profiles.json');
+                if (!arg.inputMap) throw new Error('Input map is undefined');
+                const minecraftDir = arg.inputMap['minecraftDir']; // universal minecraftDir identifier. Apps using it should always name it this way
+                if (!minecraftDir) throw new Error(`Input map does not contain an entry for 'minecraftDir'.`);
+
+                const profilesFile = Path.resolve(minecraftDir, 'launcher_profiles.json');
                 if (!exists(profilesFile)) throw new Error('Profiles file does not exist');
 
                 const jsonContent = await fs.promises.readFile(profilesFile, 'utf8');
@@ -267,6 +278,10 @@ export namespace ActionFactory {
     class InstallMCForgeAction extends PostActionHandle<ArtifactActionArgument> {
         constructor(versionId: string, child: PostActionHandle<GeneralActionArgument> | null) {
             super(async (arg) => {
+                if (!arg.inputMap) throw new Error('Input map is undefined');
+                const minecraftDir = arg.inputMap['minecraftDir']; // universal minecraftDir identifier. Apps using it should always name it this way
+                if (!minecraftDir) throw new Error(`Input map does not contain an entry for 'minecraftDir'.`);
+
                 const forgeInstallerDep = arg.dependencyAccessor.getMandatoryDependency('forge-installer');
                 const javaDep = arg.dependencyAccessor.getMandatoryDependency('java');
 
@@ -303,7 +318,7 @@ export namespace ActionFactory {
                 await childProcess;
                 console.log('Minecraft Forge installed successfully.');
 
-                const versionDir = Path.join(osHandler.getMinecraftDir(), 'versions', versionId);
+                const versionDir = Path.join(minecraftDir, 'versions', versionId);
                 if (!exists(versionDir)) throw new Error('Minecraft versions directory was not found.');
 
                 const tracker = new (ExistingFileTracker.Writer.getConstructor())(arg.artifact.id, arg.app.id, arg.trackerVars)

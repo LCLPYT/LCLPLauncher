@@ -3,7 +3,7 @@ import { IpcRendererEvent } from "electron/renderer";
 import App from "../../common/types/App";
 import AppDependency from "../../common/types/AppDependency";
 import AppState from "../../common/types/AppState";
-import InstallationInputResult from "../../common/types/InstallationInputResult";
+import InstallationInputResult, { InputMap } from "../../common/types/InstallationInputResult";
 import UpdateCheckResult from "../../common/types/UpdateCheckResult";
 import { ACTIONS, GenericIPCActionHandler, GenericIPCHandler } from "../../common/utils/ipc";
 import { updateInstallationProgress, updateInstallationState, updatePackageDownloadProgress } from "./downloads";
@@ -282,7 +282,7 @@ export const DOWNLOADER = registerHandler(new class extends IPCActionHandler {
         }
     }
 
-    public startInstallationProcess(app: App, installationDir: string, map: Map<string, string>): Promise<boolean | null> {
+    public startInstallationProcess(app: App, installationDir: string, map: InputMap): Promise<boolean | null> {
         if(this.startInstallationProcessCB) return Promise.resolve(null);
         return new Promise((resolve, reject) => {
             this.startInstallationProcessCB = {

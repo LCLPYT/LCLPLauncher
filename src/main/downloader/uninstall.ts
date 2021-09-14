@@ -7,6 +7,8 @@ import { exists, getAppArtifactsDir, getAppTrackerFile, getAppUninstallerDir, rm
 import { createReader } from "./tracker/ArtifactTrackers";
 import { DOWNLOADER } from "../utils/ipc";
 import { UninstallTrackers } from "./tracker/uninstall/UninstallTrackers";
+import { UninstallTracker } from "./tracker/uninstall/UninstallTracker";
+import { readInputMap } from "./inputs";
 
 export async function uninstallApp(app: App) {
     const installedApp = await InstalledApplication.query().where('app_id', app.id).first();
@@ -41,7 +43,11 @@ export async function uninstallApp(app: App) {
     // uninstall additional content independant from artifacts
     const uninstallTrackerDir = getAppUninstallerDir(app.id);
     if (await exists(uninstallTrackerDir)) {
-        const uninstallTrackerVars = {};
+        const inputMap = await readInputMap(app);
+
+        const uninstallTrackerVars = <UninstallTracker.Variables>{
+            inputMap: inputMap
+        };
         const uninstallFiles = await fs.promises.readdir(uninstallTrackerDir);
 
         for (const file of uninstallFiles) {

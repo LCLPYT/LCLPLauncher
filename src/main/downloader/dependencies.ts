@@ -12,10 +12,11 @@ import { extractTar } from "../utils/tar";
 import AppDependency from "../../common/types/AppDependency";
 import { DOWNLOADER, TOASTS } from "../utils/ipc";
 import { ToastType } from "../../common/types/Toast";
+import { InputMap } from "../../common/types/InstallationInputResult";
 
 export namespace Dependencies {
     export async function getUninstalledDependencies(dependencies: DependencyDescriptor[]): Promise<AppDependency[]> {
-        const installer = new DependencyInstaller();
+        const installer = new DependencyInstaller(undefined);
         await installer.prepare(dependencies);
         return (await installer.getUninstalledDependencies()).map(info => <AppDependency> {
             name: info.id,
@@ -23,8 +24,8 @@ export namespace Dependencies {
         });
     }
 
-    export async function downloadDependencies(dependencies: DependencyDescriptor[]) {
-        const installer = new DependencyInstaller();
+    export async function downloadDependencies(dependencies: DependencyDescriptor[], inputMap: InputMap) {
+        const installer = new DependencyInstaller(inputMap);
         await installer.prepare(dependencies);
         return await installer.start();
     }
@@ -75,6 +76,11 @@ export namespace Dependencies {
         protected structure: DependencyFragment[] = [];
         protected queueLength = 0;
         protected queuePosition = 0;
+        protected inputMap: InputMap | undefined;
+
+        constructor(inputMap: InputMap | undefined) {
+            this.inputMap = inputMap;
+        }
     
         public async prepare(descriptors: DependencyDescriptor[]) {
             const filterDeps = async (descriptors: DependencyDescriptor[]) => {
@@ -254,7 +260,8 @@ export namespace Dependencies {
                     artifact: {
                         md5: info.md5
                     },
-                    result: downloadedPath
+                    result: downloadedPath,
+                    inputMap: this.inputMap
                 });
             }
     

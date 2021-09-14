@@ -2,12 +2,15 @@ import { SimpleFile } from "../../../utils/SimpleFile";
 import * as fs from 'fs';
 import { getAppUninstallFile } from "../../../utils/fshelper";
 import { ERR_EOS } from "../../../utils/constants";
+import { InputMap } from "../../../../common/types/InstallationInputResult";
 
 // if a tracker file has a version older than this string, it will be deleted and an update of the artifact will be required
 const TRACKER_VERSION = 1;
 
 export namespace UninstallTracker {
-    export type Variables = {}
+    export type Variables = {
+        inputMap?: InputMap
+    }
 
     export abstract class Writer extends SimpleFile.AbstractWriter<Variables> {
         public readonly appId: number;

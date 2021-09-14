@@ -6,6 +6,8 @@ import { getInstallationDirectory } from "../downloader/installedApps";
 import * as childProcess from 'child_process';
 import { getRunningProcess, handleRunningProcess } from "./runningApps";
 import { ActionFactory, GeneralActionArgument, PostActionHandle, PostActionWrapper } from "../downloader/postActions";
+import { readInputMap } from "../downloader/inputs";
+import { InputMap } from "../../common/types/InstallationInputResult";
 
 const LAUNCHER_COMPAT = 0;
 
@@ -59,7 +61,8 @@ const compatHandlers = new Map<number, CompatHandler>([
 
             // execute pre actions
             if (appStartup.before) {
-                const executor = new PreActionExecutor(installationDir, app);
+                const inputMap = await readInputMap(app);
+                const executor = new PreActionExecutor(installationDir, app, inputMap);
                 appStartup.before.forEach(action => executor.enqueueAction(action));
                 await executor.execute();
             }
@@ -76,17 +79,20 @@ class PreActionExecutor {
     protected actionQueue: PostActionWrapper<any>[] = [];
     protected actionWorkerActive = false;
     protected currentPostAction: PostActionHandle<any> | null = null;
+    protected inputMap: InputMap;
 
-    constructor(installationDirectory: string, app: App) {
+    constructor(installationDirectory: string, app: App, inputMap: InputMap) {
         this.installationDirectory = installationDirectory;
         this.app = app;
+        this.inputMap = inputMap;
     }
 
     public enqueueAction(action: PostAction) {
         const handle = ActionFactory.createPostActionHandle(this, action);
         this.enqueuePostAction(handle, {
             app: this.app,
-            result: this.installationDirectory
+            result: this.installationDirectory,
+            inputMap: this.inputMap
         });
     }
 

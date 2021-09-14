@@ -2,9 +2,11 @@ import { CompiledInstallationInput } from "./InstallationInput";
 
 type InstallationInputResult = {
     inputs: CompiledInstallationInput[],
-    map: {
-        [key: string]: string
-    }
+    map: InputMap
+}
+
+export type InputMap = {
+    [key: string]: string
 }
 
 export default InstallationInputResult;
