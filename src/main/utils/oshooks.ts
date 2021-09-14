@@ -92,3 +92,7 @@ export function forPlatform<Arg, Res>(platformMap: OSDependantFunction<Arg, Res>
 export async function doOnPlatformAsync(action: () => Promise<void>, ...platforms: string[]) {
     if (platforms.includes(os.platform())) await action();
 }
+
+export function isPlatform(platform: string) {
+    return os.platform() === platform;
+}

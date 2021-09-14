@@ -11,8 +11,10 @@ import { ACTIONS, GenericIPCActionHandler, GenericIPCHandler } from "../../commo
 import { getAppState, validateInstallationDir, startInstallationProcess, getUninstalledDependencies, isInstallationLauncherVersionValid } from "../downloader/downloader";
 import { getInstallationDirectory } from "../downloader/installedApps";
 import { uninstallApp } from "../downloader/uninstall";
+import { isRunningAsAppImage } from "./env";
 import { getOrCreateDefaultInstallationDir } from "./fshelper";
 import { addToLibary, getLibraryApps, isInLibrary } from "./library";
+import { isPlatform } from "./oshooks";
 import { startApp, stopApp } from "./startup";
 import { freeWindow, getUpdateCheckResult, getUpdateError, isUpdateChecking } from "./updater";
 import { getMainWindow } from "./window";
@@ -285,15 +287,22 @@ export const UPDATER = registerHandler(new class extends IPCActionHandler {
                 freeWindow(mainWindow);
                 this.sendUpdateState({ updateAvailable: false }); // continue to main window
                 break;
-            case ACTIONS.updater.skipUpdate:
-                this.sendUpdateState({ updateAvailable: false }); // continue to main window
-                break;
             case ACTIONS.updater.startUpdate:
                 try {
                     if (isDevelopment) event.reply(null);
                     else {
-                        autoUpdater.downloadUpdate();
-                        event.reply(null);
+                        if (isPlatform('linux') && !isRunningAsAppImage()) {
+                            const mainWindow = getMainWindow();
+                            if (!mainWindow) throw new Error('Could not get main window.');
+                            dialog.showMessageBox(mainWindow, {
+                                type: 'info',
+                                message: 'Your installation does not support internal auto updating. Please update the app manually; e.g. with your package manager.',
+                                title: 'Manual update required'
+                            });
+                        } else {
+                            autoUpdater.downloadUpdate();
+                            event.reply(null);
+                        }
                     }
                 } catch(err) {
                     event.reply(err);
