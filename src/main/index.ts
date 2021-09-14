@@ -14,6 +14,17 @@ import { Settings } from '../common/utils/settings';
 import logoData from '../renderer/img/logo.png';
 import { checkForUpdates, notifyWindowReady } from './utils/updater';
 
+const lock = app.requestSingleInstanceLock();
+if (!lock) app.quit();
+else {
+    app.on('second-instance', (_event, _argv, _workingDirectory) => {
+        if (mainWindow) {
+            if (mainWindow.isMinimized()) mainWindow.restore();
+            mainWindow.focus();
+        }
+    });
+}
+
 // auto update
 checkForUpdates(() => mainWindow);
 
