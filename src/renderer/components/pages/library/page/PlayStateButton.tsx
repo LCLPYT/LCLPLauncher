@@ -137,9 +137,7 @@ class PlayStateButton extends Component<ContentProps, PlayState> {
 
         installationProgressManager.addEventListener('update-state', this.progressListeners['update-state'] = event => {
             if (!event.detail.currentState) { // cause manual update
-                DOWNLOADER.getAppStatus(this.props.app)
-                    .then(state => this.setState({ state: state }))
-                    .catch(err => console.error('Could not fetch app state:', err));
+                this.updateStatus();
             } else this.setState({ state: event.detail.currentState });
         });
     }
@@ -204,7 +202,7 @@ class PlayStateButton extends Component<ContentProps, PlayState> {
                             .catch(err => {
                                 console.error('Error fetching app state:', err);
                                 this.setState({ pressedAction: false });
-                            })
+                            });
                     }).catch(err => {
                         console.error('Error fetching app state:', err);
                         this.setState({ pressedAction: false });

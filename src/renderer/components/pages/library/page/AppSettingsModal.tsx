@@ -43,19 +43,19 @@ class AppSettingsModal extends Component<ModalProps, ModalState> {
     componentDidMount() {
         installationProgressManager.addEventListener('update-state', this.stateListener = event => {
             if (!event.detail.currentState) { // cause manual update
-                DOWNLOADER.getAppStatus(this.props.app)
-                    .then(state => this.setState({ state: state }))
-                    .catch(err => console.error('Could not fetch app state:', err));
+                this.updateStatus();
             } else this.setState({
                 state: event.detail.currentState
             });
         });
 
+        this.updateStatus();
+    }
+
+    updateStatus() {
         DOWNLOADER.getAppStatus(this.props.app)
-            .then(state => this.setState({
-                state: state
-            }))
-            .catch(err => console.error(err));
+            .then(state => this.setState({ state: state }))
+            .catch(err => console.error('Could not fetch app state:', err));
     }
 
     componentWillUnmount() {
@@ -109,14 +109,12 @@ class ModalBody extends Component<BodyProps, BodyState> {
         );
     }
 
-    protected stateChangeListener?: (event: InstallerEvent) => void;
-
     componentDidMount() {
-        this.update();
-    }
+        DOWNLOADER.getInstallationDir(this.props.app)
+            .then(dir => this.setState({ installationDir: dir }))
+            .catch(err => console.error(err));
 
-    componentWillUnmount() {
-        if (this.stateChangeListener) installationProgressManager.removeEventListener('update-state', this.stateChangeListener);
+        this.update();
     }
 
     componentDidUpdate() {
@@ -126,10 +124,6 @@ class ModalBody extends Component<BodyProps, BodyState> {
     protected prevClickListener?: () => void;
 
     update() {
-        DOWNLOADER.getInstallationDir(this.props.app)
-            .then(dir => this.setState({ installationDir: dir }))
-            .catch(err => console.error(err));
-
         const uninstallBtn = document.getElementById('uninstallBtn');
         if (uninstallBtn) {
             if (this.prevClickListener) uninstallBtn.removeEventListener('click', this.prevClickListener);
