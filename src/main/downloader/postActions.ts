@@ -17,6 +17,7 @@ import { UninstallMCProfile } from "./tracker/uninstall/UninstallMCProfile";
 import { UninstallTracker } from "./tracker/uninstall/UninstallTracker";
 import { Dependencies } from "./dependencies";
 import { InputMap } from "../../common/types/InstallationInputResult";
+import { isDevelopment } from "../../common/utils/env";
 
 export type GeneralActionArgument = {
     app: App;
@@ -215,6 +216,15 @@ export namespace ActionFactory {
                     });
                 }
 
+                let javaArgs = options.javaArgs;
+                if (!isDevelopment) {
+                    const properties = Object.entries({
+                        'lclplauncher.program': process.execPath
+                    }).map(([key, value]) => `-D${key}=${value}`);
+                    const joined = properties.join(' ');
+                    javaArgs = javaArgs ? javaArgs.trim().concat(' ').concat(joined) : joined;
+                }
+
                 const profile: Profile = {
                     created: now,
                     gameDir: arg.result,
@@ -223,7 +233,7 @@ export namespace ActionFactory {
                     lastVersionId: options.lastVersionId,
                     name: options.name,
                     type: 'custom',
-                    javaArgs: options.javaArgs
+                    javaArgs: javaArgs
                     // TODO: on linux, add java dir
                 };
                 launcherProfiles.profiles[options.id] = profile;
