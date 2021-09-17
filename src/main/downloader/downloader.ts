@@ -54,7 +54,20 @@ export async function getAppState(app: App): Promise<AppState> {
     if (currentPreinstalling) return 'preinstalling';
     if (currentInstaller) return currentIsUpdating ? 'updating' : 'installing';
 
-    const installation = await fetchInstallation(app);
+    let installationMaybe: Installation | undefined;
+    
+    try {
+        await fetchInstallation(app);
+    } catch (err) {
+        if (err instanceof Error) {
+            if (err.message.startsWith('[Outdated]: ')) return 'outdated-launcher';
+            else if (err.message.startsWith('[Unsupported Platform]: ')) return 'unsupported-platform';
+        }
+        throw err;
+    }
+
+    if (!installationMaybe) throw new Error('Installation is undefined');
+    const installation = installationMaybe;
 
     const currentAppVersion = getAppVersion();
     if (!currentAppVersion) throw new Error('Could not determine app version.');
@@ -116,9 +129,9 @@ async function isAppInfoVersionValid(info: AppInfo) {
 
 async function fetchInstallation(app: App): Promise<Installation> {
     const appInfo = await fetchAppInfo(app);
-    if (!await isAppInfoVersionValid(appInfo)) throw new Error(`The app '${app.key}' requires launcher version ${appInfo.launcherVersion}`);
+    if (!await isAppInfoVersionValid(appInfo)) throw new Error(`[Outdated]: The app '${app.key}' requires launcher version ${appInfo.launcherVersion}`);
 
-    if (!(os.platform() in appInfo.platforms)) throw new Error(`Current platform '${os.platform()}' is not supported by the app '${app.key}'.`);
+    if (!(os.platform() in appInfo.platforms)) throw new Error(`[Unsupported Platform]: Current platform '${os.platform()}' is not supported by the app '${app.key}'.`);
     const platformInfo = appInfo.platforms[os.platform()];
 
     const headers = new Headers();

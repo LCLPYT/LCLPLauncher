@@ -95,6 +95,14 @@ class PlayStateButton extends Component<ContentProps, PlayState> {
                     <div id="playDesc" className="ms-2_5 flex-fill">Please update LCLPLauncher</div>
                 </>
             );
+            case 'unsupported-platform': return (
+                <>
+                    <button id="playBtn" className="px-4_5 btn btn-xl fw-bold shadow btn-secondary d-flex align-items-center" disabled>
+                        <span className="ms-2">Unsupported</span>
+                    </button>
+                    <div id="playDesc" className="ms-2_5 flex-fill">This {appType === 'game' ? 'Game' : 'Software'} is not supported by your platform.</div>
+                </>
+            );
             default:
                 throw new Error(`Unimplemented state: '${this.state.state}'`);
         }
