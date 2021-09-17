@@ -28,6 +28,7 @@ import { isAppRunning } from "../utils/runningApps";
 import { CompiledInstallationInput } from "../../common/types/InstallationInput";
 import { compileAdditionalInputs, readInputMap, writeInputMap } from "./inputs";
 import { InputMap } from "../../common/types/InstallationInputResult";
+import { fetchApp } from "../utils/backend";
 
 const queue: [App, string, InputMap, (err: any) => void][] = [];
 let currentInstaller: Installer | null = null;
@@ -103,6 +104,19 @@ export async function validateInstallationDir(dir: string) {
             if (btnIndex === 0) throw new Error('Operation cancelled.'); // cancel button
         }
     }
+}
+
+export async function doesAppNeedUpdate(appKey: string): Promise<boolean> {
+    const app = await fetchApp(appKey);
+
+    const installedApp = await InstalledApplication.query().where('app_id', app.id).first();
+    if (!installedApp) throw new Error(`[Uninstalled]: App with id ${app.id} is not installed by LCLPLauncher on this machine.`);
+
+    const installation = await fetchInstallation(app);
+    const inputMap = await readInputMap(app);
+    const installer = await createAndPrepareInstaller(app, installedApp.path, installation, inputMap);
+    
+    return !installer.isUpToDate();
 }
 
 async function fetchAppInfo(app: App): Promise<AppInfo> {
@@ -267,7 +281,7 @@ export async function startInstallationProcess(app: App, installationDir: string
     beginNextInstallation();
 }
 
-async function createAndPrepareInstaller(app: App, installationDir: string, installation: Installation, inputMap: InputMap): Promise<Installer> {
+export async function createAndPrepareInstaller(app: App, installationDir: string, installation: Installation, inputMap: InputMap): Promise<Installer> {
     const installer = new Installer(app, installationDir, installation, inputMap);
     await installer.init();
     if (installation.artifacts) installation.artifacts.forEach(artifact => installer.addToQueue(artifact));

@@ -2,7 +2,6 @@
 process.env['NODE_' + 'ENV'] = process.env.NODE_ENV;
 
 import { app, shell, BrowserWindow, nativeTheme, nativeImage } from 'electron'
-import * as path from 'path'
 import { isDevelopment } from '../common/utils/env';
 import * as Database from './database/database';
 import * as Ipc from './utils/ipc';
@@ -10,35 +9,88 @@ import { isExternalResource } from '../common/utils/urls';
 import { customWords } from './utils/dictionary';
 import { setMainWindow, setWindowReady } from './utils/window';
 import { Settings } from '../common/utils/settings';
+import { checkForUpdates, notifyWindowReady } from './utils/updater';
+import { getParsedArgv, handleArgv, parseArgv } from './utils/argv';
 
 import logoData from '../renderer/img/logo.png';
-import { checkForUpdates, notifyWindowReady } from './utils/updater';
 
-const lock = app.requestSingleInstanceLock();
-if (!lock) app.quit();
-else {
-    app.on('second-instance', (_event, _argv, _workingDirectory) => {
-        if (mainWindow) {
-            if (mainWindow.isMinimized()) mainWindow.restore();
-            mainWindow.focus();
+// Handle programm arguments
+handleArgv().then(exitCode => {
+    if (exitCode === undefined) startGUI();
+    else process.exit(exitCode);
+}).catch(err => {
+    console.error('Error while handling program args:', err);
+    process.exit(1);
+});
+
+// global reference to mainWindow (necessary to prevent window from being garbage collected)
+let mainWindow: BrowserWindow | null;
+let appWasReady = false;
+
+function startGUI() {
+    const lock = app.requestSingleInstanceLock();
+    if (!lock) {
+        app.quit();
+        return;
+    } else {
+        app.on('second-instance', (_event, argv) => {
+            const argvParsed = parseArgv(argv);
+
+            if (mainWindow) {
+                if (mainWindow.isMinimized()) mainWindow.restore();
+                mainWindow.focus();
+
+                if (argvParsed.location) Ipc.UTILITIES.changeLocationHash(argvParsed.location);
+            }
+        });
+    }
+
+    // auto update
+    checkForUpdates(() => mainWindow);
+
+    // init settings
+    Settings.init();
+
+    // init database in background
+    Database.initDatabase();
+
+    // init IPC
+    Ipc.initIPC();
+
+    if (appWasReady) startAppGUI();
+
+    // create main BrowserWindow when electron is ready
+    app.on('ready', () => startAppGUI());
+
+    // quit application when all windows are closed
+    app.on('window-all-closed', () => {
+        // on macOS it is common for applications to stay open until the user explicitly quits
+        if (process.platform !== 'darwin') app.quit();
+    });
+
+    app.on('activate', () => {
+        // on macOS it is common to re-create a window even after all windows have been closed
+        if (mainWindow === null) {
+            createMainWindow().then(window => {
+                mainWindow = window;
+                setMainWindow(mainWindow);
+            });
         }
     });
 }
 
-// auto update
-checkForUpdates(() => mainWindow);
+let appGuiStarted = false;
 
-// init settings
-Settings.init();
+function startAppGUI() {
+    if (appGuiStarted) return;
+    appGuiStarted = true;
 
-// init database in background
-Database.initDatabase();
-
-// init IPC
-Ipc.initIPC();
-
-// global reference to mainWindow (necessary to prevent window from being garbage collected)
-let mainWindow: BrowserWindow | null;
+    nativeTheme.themeSource = 'dark';
+    createMainWindow().then(window => {
+        mainWindow = window;
+        setMainWindow(mainWindow);
+    });
+}
 
 /**
  * Creates the main window of the application.
@@ -67,12 +119,16 @@ async function createMainWindow(): Promise<BrowserWindow> {
 
     window.removeMenu();
 
+    const location = getParsedArgv()?.location;
+    const tag = location ? location : '';
+
     if (isDevelopment) {
         console.log(`Loading content from: http://localhost:${process.env.ELECTRON_WEBPACK_WDS_PORT}...`);
-        window.loadURL(`http://localhost:${process.env.ELECTRON_WEBPACK_WDS_PORT}`).catch(e => console.error(e));
+        window.loadURL(`http://localhost:${process.env.ELECTRON_WEBPACK_WDS_PORT}/#${tag}`).catch(e => console.error(e));
     } else {
-        const indexHTML = path.join(__dirname + '/index.html');
-        window.loadFile(indexHTML).catch(e => console.error(e));
+        window.loadFile(`${__dirname}/index.html`, {
+            hash: tag
+        }).catch(e => console.error(e));
     }
 
     /* window events */
@@ -114,27 +170,4 @@ async function createMainWindow(): Promise<BrowserWindow> {
     return window;
 }
 
-// create main BrowserWindow when electron is ready
-app.on('ready', () => {
-    nativeTheme.themeSource = 'dark';
-    createMainWindow().then(window => {
-        mainWindow = window;
-        setMainWindow(mainWindow);
-    });
-});
-
-// quit application when all windows are closed
-app.on('window-all-closed', () => {
-    // on macOS it is common for applications to stay open until the user explicitly quits
-    if (process.platform !== 'darwin') app.quit();
-});
-
-app.on('activate', () => {
-    // on macOS it is common to re-create a window even after all windows have been closed
-    if (mainWindow === null) {
-        createMainWindow().then(window => {
-            mainWindow = window;
-            setMainWindow(mainWindow);
-        });
-    }
-});
+app.on('ready', () => appWasReady = true);

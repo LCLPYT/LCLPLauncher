@@ -456,6 +456,10 @@ export const UTILITIES = registerHandler(new class extends IPCActionHandler {
 
                 this.doesFileExistCB.delete(args[0]);
                 break;
+            case ACTIONS.utilities.changeLocationHash:
+                if (args.length < 1) throw new Error('Hash argument does not exist.');
+                window.location.hash = args[0];
+                break;
             default:
                 throw new Error(`Action '${action}' not implemented.`);
         }

@@ -59,7 +59,8 @@ export const ACTIONS = {
         getAppPath: 'get-app-path',
         toggleDevTools: 'toggle-dev-tools',
         toggleFullScreen: 'toggle-full-screen',
-        doesFileExist: 'does-file-exist'
+        doesFileExist: 'does-file-exist',
+        changeLocationHash: 'change-location-hash'
     },
     toasts: {
         addToast: 'add-toast',

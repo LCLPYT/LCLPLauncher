@@ -24,6 +24,8 @@ class App extends Component {
                         <Route exact path="/home" component={Home} />
                         <Route path="/library" component={Library} />
                         <Route exact path="/settings" component={Settings} />
+
+                        <Redirect to="/" /> {/* Fallback route */}
                     </Switch>
                 </div>
                 <ToastStack />

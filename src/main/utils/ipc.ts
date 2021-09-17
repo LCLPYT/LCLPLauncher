@@ -273,6 +273,10 @@ export const UTILITIES = registerHandler(new class extends IPCActionHandler {
     public setMaximizable(maximizable: boolean) {
         this.sendAction(ACTIONS.utilities.setMaximizable, maximizable);
     }
+
+    public changeLocationHash(hash: string) {
+        this.sendAction(ACTIONS.utilities.changeLocationHash, hash);
+    }
 }('utilities'));
 
 export const TOASTS = registerHandler(new class extends IPCActionHandler {
