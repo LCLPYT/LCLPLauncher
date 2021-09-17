@@ -57,7 +57,7 @@ export async function getAppState(app: App): Promise<AppState> {
     let installationMaybe: Installation | undefined;
     
     try {
-        await fetchInstallation(app);
+        installationMaybe = await fetchInstallation(app);
     } catch (err) {
         if (err instanceof Error) {
             if (err.message.startsWith('[Outdated]: ')) return 'outdated-launcher';
