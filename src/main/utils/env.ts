@@ -7,5 +7,9 @@ export function getAppVersion(): string | undefined {
 }
 
 export function isRunningAsAppImage() {
-    return !!process.env.APPIMAGE;
+    return !!getAppImagePath();
+}
+
+export function getAppImagePath() {
+    return process.env['APPIMAGE'];
 }

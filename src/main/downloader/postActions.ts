@@ -18,6 +18,7 @@ import { UninstallTracker } from "./tracker/uninstall/UninstallTracker";
 import { Dependencies } from "./dependencies";
 import { InputMap } from "../../common/types/InstallationInputResult";
 import { isDevelopment } from "../../common/utils/env";
+import { getAppImagePath } from "../utils/env";
 
 export type GeneralActionArgument = {
     app: App;
@@ -218,8 +219,9 @@ export namespace ActionFactory {
 
                 let javaArgs = options.javaArgs;
                 if (!isDevelopment) {
+                    const appImagePath = getAppImagePath();
                     const properties = Object.entries({
-                        'lclplauncher.program': process.execPath
+                        'lclplauncher.program': appImagePath ? appImagePath : process.execPath
                     }).map(([key, value]) => `-D${key}=${value}`);
                     const joined = properties.join(' ');
                     javaArgs = javaArgs ? javaArgs.trim().concat(' ').concat(joined) : joined;
