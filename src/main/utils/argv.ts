@@ -2,6 +2,7 @@ import parser from 'yargs-parser';
 import { initDatabase } from '../database/database';
 import { doesAppNeedUpdate } from '../downloader/downloader';
 import { isInLibrary } from './library';
+import { fetchMandatoryUpdateRequired } from './updater';
 
 const commands: {
     [key: string]: Command
@@ -16,9 +17,11 @@ const commands: {
             }
         ],
         execute: async (positionals) => {
+            if (await checkMandatoryUpdate()) return 2;
+
             console.log('Checking for an update for application with id', positionals[0], '...');
 
-            initDatabase(); // update-checking requires sqlite
+            await initDatabase(); // update-checking requires sqlite
 
             try {
                 const needsUpdate = await doesAppNeedUpdate(positionals[0])
@@ -32,6 +35,8 @@ const commands: {
     }
 };
 
+/* URL-commands should never interact with the render thread directly.
+ If changes, like location changes must be done, the URL-command should set some flag, which is later evalutated. (after update-check) */
 const urlCommands: URLCommandChildContainer = {
     'app': {
         children: ['appKey', {
@@ -39,7 +44,7 @@ const urlCommands: URLCommandChildContainer = {
                 const appKey = vars['appKey'];
                 if (!appKey) return;
 
-                initDatabase();
+                await initDatabase();
 
                 if (await isInLibrary(appKey)) argv.location = `/library/app/${appKey}`;
                 else argv.location = `/library/store/app/${appKey}`;
@@ -138,8 +143,11 @@ function findCommandRecursive(commandArgs: string[], container: URLCommandChildC
     }
 }
 
-function isVarChild(arg: URLCommandChildContainer | URLCommandVarChild): arg is URLCommandVarChild {
-    return Array.isArray(arg);
+async function checkMandatoryUpdate(): Promise<boolean> {
+    if (await fetchMandatoryUpdateRequired()) {
+        console.error('LCLPLauncher requires a mandatory update. Please update first!');
+        return true;
+    } else return false;
 }
 
 type URLCommandFragment = {
@@ -175,4 +183,8 @@ type Positional = {
 
 function isPromiseLike<T>(arg: PromiseLike<T> | T): arg is PromiseLike<T> {
     return !!arg && (<PromiseLike<T>>arg).then !== undefined;
+}
+
+function isVarChild(arg: URLCommandChildContainer | URLCommandVarChild): arg is URLCommandVarChild {
+    return Array.isArray(arg);
 }

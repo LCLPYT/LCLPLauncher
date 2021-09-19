@@ -6,7 +6,7 @@ import { Model } from 'objection';
 // export let database: Database<sqlite3.Database, sqlite3.Statement> | null = null;
 export let knexInstance: Knex<any, unknown[]> | null = null;
 
-export function initDatabase() {
+export async function initDatabase() {
     if (knexInstance) return; // database already initialized
     
     const file = path.resolve(app.getPath('userData'), 'db.sqlite3');
@@ -22,7 +22,7 @@ export function initDatabase() {
     Model.knex(knexInstance);
 
     // knexInstance.migrate.rollback({ migrationSource: new WebpackMigrationSource(require.context('./migrations', false, /^\.\/.*\.ts$/)) });
-    knexInstance.migrate.latest({ migrationSource: new WebpackMigrationSource(require.context('./migrations', false, /^\.\/.*\.ts$/)) });
+    await knexInstance.migrate.latest({ migrationSource: new WebpackMigrationSource(require.context('./migrations', false, /^\.\/.*\.ts$/)) });
 }
 
 class WebpackMigrationSource {

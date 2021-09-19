@@ -39,7 +39,7 @@ export function freeWindow(window: BrowserWindow) {
     UTILITIES.setMaximizable(true);
 }
 
-export function checkForUpdates(windowSupplier: () => BrowserWindow | null) {
+export function checkForUpdates(windowSupplier: WindowSupplier) {
     if (!isDevelopment) {
         if (isPlatform('linux') && !isRunningAsAppImage()) {
             console.log('Checking for updates manually...');
@@ -112,7 +112,7 @@ export function checkForUpdates(windowSupplier: () => BrowserWindow | null) {
     }
 }
 
-function onNoUpdateAvailable(windowSupplier: () => BrowserWindow | null) {
+function onNoUpdateAvailable(windowSupplier: WindowSupplier) {
     console.log('No update available; already up-to-date.');
     updateCheckResult = {
         updateAvailable: false
@@ -121,49 +121,29 @@ function onNoUpdateAvailable(windowSupplier: () => BrowserWindow | null) {
     if (isWindowReady()) sendUpdateAvailability(windowSupplier);
 }
 
-function onUpdateAvailable(windowSupplier: () => BrowserWindow | null) {
+function onUpdateAvailable(windowSupplier: WindowSupplier) {
     console.log('Update available. Checking for minimum launcher version...');
 
-    const headers = new Headers();
-    headers.append('pragma', 'no-cache');
-    headers.append('cache-control', 'no-cache');
-
-    fetch('https://lclpnet.work/api/lclplauncher/info', {
-        headers: headers
-    }).then(resp => resp.json())
-        .then(resp => {
-            const info = <LauncherInfo>resp;
-            console.log('Minimum launcher version fetched: ', info.minVersion);
-
-            const currentAppVersion = getAppVersion();
-            if (!currentAppVersion) {
-                console.error('Could not determine app version.');
-                updateCheckResult = { updateAvailable: true };
-                updateChecking = false;
-                if (isWindowReady()) sendUpdateAvailability(windowSupplier);
-                return;
-            }
-
-            updateCheckResult = {
-                updateAvailable: true,
-                mandatory: !semver.gte(currentAppVersion, info.minVersion)
-            };
-            updateChecking = false;
-            if (isWindowReady()) sendUpdateAvailability(windowSupplier);
-        })
-        .catch(err => {
-            console.error('Could not fetch launcher info:', err);
-            updateCheckResult = { updateAvailable: true };
-            updateChecking = false;
-            if (isWindowReady()) sendUpdateAvailability(windowSupplier);
-        })
+    fetchMandatoryUpdateRequired().then(mandatory => {
+        updateCheckResult = {
+            updateAvailable: true,
+            mandatory: mandatory
+        };
+        updateChecking = false;
+        if (isWindowReady()) sendUpdateAvailability(windowSupplier);
+    }).catch(err => {
+        console.error('Could not fetch launcher info:', err);
+        updateCheckResult = { updateAvailable: true };
+        updateChecking = false;
+        if (isWindowReady()) sendUpdateAvailability(windowSupplier);
+    });
 }
 
-export function notifyWindowReady(windowSupplier: () => BrowserWindow | null) {
+export function notifyWindowReady(windowSupplier: WindowSupplier) {
     if (updateCheckResult !== undefined) sendUpdateAvailability(windowSupplier);
 }
 
-function sendUpdateAvailability(windowSupplier: () => BrowserWindow | null) {
+function sendUpdateAvailability(windowSupplier: WindowSupplier) {
     if (!updateCheckResult) return;
 
     const mainWindow = windowSupplier();
@@ -177,3 +157,26 @@ function sendUpdateAvailability(windowSupplier: () => BrowserWindow | null) {
 
     UPDATER.sendUpdateState(updateCheckResult);
 }
+
+async function fetchLauncherInfo() {
+    const headers = new Headers();
+    headers.append('pragma', 'no-cache');
+    headers.append('cache-control', 'no-cache');
+
+    const content = await fetch('https://lclpnet.work/api/lclplauncher/info', {
+        headers: headers
+    });
+
+    return <LauncherInfo> await content.json();
+}
+
+export async function fetchMandatoryUpdateRequired(): Promise<boolean> {
+    const info = await fetchLauncherInfo();
+
+    const currentAppVersion = getAppVersion();
+    if (!currentAppVersion) throw new Error('Could not determine current app version.');
+
+    return !semver.gte(currentAppVersion, info.minVersion);
+}
+
+export type WindowSupplier = (() => BrowserWindow | null);
