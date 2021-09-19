@@ -5,12 +5,13 @@ import { app, shell, BrowserWindow, nativeTheme, nativeImage } from 'electron'
 import { isDevelopment } from '../common/utils/env';
 import * as Database from './database/database';
 import * as Ipc from './utils/ipc';
+import * as path from 'path';
 import { isExternalResource } from '../common/utils/urls';
 import { customWords } from './utils/dictionary';
 import { setMainWindow, setWindowReady } from './utils/window';
 import { Settings } from '../common/utils/settings';
 import { checkForUpdates, notifyWindowReady } from './utils/updater';
-import { getParsedArgv, handleArgv, parseArgv } from './utils/argv';
+import { executeUrlCommand, getParsedArgv, handleArgv, parseArgv } from './utils/argv';
 
 import logoData from '../renderer/img/logo.png';
 
@@ -36,13 +37,32 @@ function startGUI() {
         app.on('second-instance', (_event, argv) => {
             const argvParsed = parseArgv(argv);
 
-            if (mainWindow) {
-                if (mainWindow.isMinimized()) mainWindow.restore();
-                mainWindow.focus();
-
-                if (argvParsed.location) Ipc.UTILITIES.changeLocationHash(argvParsed.location);
+            function doOnSecondInstance() {
+                if (mainWindow) {
+                    if (mainWindow.isMinimized()) mainWindow.restore();
+                    mainWindow.focus();
+    
+                    // do actual changes
+                    if (argvParsed.location) Ipc.UTILITIES.changeLocationHash(argvParsed.location);
+                }
             }
+
+            // check for url command in argv
+            if ('allow-file-access-from-files' in argvParsed) {
+                // there is a url command in form of lclplauncher://...
+                const urlCommand = argvParsed['allow-file-access-from-files'];
+                executeUrlCommand(argvParsed, urlCommand).then(() => {
+                    // url command did execute and left it's changes (e.g. modifications on argvParsed)
+                    doOnSecondInstance();
+                }).catch(err => console.error('Error executing url command:', err));
+            } else doOnSecondInstance();
         });
+    }
+
+    if (process.defaultApp) {
+        if (process.argv.length >= 2) app.setAsDefaultProtocolClient('lclplauncher', process.execPath, [path.resolve(process.argv[1])]);
+    } else {
+        app.setAsDefaultProtocolClient('lclplauncher');
     }
 
     // auto update

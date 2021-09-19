@@ -7,6 +7,8 @@ import { Model } from 'objection';
 export let knexInstance: Knex<any, unknown[]> | null = null;
 
 export function initDatabase() {
+    if (knexInstance) return; // database already initialized
+    
     const file = path.resolve(app.getPath('userData'), 'db.sqlite3');
 
     knexInstance = knex({

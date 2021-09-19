@@ -14,6 +14,7 @@ import AppSettingsModal from './page/AppSettingsModal';
 import InstallationOptionsModal from './page/InstallationOptionsModal';
 import DependenciesAlertModal from './page/DependenciesAlertModal';
 import AppFeed from './page/AppFeed';
+import { goToHome } from '../../../utils/router';
 
 interface Props extends RouteComponentProps<{ app: string }> { }
 
@@ -45,6 +46,7 @@ class AppPage extends Component<Props, State> {
             })
             .catch(reason => {
                 console.error('Failed to fetch app data:', reason);
+                goToHome();
             });
     }
 }

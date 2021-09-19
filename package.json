@@ -1,6 +1,6 @@
 {
   "name": "lclplauncher",
-  "version": "2.1.3",
+  "version": "2.2.0",
   "description": "LCLP's game launcher.",
   "repository": "git@github.com:LCLPYT/LCLPLauncher.git",
   "author": "LCLP <lukas.lupale.2003@gmail.com>",
@@ -92,6 +92,14 @@
     "extraMetadata": {
       "name": "LCLPLauncher"
     },
+    "protocols": [
+      {
+        "name": "LCLPLauncher Protocol",
+        "schemes": [
+          "lclplauncher"
+        ]
+      }
+    ],
     "publish": [
       {
         "provider": "generic",
