@@ -30,6 +30,11 @@ class AppFeed extends Component<Props, State> {
                     if (index >= this.state.items.length - 1) this.lastItemId = item.id;
                     return <FeedItem key={item.id} item={item} />;
                 })}
+                {this.state.items.length <= 0 ? (
+                    <div className="d-flex text-muted align-items-center justify-content-center pt-5">
+                        <div className="feed-text-big">No activity yet.</div>
+                    </div>
+                ) : undefined}
             </div>
         );
     }

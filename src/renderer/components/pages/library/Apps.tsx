@@ -112,7 +112,7 @@ class AppEntry extends Component<{ app: App }> {
                             <img className="card-banner" src={`${getBackendHost()}/api/lclplauncher/apps/assets/card-banner/${this.props.app.key}`} alt="App banner" />
                         </div>
                         <div className="card-overlay-bottom p-2 d-flex align-items-center">
-                            <div className="flex-fill text-start ps-2">{this.props.app.title}</div>
+                            <div id={`appName${this.props.app.id}`} className="flex-fill text-start ps-2 library-app-name">{this.props.app.title}</div>
                             <span className="material-icons overlay-arrow">chevron_right</span>
                         </div>
                     </div>
@@ -142,6 +142,20 @@ class AppEntry extends Component<{ app: App }> {
                     animation: 'scale'
                 });
             }
+        }
+
+        const name = document.getElementById(`appName${this.props.app.id}`);
+        if (name) {
+            const onResize = () => {
+                if (name.getBoundingClientRect().height > 24) {
+                    const parent = name.parentElement;
+                    if (parent) {
+                        parent.classList.add('py-3');
+                    }
+                }
+            };
+            window.addEventListener('resize', () => onResize());
+            onResize();
         }
     }
 }

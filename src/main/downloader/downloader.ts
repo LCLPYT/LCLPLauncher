@@ -371,7 +371,7 @@ export class Installer {
                 console.log('Updates found. Downloading...');
     
                 this.downloadQueue.forEach(artifact => this.totalBytes += Math.max(0, artifact.size));
-                await this.downloadNextArtifact();
+                await this.downloadNextArtifact().catch(err => reject(err));
             } else console.log('Everything is already up-to-date.');
     
             console.log('Finalizing...');
@@ -540,12 +540,16 @@ export class Installer {
 
     protected enqueueFinalization() {
         this.installation.finalize?.forEach(action => {
-            const handle = ActionFactory.createPostActionHandle(this, action);
-            this.enqueuePostAction(handle, {
-                app: this.app,
-                result: this.installationDirectory,
-                inputMap: this.inputMap
-            });
+            try {
+                const handle = ActionFactory.createPostActionHandle(this, action);
+                this.enqueuePostAction(handle, {
+                    app: this.app,
+                    result: this.installationDirectory,
+                    inputMap: this.inputMap
+                });
+            } catch(err) {
+                this.failInstallation(err);
+            }
         });
     }
 
@@ -563,6 +567,7 @@ export class Installer {
         this.actionQueue.splice(0, 1); // remove it from the queue
 
         await action.handle.call(action.argument).catch(err => this.failInstallation(err)); // wait for the action to complete
+        
         this.currentPostAction = null;
         this.actionWorkerActive = false;
         this.doNextPostAction(); // start next post action, but do not wait for it to finish, so the causing artifact gets finished. 
@@ -571,7 +576,7 @@ export class Installer {
 
     protected completePostActions() {
         // called after downloads have finished
-        return new Promise<void>((resolve) => {
+        return new Promise<void>((resolve, reject) => {
             // check if there are any queued actions left
             if (this.actionQueue.length <= 0) {
                 // no enqueued actions, check if there is an action currently running
@@ -583,7 +588,7 @@ export class Installer {
                 // resolve at completion of the last action chain in queue
                 const lastAction = this.actionQueue[this.actionQueue.length - 1]
                 lastAction.handle.lastChild().onCompleted = () => resolve();
-                this.doNextPostAction(); // start the post action worker, if it somehow died
+                this.doNextPostAction().catch(err => reject(err)); // start the post action worker, if it somehow died
             }
         });
     }

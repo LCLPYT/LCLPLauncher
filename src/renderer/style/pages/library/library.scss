@@ -69,3 +69,12 @@
 .centered-info {
     font-size: 22px;
 }
+
+.library-app-name {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    word-wrap: break-word;
+    display: block;
+    line-height: 1em;
+    max-height: 2em;
+}
