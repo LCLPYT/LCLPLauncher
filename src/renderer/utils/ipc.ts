@@ -247,6 +247,7 @@ export const DOWNLOADER = registerHandler(new class extends IPCActionHandler {
                     const err: any = args[0];
                     if (err) this.uninstallCB.reject(err);
                     else this.uninstallCB.resolve();
+                    this.uninstallCB = undefined;
                 } else console.warn('No callback defined for', ACTIONS.downloader.uninstall);
                 break;
             case ACTIONS.downloader.getUninstalledDependencies:

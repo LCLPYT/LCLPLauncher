@@ -13,8 +13,8 @@ export type Substitution = {
     functions?: SubstitutionFunctions
 }
 
-const substitutePattern = () => /\${([a-zA-Z0-9_()/]*)}/g;
-const functionPattern = () => /^([a-zA-Z0-9_]+)\(([a-zA-Z0-9_()/]*)\)$/g;
+const substitutePattern = () => /\${([a-zA-Z0-9_()/\-.]*)}/g;
+const functionPattern = () => /^([a-zA-Z0-9_]+)\(([a-zA-Z0-9_()/\-.]*)\)$/g;
 
 export function replaceArraySubstitutes(arr: string[], subst: Substitution): string[] {
     return arr.map(str => replaceSubstitutes(str, subst));

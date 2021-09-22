@@ -398,8 +398,8 @@ export class Installer {
             await this.writeStartup();
             await this.cleanUp();
 
-            // ensure installation directory exists (for apps that only modify other parts of filesystem)
-            await fs.promises.mkdir(this.installationDirectory);
+            // ensure installation directory exists (for apps which have no files in their directory)
+            await fs.promises.mkdir(this.installationDirectory).catch(() => undefined);
 
             resolve();
         });
@@ -676,7 +676,7 @@ export class Installer {
             },
             functions: {
                 dependency: param => {
-                    if (!param.match(/^[a-zA-Z0-9_]+\/[a-zA-Z0-9@.]+$/)) throw new Error(`Given dependency '${param}' does not match the required scheme (dependency/version).`)
+                    if (!param.match(/^[a-zA-Z0-9_\-]+\/[a-zA-Z0-9@.]+$/)) throw new Error(`Given dependency '${param}' does not match the required scheme (dependency/version).`)
 
                     const [id, version] = param.split('/');
                     const dependency = dependencyAccessor.getMandatoryDependency(id, version);

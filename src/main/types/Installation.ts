@@ -38,9 +38,9 @@ export type OptifineUrlResolverArgs = AbstractUrlResolverArgs & {
 }
 
 /* Post Actions */
-export type PostAction = GeneralPostAction | ExtractZipPostAction | AddMCProfilePostAction | PrepareMCProfilePostAction | InstallMCForgePostAction;
+export type PostAction = GeneralPostAction | ExtractZipPostAction | AddMCProfilePostAction | PrepareMCProfilePostAction;
 export type GeneralPostAction = {
-    type: 'extractZip' | 'addMinecraftProfile' | 'prepareMinecraftProfile' | 'installMinecraftForge' | 'executeProgram' | 'trackExistingFile'
+    type: 'extractZip' | 'addMinecraftProfile' | 'prepareMinecraftProfile' | 'executeProgram' | 'trackExistingFile'
     /** Action to execute after this action */
     post?: PostAction
 }
@@ -72,10 +72,6 @@ export type AddMCProfilePostAction = GeneralPostAction & {
 export type PrepareMCProfilePostAction = GeneralPostAction & {
     /** The id of the profile */
     id: string
-}
-export type InstallMCForgePostAction = GeneralPostAction & {
-    /** The version id of the minecraft profile */
-    versionId: string
 }
 
 export type SegmentedPath = string[];

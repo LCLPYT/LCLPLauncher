@@ -1,14 +1,14 @@
-import { AddMCProfilePostAction, Artifact, ExecuteProgramPostAction, ExtractZipPostAction, InstallMCForgePostAction, PostAction, PrepareMCProfilePostAction, SegmentedPath, TrackExistingFilePostAction } from "../types/Installation";
+import { AddMCProfilePostAction, Artifact, ExecuteProgramPostAction, ExtractZipPostAction, PostAction, PrepareMCProfilePostAction, SegmentedPath, TrackExistingFilePostAction } from "../types/Installation";
 import * as Path from 'path';
 import * as fs from 'fs';
 import { checksumFile } from "../utils/checksums";
-import { backupFile, exists, getDependencyDir, rename, resolveSegmentedPath } from "../utils/fshelper";
+import { backupFile, exists, rename, resolveSegmentedPath } from "../utils/fshelper";
 import { unzip } from "../utils/zip";
 import { SingleFileTracker } from "./tracker/SingleFileTracker";
 import { ExtractedArchiveTracker } from "./tracker/ExtractedArchiveTracker";
 import { ArtifactTrackerVariables, TrackerWriter } from "./tracker/ArtifactTracker";
 import App from "../../common/types/App";
-import { chooseForPlatform, doOnPlatformAsync, forPlatform, isPlatform } from "../utils/oshooks";
+import { isPlatform } from "../utils/oshooks";
 import { parseProfilesFromJson, Profile } from "../types/MCLauncherProfiles";
 import { getBase64DataURL } from "../utils/resources";
 import execa from "execa";
@@ -128,9 +128,6 @@ export namespace ActionFactory {
                 return new AddMCProfileAction(<AddMCProfilePostAction> <unknown> action, child);
             case 'prepareMinecraftProfile':
                 return new PrepareMCProfileAction(<PrepareMCProfilePostAction> <unknown> action, child);
-            case 'installMinecraftForge':
-                const installForgeAction = <InstallMCForgePostAction> <unknown> action;
-                return new InstallMCForgeAction(installForgeAction.versionId, child);
             case 'executeProgram':
                 return new ExecuteProgramAction(<ExecuteProgramPostAction> action, child);
             case 'trackExistingFile':
@@ -348,67 +345,6 @@ export namespace ActionFactory {
                 await fs.promises.writeFile(profilesFile, JSON.stringify(launcherProfiles, undefined, 2));
     
                 console.log(`Launcher profile '${options.id}' was successfully prepared.`);
-            }, child);
-        }
-    }
-
-    class InstallMCForgeAction extends PostActionHandle<ArtifactActionArgument> {
-        constructor(versionId: string, child: PostActionHandle<GeneralActionArgument> | null) {
-            super(async (arg) => {
-                if (!arg.inputMap) throw new Error('Input map is undefined');
-                const minecraftDir = arg.inputMap['minecraftDir']; // universal minecraftDir identifier. Apps using it should always name it this way
-                if (!minecraftDir) throw new Error(`Input map does not contain an entry for 'minecraftDir'.`);
-
-                const forgeInstallerDep = arg.dependencyAccessor.getMandatoryDependency('forge-installer', '1.1.0');
-                const javaDep = arg.dependencyAccessor.getMandatoryDependency('java', '16');
-
-                const forgeInstaller = Path.join(getDependencyDir(forgeInstallerDep), 'forge-installer.jar');
-                if (!await exists(forgeInstaller)) throw new Error(`Cannot find forge installer at: '${forgeInstaller}'`);
-
-                const javaDepDir = getDependencyDir(javaDep);
-                const files = await fs.promises.readdir(javaDepDir);
-                if (files.length !== 1) throw new Error(`There are more than one file inside of '${javaDepDir}'`);
-
-                const javaExecutableName = chooseForPlatform({
-                    'win32': 'java.exe',
-                    'linux': 'java'
-                });
-
-                const javaExecutable = Path.join(javaDepDir, files[0], 'bin', javaExecutableName);
-                if (!await exists(javaExecutable)) throw new Error(`Cannot find Java executable at: '${javaExecutable}'`);
-
-                const classPath = forPlatform<string[], string>({
-                    'win32': segments => segments.join(';'),
-                    'linux': segements => segements.join(':')
-                })([forgeInstaller, arg.result]);
-
-                console.log('Installing Minecraft Forge...');
-                await doOnPlatformAsync(async () => {
-                    const childProcess = execa('chmod', ['+x', javaExecutable]);
-                    childProcess.stdout?.pipe(process.stdout);
-                    childProcess.stderr?.pipe(process.stderr);
-                    await childProcess;
-                }, 'linux');
-
-                const childProcess = execa(javaExecutable, ['-Xms1G', '-Xmx2G', '-cp', classPath, 'work.lclpnet.forgeinstaller.ForgeInstaller', 'none', '0']);
-                childProcess.stdout?.pipe(process.stdout);
-                childProcess.stderr?.pipe(process.stderr);
-
-                await childProcess;
-                console.log('Minecraft Forge installed successfully.');
-
-                const versionDir = Path.join(minecraftDir, 'versions', versionId);
-                if (!exists(versionDir)) throw new Error('Minecraft versions directory was not found.');
-
-                const tracker = new (ExistingFileTracker.Writer.getConstructor())(arg.artifact.id, arg.app.id, arg.trackerVars)
-                await tracker.trackSinglePath(versionDir);
-                arg.tracker = tracker;
-
-                console.log(`Deleting '${arg.result}'...`);
-                await fs.promises.unlink(arg.result);
-                console.log(`Deleted '${arg.result}'`);
-
-                return arg;
             }, child);
         }
     }
