@@ -40,12 +40,20 @@ export type OptifineUrlResolverArgs = AbstractUrlResolverArgs & {
 /* Post Actions */
 export type PostAction = GeneralPostAction | ExtractZipPostAction | AddMCProfilePostAction | PrepareMCProfilePostAction | InstallMCForgePostAction;
 export type GeneralPostAction = {
-    type: 'extractZip' | 'addMinecraftProfile' | 'prepareMinecraftProfile' | 'installMinecraftForge',
+    type: 'extractZip' | 'addMinecraftProfile' | 'prepareMinecraftProfile' | 'installMinecraftForge' | 'executeProgram' | 'trackExistingFile'
     /** Action to execute after this action */
     post?: PostAction
 }
 export type ExtractZipPostAction = GeneralPostAction & {
     destination: SegmentedPath
+}
+export type ExecuteProgramPostAction = GeneralPostAction & {
+    program: string,
+    args?: string[],
+    makeExecutable?: boolean
+}
+export type TrackExistingFilePostAction = GeneralPostAction & {
+    path: SegmentedPath
 }
 export type AddMCProfilePostAction = GeneralPostAction & {
     /** The id of the profile */

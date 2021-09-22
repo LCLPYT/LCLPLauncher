@@ -89,7 +89,7 @@ class Content extends Component<ContentProps, ContentState> {
                 </div>
                 <div id="appForeground">
                     <div>
-                        {this.state.titleBranding ? <img src={this.state.titleBranding} alt={this.props.app.title} className="app-title-branding p-1" /> : <h1 className="app-title px-3">{this.props.app.title}</h1>}
+                        {this.state.titleBranding ? <img src={this.state.titleBranding} alt={this.props.app.title} className="app-title-branding" /> : <h1 className="app-title px-3">{this.props.app.title}</h1>}
                     </div>
                     <div className="foreground-container separator-border-dark-top">
                         <div id="playBar" className="px-4 d-flex align-items-center text-lighter separator-border-dark-bottom sticky-top">

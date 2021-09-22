@@ -8,6 +8,7 @@ import { getRunningProcess, handleRunningProcess } from "./runningApps";
 import { ActionFactory, GeneralActionArgument, PostActionHandle, PostActionWrapper } from "../downloader/postActions";
 import { readInputMap } from "../downloader/inputs";
 import { InputMap } from "../../common/types/InstallationInputResult";
+import { Substitution, SubstitutionFunctions, SubstitutionVariables } from "./substitute";
 
 const LAUNCHER_COMPAT = 0;
 
@@ -137,6 +138,13 @@ class PreActionExecutor {
 
     public async execute() {
         await this.completePostActions();
+    }
+
+    public getSubstitution(mixinVariables?: SubstitutionVariables, mixinFunctions?: SubstitutionFunctions): Substitution {
+        return {
+            variables: mixinVariables,
+            functions: mixinFunctions
+        };
     }
 }
 

@@ -6,7 +6,7 @@ import * as fs from 'fs';
 import * as os from 'os';
 import App from "../../common/types/App";
 import Installation, { Artifact, SegmentedPath } from "../types/Installation";
-import { exists, getAppStartupFile, getInstallerAppDir, mkdirp, resolveSegmentedPath, rmdirRecusive } from "../utils/fshelper";
+import { exists, getAppStartupFile, getDependencyDir, getInstallerAppDir, mkdirp, resolveSegmentedPath, rmdirRecusive } from "../utils/fshelper";
 import { PostActionHandle, PostActionWrapper, ActionFactory, ArtifactActionArgument, GeneralActionArgument } from "./postActions";
 import { ArtifactTrackerVariables } from "./tracker/ArtifactTracker";
 import { AppTracker } from "./tracker/AppTracker";
@@ -29,6 +29,7 @@ import { CompiledInstallationInput } from "../../common/types/InstallationInput"
 import { compileAdditionalInputs, readInputMap, writeInputMap } from "./inputs";
 import { InputMap } from "../../common/types/InstallationInputResult";
 import { fetchApp } from "../utils/backend";
+import { replaceArraySubstitutes, Substitution, SubstitutionFunctions, SubstitutionVariables } from "../utils/substitute";
 
 const queue: [App, string, InputMap, (err: any) => void][] = [];
 let currentInstaller: Installer | null = null;
@@ -193,10 +194,14 @@ export async function startInstallationProcess(app: App, installationDir: string
     const installation = await fetchInstallation(app);
 
     let dependencyStructure: DependencyFragment[] | undefined;
+    let dependencyInfos: Dependencies.DependencyInfoStore = {};
     if (installation.dependencies) {
+        const result = await Dependencies.downloadDependencies(installation.dependencies, map);
+        if (result) dependencyInfos = result[1];
+
         console.log('Checking dependencies...');
         currentPreinstalling = true;
-        dependencyStructure = await Dependencies.downloadDependencies(installation.dependencies, map);
+        dependencyStructure = result ? result[0] : undefined;
         currentPreinstalling = false;
         console.log('Dependencies are now up-to-date.');
     }
@@ -248,6 +253,7 @@ export async function startInstallationProcess(app: App, installationDir: string
 
     const installer = await createAndPrepareInstaller(app, installationDir, installation, map);
     installer.dependencyStructure = dependencyStructure;
+    installer.dependencyInfos = dependencyInfos;
     currentInstaller = installer;
     try {
         await installer.startDownloading();
@@ -305,6 +311,7 @@ export class Installer {
     protected installedVersion?: AppTracker.Header;
     protected downloadReady = false;
     public dependencyStructure?: DependencyFragment[];
+    public dependencyInfos: Dependencies.DependencyInfoStore = {};
     protected rejectFunction?: (err: any) => void;
     protected currentDownloader?: Downloader;
 
@@ -314,6 +321,12 @@ export class Installer {
         this.tmpDir = Path.resolve(this.installationDirectory, '.tmp');
         this.installation = installer;
         this.inputMap = inputMap;
+    }
+
+    protected _dependencyAccessor?: Dependencies.DependencyAccessor;
+
+    public get dependencyAccessor() : Dependencies.DependencyAccessor {
+        return this._dependencyAccessor ? this._dependencyAccessor : (this._dependencyAccessor = new Dependencies.DependencyAccessor(this.dependencyStructure, this.dependencyInfos));
     }
 
     public async validateVersion() {
@@ -384,6 +397,9 @@ export class Installer {
             await writeInputMap(this.app, this.inputMap);
             await this.writeStartup();
             await this.cleanUp();
+
+            // ensure installation directory exists (for apps that only modify other parts of filesystem)
+            await fs.promises.mkdir(this.installationDirectory);
 
             resolve();
         });
@@ -524,13 +540,19 @@ export class Installer {
 
             firstAction.doLast(ActionFactory.createDefaultTrackerHandle());
 
+            const vars: {[key: string]: string} = {};
+            if (downloadedPath) vars.result = downloadedPath;
+
+            const subst = this.getSubstitution(vars); // mixin additional vars
+
             this.enqueuePostAction(firstAction, {
                 artifact: artifact,
                 result: downloadedPath,
                 app: this.app,
                 trackerVars: this.getArtifactTrackerVars(),
-                dependencyAccessor: new Dependencies.DepedencyAccessor(this.dependencyStructure),
-                inputMap: this.inputMap
+                dependencyAccessor: this.dependencyAccessor,
+                inputMap: this.inputMap,
+                substitution: subst
             });
         }
 
@@ -545,7 +567,8 @@ export class Installer {
                 this.enqueuePostAction(handle, {
                     app: this.app,
                     result: this.installationDirectory,
-                    inputMap: this.inputMap
+                    inputMap: this.inputMap,
+                    substitution: this.getSubstitution()
                 });
             } catch(err) {
                 this.failInstallation(err);
@@ -629,7 +652,8 @@ export class Installer {
     }
 
     public toActualPath(path: SegmentedPath) {
-        return resolveSegmentedPath(this.installationDirectory, path);
+        const substPath = replaceArraySubstitutes(path, this.getSubstitution());
+        return resolveSegmentedPath(this.installationDirectory, substPath);
     }
 
     protected async writeStartup() {
@@ -640,5 +664,34 @@ export class Installer {
         const data = JSON.stringify(this.installation.startup);
         await fs.promises.writeFile(startupFile, data, 'utf8');
         console.log('Startup file written.');
+    }
+
+    public getSubstitution(mixinVariables?: SubstitutionVariables, mixinFunctions?: SubstitutionFunctions): Substitution {
+        const dependencyAccessor = new Dependencies.DependencyAccessor(this.dependencyStructure, this.dependencyInfos)
+        return {
+            variables: {
+                installDir: this.installationDirectory,
+                installTmpDir: this.tmpDir,
+                ...mixinVariables
+            },
+            functions: {
+                dependency: param => {
+                    if (!param.match(/^[a-zA-Z0-9_]+\/[a-zA-Z0-9@.]+$/)) throw new Error(`Given dependency '${param}' does not match the required scheme (dependency/version).`)
+
+                    const [id, version] = param.split('/');
+                    const dependency = dependencyAccessor.getMandatoryDependency(id, version);
+                    const info = dependencyAccessor.getMandatoryDependencyInfo(param);
+                    const specificInfo = Dependencies.getInfoForOperatingSystem(info);
+                    if (!specificInfo.index) throw new Error(`Dependency '${param}' has no defined index.`);
+    
+                    return resolveSegmentedPath(getDependencyDir(dependency), specificInfo.index);
+                },
+                input: param => {
+                    if (!(param in this.inputMap)) throw new Error(`Input map does not contain '${param}'.`);
+                    return this.inputMap[param];
+                },
+                ...mixinFunctions
+            }
+        };
     }
 }

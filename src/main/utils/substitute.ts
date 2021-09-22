@@ -8,8 +8,20 @@ export type SubstitutionFunctions = {
 
 export type SubstitutionFunction = (param: string) => string;
 
-export function replaceSubstitutes(str: string, vars: SubstitutionVariables, varFunctions?: SubstitutionFunctions): string {
-    const regex = /\${([a-zA-Z0-9_()]*)}/g;
+export type Substitution = {
+    variables?: SubstitutionVariables,
+    functions?: SubstitutionFunctions
+}
+
+const substitutePattern = () => /\${([a-zA-Z0-9_()/]*)}/g;
+const functionPattern = () => /^([a-zA-Z0-9_]+)\(([a-zA-Z0-9_()/]*)\)$/g;
+
+export function replaceArraySubstitutes(arr: string[], subst: Substitution): string[] {
+    return arr.map(str => replaceSubstitutes(str, subst));
+}
+
+export function replaceSubstitutes(str: string, subst: Substitution): string {
+    const regex = substitutePattern();
 
     let match: RegExpExecArray | null;
     while ((match = regex.exec(str)) !== null) {
@@ -19,7 +31,7 @@ export function replaceSubstitutes(str: string, vars: SubstitutionVariables, var
         const prefix = str.substring(0, match.index);
         const suffix = str.substring(regex.lastIndex);
 
-        const value = getSubstitutedValue(match[1], vars, varFunctions);
+        const value = getSubstitutedValue(match[1], subst);
 
         str = prefix.concat(value).concat(suffix);
     }
@@ -27,13 +39,13 @@ export function replaceSubstitutes(str: string, vars: SubstitutionVariables, var
     return str;
 }
 
-export function getSubstitutedValue(expression: string, vars: SubstitutionVariables, varFunctions?: SubstitutionFunctions): string {
-    const functionMatch = /^([a-zA-Z0-9_]+)\(([a-zA-Z0-9_()]*)\)$/g.exec(expression);
+export function getSubstitutedValue(expression: string, subst: Substitution): string {
+    const functionMatch = functionPattern().exec(expression);
     if (functionMatch) {
-        return resolveSubstitutionFunctionValue(functionMatch, varFunctions)
+        return resolveSubstitutionFunctionValue(functionMatch, subst.functions)
     } else {
-        if (!(expression in vars)) throw new Error(`Unknown variable '${expression}', can't substitute.`);
-        else return vars[expression];
+        if (!subst.variables || !(expression in subst.variables)) throw new Error(`Unknown variable '${expression}', can't substitute.`);
+        else return subst.variables[expression];
     }
 }
 
@@ -43,7 +55,7 @@ function resolveSubstitutionFunctionValue(functionMatch: RegExpMatchArray, varFu
 
     if (!varFunctions || !(functionName in varFunctions)) throw new Error(`Unknown substitution function '${functionName}', can't substitute.`);
 
-    const nestedMatch = /^([a-zA-Z0-9_]+)\(([a-zA-Z0-9_()]*)\)$/g.exec(parameter);
+    const nestedMatch = functionPattern().exec(parameter);
     if (nestedMatch) parameter = resolveSubstitutionFunctionValue(nestedMatch, varFunctions);
     
     return varFunctions[functionName](parameter);

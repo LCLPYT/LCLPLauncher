@@ -30,14 +30,16 @@ export namespace Dependencies {
         return await installer.start();
     }
     
-    export class DepedencyAccessor {
+    export class DependencyAccessor {
         public readonly structure?: DependencyFragment[];
+        public readonly infos: DependencyInfoStore;
     
-        constructor(structure: DependencyFragment[] | undefined) {
+        constructor(structure: DependencyFragment[] | undefined, infos: DependencyInfoStore) {
             this.structure = structure;
+            this.infos = infos;
         }
     
-        public getDependency(id: string): DependencyFragment | undefined {
+        public getDependency(id: string, version: string): DependencyFragment | undefined {
             if (!this.structure) return undefined;
     
             const structure = this.structure;
@@ -46,7 +48,7 @@ export namespace Dependencies {
                 if (!dependencies) return undefined;
     
                 for (const dependency of dependencies) {
-                    if (dependency.id === id) return dependency;
+                    if (dependency.id === id && dependency.version === version) return dependency;
     
                     const nestedDependency = recurse(dependency.dependencies);
                     if (nestedDependency) return nestedDependency;
@@ -58,9 +60,36 @@ export namespace Dependencies {
             return recurse(structure);
         }
     
-        public getMandatoryDependency(id: string): DependencyDescriptor {
-            const dependency = this.getDependency(id);
+        public getMandatoryDependency(id: string, version: string): DependencyDescriptor {
+            const dependency = this.getDependency(id, version);
             if (!dependency) throw new Error(`Missing dependency '${id}'`);
+            return dependency;
+        }
+
+        public getDependencyInfo(id: string): DependencyInfo | undefined {
+            return this.infos[id];
+        }
+
+        public getMandatoryDependencyInfo(id: string): DependencyInfo {
+            const info = this.getDependencyInfo(id);
+            if (!info) throw new Error(`Missing info for dependency '${id}'`);
+            return info;
+        }
+    }
+
+    export type DependencyInfoStore = {
+        [key: string]: DependencyInfo
+    }
+
+    export function getInfoForOperatingSystem(dependency: DependencyInfo): SpecificInfo {
+        if (dependency.platform) {
+            const currentPlatform = os.platform();
+            if (!(currentPlatform in dependency.platform))
+                throw new Error(`The artifact '${dependency.id}/${dependency.version}' is not available your platform: '${currentPlatform}'`);
+            return dependency.platform[currentPlatform];
+        } else {
+            // if URL is omitted and platform is undefined, use this default value
+            if (!dependency.url) dependency.url = `${getBackendHost()}/api/lclplauncher/package/${dependency.id}/${dependency.version}`;
             return dependency;
         }
     }
@@ -120,7 +149,7 @@ export namespace Dependencies {
         }
     
         protected addToDownloadQueue(dependency: DependencyInfo) {
-            const info = this.getInfoForOperatingSystem(dependency);
+            const info = getInfoForOperatingSystem(dependency);
             if (!info.size) throw new Error('Dependency download size is not given');
             this.downloadQueue.push(dependency);
         }
@@ -150,11 +179,16 @@ export namespace Dependencies {
             return uninstalled;
         }
     
-        public async start(): Promise<DependencyFragment[] | undefined> {
+        public async start(): Promise<[DependencyFragment[], DependencyInfoStore] | undefined> {
             if (!this.downloadReady) throw new Error('Download is not yet ready.');
             if (this.active) return undefined;
 
-            if (this.downloadQueue.length <= 0) return this.structure; // no artifacts to download
+            const store: DependencyInfoStore = {};
+            Array.from(this.dependencyCache.entries()).forEach(([key, value]) => {
+                if (value) store[key] = value;
+            });
+
+            if (this.downloadQueue.length <= 0) return [this.structure, store]; // no artifacts to download
     
             const toastId = TOASTS.getNextToastId();
             TOASTS.addToast({
@@ -177,7 +211,7 @@ export namespace Dependencies {
 
             TOASTS.removeToast(toastId);
     
-            return this.structure;
+            return [this.structure, store];
         }
     
         protected async downloadNext() {
@@ -190,7 +224,7 @@ export namespace Dependencies {
     
         protected async download(dependency: DependencyInfo) {
             this.queuePosition++;
-            const info = this.getInfoForOperatingSystem(dependency);
+            const info = getInfoForOperatingSystem(dependency);
     
             console.log(`Resolving dependency '${dependency.id}...'`);
     
@@ -266,19 +300,6 @@ export namespace Dependencies {
             }
     
             await this.downloadNext();
-        }
-    
-        protected getInfoForOperatingSystem(dependency: DependencyInfo): SpecificInfo {
-            if (dependency.platform) {
-                const currentPlatform = os.platform();
-                if (!(currentPlatform in dependency.platform))
-                    throw new Error(`The artifact '${dependency.id}/${dependency.version}' is not available your platform: '${currentPlatform}'`);
-                return dependency.platform[currentPlatform];
-            } else {
-                // if URL is omitted and platform is undefined, use this default value
-                if (!dependency.url) dependency.url = `${getBackendHost()}/api/lclplauncher/package/${dependency.id}/${dependency.version}`;
-                return dependency;
-            }
         }
     
         protected enqueuePostAction<T extends GeneralActionArgument>(action: PostActionHandle<T>, argument: T) {

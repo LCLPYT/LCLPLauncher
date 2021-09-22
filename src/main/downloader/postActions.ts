@@ -1,14 +1,14 @@
-import { AddMCProfilePostAction, Artifact, ExtractZipPostAction, InstallMCForgePostAction, PostAction, PrepareMCProfilePostAction } from "../types/Installation";
+import { AddMCProfilePostAction, Artifact, ExecuteProgramPostAction, ExtractZipPostAction, InstallMCForgePostAction, PostAction, PrepareMCProfilePostAction, SegmentedPath, TrackExistingFilePostAction } from "../types/Installation";
 import * as Path from 'path';
 import * as fs from 'fs';
 import { checksumFile } from "../utils/checksums";
-import { backupFile, exists, getDependencyDir, rename } from "../utils/fshelper";
+import { backupFile, exists, getDependencyDir, rename, resolveSegmentedPath } from "../utils/fshelper";
 import { unzip } from "../utils/zip";
 import { SingleFileTracker } from "./tracker/SingleFileTracker";
 import { ExtractedArchiveTracker } from "./tracker/ExtractedArchiveTracker";
 import { ArtifactTrackerVariables, TrackerWriter } from "./tracker/ArtifactTracker";
 import App from "../../common/types/App";
-import { chooseForPlatform, doOnPlatformAsync, forPlatform } from "../utils/oshooks";
+import { chooseForPlatform, doOnPlatformAsync, forPlatform, isPlatform } from "../utils/oshooks";
 import { parseProfilesFromJson, Profile } from "../types/MCLauncherProfiles";
 import { getBase64DataURL } from "../utils/resources";
 import execa from "execa";
@@ -19,18 +19,20 @@ import { Dependencies } from "./dependencies";
 import { InputMap } from "../../common/types/InstallationInputResult";
 import { isDevelopment } from "../../common/utils/env";
 import { getAppImagePath } from "../utils/env";
+import { replaceArraySubstitutes, replaceSubstitutes, Substitution, SubstitutionFunctions, SubstitutionVariables } from "../utils/substitute";
 
 export type GeneralActionArgument = {
     app: App;
     result: any;
-    inputMap?: InputMap
+    inputMap?: InputMap,
+    substitution?: Substitution
 }
 
 export type ArtifactActionArgument = GeneralActionArgument & {
     artifact: Artifact;
     trackerVars: ArtifactTrackerVariables;
     tracker?: TrackerWriter;
-    dependencyAccessor: Dependencies.DepedencyAccessor;
+    dependencyAccessor: Dependencies.DependencyAccessor;
 }
 
 export class PostActionWrapper<T extends GeneralActionArgument> {
@@ -60,9 +62,15 @@ export class PostActionHandle<T extends GeneralActionArgument> {
 
     public async call(arg: T): Promise<void> {
         const result = await this.action(arg);
-        if(this.onCompleted) this.onCompleted();
-        if(this.child) {
-            if(result !== undefined) arg.result = result;
+        if (this.onCompleted) this.onCompleted();
+        if (this.child) {
+            if (result !== undefined) {
+                arg.result = result;
+
+                // update substitution 'result' variable
+                if (typeof result === 'string' && arg.substitution?.variables?.result) 
+                    arg.substitution.variables.result = result;
+            }
             await this.child.call(arg);
         }
     }
@@ -104,23 +112,29 @@ export namespace ActionFactory {
     }
 
     export type InstallerProto = {
-        installationDirectory: string
+        installationDirectory: string,
+        getSubstitution(mixinVariables?: SubstitutionVariables, mixinFunctions?: SubstitutionFunctions): Substitution
     }
     
     export function createPostActionHandle(installer: InstallerProto, action: PostAction): PostActionHandle<any> {
+        const child: PostActionHandle<any> | null = action.post ? createPostActionHandle(installer, action.post) : null;
         switch (action.type) {
             case 'extractZip':
                 const extractZipAction = <ExtractZipPostAction> <unknown> action;
-                const child: PostActionHandle<any> | null = extractZipAction.post ? createPostActionHandle(installer, extractZipAction.post) : null;
-                const target = Path.resolve(installer.installationDirectory, ...extractZipAction.destination);
+                const substPath = replaceArraySubstitutes(extractZipAction.destination, installer.getSubstitution())
+                const target = resolveSegmentedPath(installer.installationDirectory, substPath);
                 return new ExtractZipAction(target, child);
             case 'addMinecraftProfile':
-                return new AddMCProfileAction(<AddMCProfilePostAction> <unknown> action, null);
+                return new AddMCProfileAction(<AddMCProfilePostAction> <unknown> action, child);
             case 'prepareMinecraftProfile':
-                return new PrepareMCProfileAction(<PrepareMCProfilePostAction> <unknown> action, null);
+                return new PrepareMCProfileAction(<PrepareMCProfilePostAction> <unknown> action, child);
             case 'installMinecraftForge':
                 const installForgeAction = <InstallMCForgePostAction> <unknown> action;
-                return new InstallMCForgeAction(installForgeAction.versionId, null);
+                return new InstallMCForgeAction(installForgeAction.versionId, child);
+            case 'executeProgram':
+                return new ExecuteProgramAction(<ExecuteProgramPostAction> action, child);
+            case 'trackExistingFile':
+                return new TrackExistingFileAction((<TrackExistingFilePostAction> action).path, installer.installationDirectory, child);
             default:
                 throw new Error(`Unimplemented action: '${action.type}'`);
         }
@@ -185,6 +199,57 @@ export namespace ActionFactory {
 
                 return arg;
             }, child)
+        }
+    }
+
+    class ExecuteProgramAction extends PostActionHandle<ArtifactActionArgument> {
+        constructor(action: ExecuteProgramPostAction, child: PostActionHandle<GeneralActionArgument> | null) {
+            super(async (arg) => {
+                const subst = arg.substitution ? arg.substitution : {};
+                const program = replaceSubstitutes(action.program, subst);
+                const args = action.args ? replaceArraySubstitutes(action.args, subst) : [];
+
+                if (action.makeExecutable && isPlatform('linux') && await exists(program)) {
+                    // program is a file, make it executable
+                    console.log(`Making '${program}' executable...`);
+                    const childProcess = execa('chmod', ['+x', program]);
+                    childProcess.stdout?.pipe(process.stdout);
+                    childProcess.stderr?.pipe(process.stderr);
+    
+                    await childProcess;
+                    console.log(`Made '${program}' executable.`);
+                }
+
+                console.log(`Executing program: "${program} ${args.join(' ')}"`);
+
+                const childProcess = execa(program, args);
+                childProcess.stdout?.pipe(process.stdout);
+                childProcess.stderr?.pipe(process.stderr);
+
+                await childProcess;
+                console.log(`Program exitted with code ${childProcess.exitCode}.`);
+            }, child);
+        }
+    }
+
+    class TrackExistingFileAction extends PostActionHandle<ArtifactActionArgument> {
+        constructor(relPath: SegmentedPath, rootDir: string, child: PostActionHandle<GeneralActionArgument> | null) {
+            super(async (arg) => {
+                const subst = arg.substitution ? arg.substitution : {};
+                const substPath = replaceArraySubstitutes(relPath, subst);
+                const file = resolveSegmentedPath(rootDir, substPath);
+                if (!await exists(file)) throw new Error(`Can't track non-existent file '${file}'`);
+
+                console.log(`Tracking existing file '${file}'...`);
+
+                const tracker = new (ExistingFileTracker.Writer.getConstructor())(arg.artifact.id, arg.app.id, arg.trackerVars)
+                await tracker.trackSinglePath(file);
+                arg.tracker = tracker;
+
+                console.log(`Successfully tracked '${file}'.`)
+
+                return arg;
+            }, child);
         }
     }
 
@@ -294,8 +359,8 @@ export namespace ActionFactory {
                 const minecraftDir = arg.inputMap['minecraftDir']; // universal minecraftDir identifier. Apps using it should always name it this way
                 if (!minecraftDir) throw new Error(`Input map does not contain an entry for 'minecraftDir'.`);
 
-                const forgeInstallerDep = arg.dependencyAccessor.getMandatoryDependency('forge-installer');
-                const javaDep = arg.dependencyAccessor.getMandatoryDependency('java');
+                const forgeInstallerDep = arg.dependencyAccessor.getMandatoryDependency('forge-installer', '1.1.0');
+                const javaDep = arg.dependencyAccessor.getMandatoryDependency('java', '16');
 
                 const forgeInstaller = Path.join(getDependencyDir(forgeInstallerDep), 'forge-installer.jar');
                 if (!await exists(forgeInstaller)) throw new Error(`Cannot find forge installer at: '${forgeInstaller}'`);
@@ -321,11 +386,13 @@ export namespace ActionFactory {
                 await doOnPlatformAsync(async () => {
                     const childProcess = execa('chmod', ['+x', javaExecutable]);
                     childProcess.stdout?.pipe(process.stdout);
+                    childProcess.stderr?.pipe(process.stderr);
                     await childProcess;
                 }, 'linux');
 
                 const childProcess = execa(javaExecutable, ['-Xms1G', '-Xmx2G', '-cp', classPath, 'work.lclpnet.forgeinstaller.ForgeInstaller', 'none', '0']);
-                if(childProcess.stdout) childProcess.stdout.pipe(process.stdout);
+                childProcess.stdout?.pipe(process.stdout);
+                childProcess.stderr?.pipe(process.stderr);
 
                 await childProcess;
                 console.log('Minecraft Forge installed successfully.');
@@ -334,7 +401,7 @@ export namespace ActionFactory {
                 if (!exists(versionDir)) throw new Error('Minecraft versions directory was not found.');
 
                 const tracker = new (ExistingFileTracker.Writer.getConstructor())(arg.artifact.id, arg.app.id, arg.trackerVars)
-                tracker.trackSinglePath(versionDir);
+                await tracker.trackSinglePath(versionDir);
                 arg.tracker = tracker;
 
                 console.log(`Deleting '${arg.result}'...`);

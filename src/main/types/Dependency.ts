@@ -1,3 +1,5 @@
+import { SegmentedPath } from "./Installation"
+
 export type DependencyDescriptor = {
     id: string,
     version: string,
@@ -16,7 +18,8 @@ export type SpecificInfo = {
     url?: string,
     size?: number,
     md5?: string,
-    itemTotalSize?: number
+    itemTotalSize?: number,
+    index?: SegmentedPath
 }
 
 export type OSDependantInfo = {
