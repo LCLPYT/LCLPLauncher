@@ -275,7 +275,7 @@ export namespace ActionFactory {
                 if (options.ensureLatest) {
                     console.log('Ensuring that the newly created profile will be the most recent...');
                     Object.entries(launcherProfiles.profiles).forEach(([_id, profile]) => {
-                        if (!profile.lastUsed || profile.lastUsed.getTime() > beforeNow.getTime()) profile.lastUsed = beforeNow;
+                        if (!profile.lastUsed || !profile.lastUsed.getTime || profile.lastUsed.getTime() > beforeNow.getTime()) profile.lastUsed = beforeNow;
                     });
                 }
 
@@ -335,7 +335,7 @@ export namespace ActionFactory {
                 const beforeNow = new Date(now.getTime() - diff);
 
                 Object.entries(launcherProfiles.profiles).forEach(([_id, profile]) => {
-                    if (!profile.lastUsed || profile.lastUsed.getTime() > beforeNow.getTime()) profile.lastUsed = beforeNow;
+                    if (!profile.lastUsed || !profile.lastUsed.getTime || profile.lastUsed.getTime() > beforeNow.getTime()) profile.lastUsed = beforeNow;
                 });
 
                 const profile = launcherProfiles.profiles[options.id];
