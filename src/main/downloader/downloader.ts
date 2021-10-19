@@ -1,35 +1,36 @@
+import { BrowserWindow, dialog } from "electron";
 import fetch, { Headers } from "electron-fetch";
+import * as fs from 'fs';
 import { jsoncSafe } from "jsonc/lib/jsonc.safe";
 import Downloader from 'nodejs-file-downloader';
-import * as Path from 'path';
-import * as fs from 'fs';
 import * as os from 'os';
-import App from "../../common/types/App";
-import Installation, { Artifact, SegmentedPath } from "../types/Installation";
-import { exists, getAppStartupFile, getDependencyDir, getInstallerAppDir, mkdirp, resolveSegmentedPath, rmdirRecusive } from "../utils/fshelper";
-import { PostActionHandle, PostActionWrapper, ActionFactory, ArtifactActionArgument, GeneralActionArgument } from "./postActions";
-import { ArtifactTrackerVariables } from "./tracker/ArtifactTracker";
-import { AppTracker } from "./tracker/AppTracker";
+import * as Path from 'path';
 import * as semver from 'semver';
-import { getAppVersion } from "../utils/env";
-import { DependencyFragment } from "../types/Dependency";
-import { resolveUrl } from "./urlResolver";
-import { getBackendHost } from "../../common/utils/settings";
+import App from "../../common/types/App";
 import AppState from "../../common/types/AppState";
-import { InstalledApplication } from "../database/models/InstalledApplication";
-import { BrowserWindow, dialog } from "electron";
-import { DOWNLOADER, TOASTS } from "../utils/ipc";
-import { ToastType } from "../../common/types/Toast";
-import { uninstallApp } from "./uninstall";
-import { createReader } from "./tracker/ArtifactTrackers";
-import { Dependencies } from "./dependencies";
-import AppInfo from "../types/AppInfo";
-import { isAppRunning } from "../utils/runningApps";
 import { CompiledInstallationInput } from "../../common/types/InstallationInput";
-import { compileAdditionalInputs, readInputMap, writeInputMap } from "./inputs";
 import { InputMap } from "../../common/types/InstallationInputResult";
+import { ToastType } from "../../common/types/Toast";
+import { getBackendHost } from "../../common/utils/settings";
+import { InstalledApplication } from "../database/models/InstalledApplication";
+import AppInfo from "../types/AppInfo";
+import { DependencyFragment } from "../types/Dependency";
+import Installation, { Artifact, SegmentedPath } from "../types/Installation";
 import { fetchApp } from "../utils/backend";
+import { getAppVersion } from "../utils/env";
+import { exists, getAppStartupFile, getDependencyDir, getInstallerAppDir, mkdirp, resolveSegmentedPath, rmdirRecusive } from "../utils/fshelper";
+import { DOWNLOADER, TOASTS } from "../utils/ipc";
+import { isAppRunning } from "../utils/runningApps";
 import { replaceArraySubstitutes, Substitution, SubstitutionFunctions, SubstitutionVariables } from "../utils/substitute";
+import { isDomainTrusted } from "../utils/tls";
+import { Dependencies } from "./dependencies";
+import { compileAdditionalInputs, readInputMap, writeInputMap } from "./inputs";
+import { ActionFactory, ArtifactActionArgument, GeneralActionArgument, PostActionHandle, PostActionWrapper } from "./postActions";
+import { AppTracker } from "./tracker/AppTracker";
+import { ArtifactTrackerVariables } from "./tracker/ArtifactTracker";
+import { createReader } from "./tracker/ArtifactTrackers";
+import { uninstallApp } from "./uninstall";
+import { resolveUrl } from "./urlResolver";
 
 const queue: [App, string, InputMap, (err: any) => void][] = [];
 let currentInstaller: Installer | null = null;
@@ -385,6 +386,7 @@ export class Installer {
     
                 this.downloadQueue.forEach(artifact => this.totalBytes += Math.max(0, artifact.size));
                 await this.downloadNextArtifact().catch(err => reject(err));
+                console.log('Updates downloaded.')
             } else console.log('Everything is already up-to-date.');
     
             console.log('Finalizing...');
@@ -512,7 +514,14 @@ export class Installer {
 
         console.log(`Downloading '${url}'...`);
         this.currentDownloader = downloader;
-        await downloader.download();
+        try {
+            const trusted = isDomainTrusted(url);
+            if (trusted) process.env.NODE_TLS_REJECT_UNAUTHORIZED = '0';
+            await downloader.download();
+            if (trusted) delete process.env.NODE_TLS_REJECT_UNAUTHORIZED;
+        } catch(err) {
+            throw new Error(`Error downloading '${url}': ${err}`);
+        }
         this.currentDownloader = undefined;
         console.log(`Downloaded '${url}'.`);
 
