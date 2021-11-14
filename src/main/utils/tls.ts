@@ -1,6 +1,7 @@
 // Ugly solution; domains on which to set NODE_TLS_REJECT_UNAUTHORIZED = '0', because root certificates are expired (thanks, MinecraftForge)
 const trustedDomain = [
-    'files.minecraftforge.net'
+    'files.minecraftforge.net',
+    'maven.minecraftforge.net'
 ];
 
 export function isDomainTrusted(url: string) {
