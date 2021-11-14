@@ -1,9 +1,9 @@
 import { withBufferReadMethods, withBufferWriteMethods } from "../../../utils/buffer";
 import { UninstallTracker } from "./UninstallTracker";
-import * as Path from 'path';
 import * as fs from 'fs';
 import { parseProfilesFromJson } from "../../../types/MCLauncherProfiles";
 import { backupFile, exists } from "../../../utils/fshelper";
+import { getMinecraftLauncherProfiles } from "../../../../renderer/utils/gameEnv";
 
 export namespace UninstallMCProfile {
     export class Writer extends UninstallTracker.Writer {
@@ -46,7 +46,7 @@ export namespace UninstallMCProfile {
             const minecraftDir = this.vars.inputMap['minecraftDir']; // universal minecraftDir identifier. Apps using it should always name it this way
             if (!minecraftDir) return; // do not insist to get minecraft dir, because a previous version could have corruped the input map. Uninstallation should always be possible
 
-            const profilesFile = Path.resolve(minecraftDir, 'launcher_profiles.json');
+            const profilesFile = await getMinecraftLauncherProfiles(minecraftDir);
             if (!exists(profilesFile)) return; // profiles files does not exist
             const jsonContent = await fs.promises.readFile(profilesFile, 'utf8');
             const launcherProfiles = parseProfilesFromJson(jsonContent);

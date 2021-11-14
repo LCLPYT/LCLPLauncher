@@ -1,5 +1,4 @@
 import { AddMCProfilePostAction, Artifact, ExecuteProgramPostAction, ExtractZipPostAction, PostAction, PrepareMCProfilePostAction, SegmentedPath, TrackExistingFilePostAction } from "../types/Installation";
-import * as Path from 'path';
 import * as fs from 'fs';
 import { checksumFile } from "../utils/checksums";
 import { backupFile, exists, rename, resolveSegmentedPath } from "../utils/fshelper";
@@ -20,6 +19,7 @@ import { InputMap } from "../../common/types/InstallationInputResult";
 import { isDevelopment } from "../../common/utils/env";
 import { getAppImagePath } from "../utils/env";
 import { replaceArraySubstitutes, replaceSubstitutes, Substitution, SubstitutionFunctions, SubstitutionVariables } from "../utils/substitute";
+import { getMinecraftLauncherProfiles } from "../../renderer/utils/gameEnv";
 
 export type GeneralActionArgument = {
     app: App;
@@ -259,7 +259,7 @@ export namespace ActionFactory {
                 const minecraftDir = arg.inputMap['minecraftDir']; // universal minecraftDir identifier. Apps using it should always name it this way
                 if (!minecraftDir) throw new Error(`Input map does not contain an entry for 'minecraftDir'.`);
 
-                const profilesFile = Path.resolve(minecraftDir, 'launcher_profiles.json');
+                const profilesFile = await getMinecraftLauncherProfiles(minecraftDir);
                 if (!exists(profilesFile)) throw new Error('Profiles file does not exist');
 
                 const jsonContent = await fs.promises.readFile(profilesFile, 'utf8');
@@ -322,7 +322,7 @@ export namespace ActionFactory {
                 const minecraftDir = arg.inputMap['minecraftDir']; // universal minecraftDir identifier. Apps using it should always name it this way
                 if (!minecraftDir) throw new Error(`Input map does not contain an entry for 'minecraftDir'.`);
 
-                const profilesFile = Path.resolve(minecraftDir, 'launcher_profiles.json');
+                const profilesFile = await getMinecraftLauncherProfiles(minecraftDir);
                 if (!exists(profilesFile)) throw new Error('Profiles file does not exist');
 
                 const jsonContent = await fs.promises.readFile(profilesFile, 'utf8');
