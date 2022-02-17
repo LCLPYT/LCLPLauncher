@@ -36,6 +36,10 @@ export type AbstractUrlResolverArgs = {
 export type OptifineUrlResolverArgs = AbstractUrlResolverArgs & {
     id: string
 }
+export type CurseForgeUrlResolverArgs = AbstractUrlResolverArgs & {
+    projectId: number,
+    fileId: number
+}
 
 /* Post Actions */
 export type PostAction = GeneralPostAction | ExtractZipPostAction | AddMCProfilePostAction | PrepareMCProfilePostAction;
