@@ -3,7 +3,7 @@ import { InstalledApplication } from "../database/models/InstalledApplication";
 import { ArtifactTrackerVariables } from "./tracker/ArtifactTracker";
 import * as Path from 'path';
 import * as fs from 'fs';
-import { exists, getAppArtifactsDir, getAppTrackerFile, getAppUninstallerDir, rmdirRecusive } from "../utils/fshelper";
+import { exists, getAppArtifactsDir, getAppTrackerFile, getAppUninstallerDir, getAppUninstallPropsFile, mkdirp, rmdirRecusive } from "../utils/fshelper";
 import { createReader } from "./tracker/ArtifactTrackers";
 import { DOWNLOADER } from "../utils/ipc";
 import { UninstallTrackers } from "./tracker/uninstall/UninstallTrackers";
@@ -15,6 +15,7 @@ export async function uninstallApp(app: App) {
     if (!installedApp) return;
 
     const installationDir = installedApp.path;
+    const uninstallProps = await readUninstallProps(app);
 
     // uninstall all artifacts
     const artifactTrackerDir = getAppArtifactsDir(app.id);
@@ -30,14 +31,17 @@ export async function uninstallApp(app: App) {
             if (!reader) return; // if there was an error, do nothing
     
             console.log(`Deleting artifact '${file}'...`);
-            await reader.deleteEntries(reader, true);
+            const uninstalledCompletely = await reader.deleteEntries(reader, true, uninstallProps.skip).catch(err => {
+                console.error(`Could not delete artifact '${file}':`, err);
+                return true;  // loose tracker, to fix artifact on next installation
+            });
             console.log(`Artifact '${file}' deleted successfully.`);
-        }
 
-        /* 
-            Artifact-tracker-directory should not be deleted, since some artifacts may persist, even after uninstallation.
-            To speed up the re-installation, keep all the trackers.
-        */
+            // if all files of the tracker have been removed, there is no need to keep the tracker any longer
+            if (uninstalledCompletely || uninstalledCompletely === undefined) {
+                reader.deleteFile();  // no need to await file deletion, as the loop ends here
+            }
+        }
     }
 
     // uninstall additional content independant from artifacts
@@ -74,12 +78,50 @@ export async function uninstallApp(app: App) {
 
     // delete app info file
     const appInfoFile = getAppTrackerFile(app.id);
-    if (await exists(appInfoFile)) await fs.promises.unlink(appInfoFile).catch(err => console.error(err));
+    if (await exists(appInfoFile)) 
+        await fs.promises.unlink(appInfoFile).catch(err => console.error('Could not remove app info file:', err));
 
     await InstalledApplication.query().where('app_id', app.id).delete(); // remove from database
+
+    const uninstallPropsFile = getAppUninstallPropsFile(app);
+    if (await exists(uninstallPropsFile))
+        await fs.promises.unlink(uninstallPropsFile).catch(err => console.error('Could not remove uninstall properties file', err))
 
     // TODO clean packages
 
     // update state
     DOWNLOADER.updateInstallationState('not-installed');
+}
+
+/**
+ * Registers a path that should be skipped when uninstalling.
+ * @param path The path to be ignored during uninstallation.
+ */
+export async function registerUninstallExceptionPath(app: App | number, path: string) {
+    const props = await readUninstallProps(app);
+    if (!props.skip) props.skip = [];
+
+    if (props.skip.includes(path)) return;
+
+    props.skip.push(path);
+    writeUninstallProps(app, props);
+}
+
+type UninstallProps = {
+    skip?: string[]
+}
+
+async function readUninstallProps(app: App | number): Promise<UninstallProps> {
+    const file = getAppUninstallPropsFile(app);
+    if (!await exists(file)) return {};
+
+    return fs.promises.readFile(file, 'utf8')
+        .then(content => JSON.parse(content) as UninstallProps)
+        .catch(() => <UninstallProps> {});
+}
+
+async function writeUninstallProps(app: App | number, props: UninstallProps) {
+    const file = getAppUninstallPropsFile(app);
+    await mkdirp(Path.dirname(file));
+    await fs.promises.writeFile(file, JSON.stringify(props), 'utf8');
 }

@@ -82,7 +82,8 @@ export namespace ExtractedArchiveTracker {
         protected async doAllArchiveItemsExist(reuseReader?: TrackerReader): Promise<boolean> {
             async function checkItems(trackerReader: TrackerReader): Promise<boolean> {
                 try {
-                    // for each extracted entry, check if it exists
+                    // for each extracted entry, check if it exists^
+                    // if there is no path remaining, the promise will throw ERR_EOS
                     while (true) {
                         if (!await exists(trackerReader.readPath())) return false;
                     }

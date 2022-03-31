@@ -28,11 +28,27 @@ export async function mkdirp(dir: string) {
     });
 }
 
-export async function unlinkRemoveParentIfEmpty(file: string) {
+export async function unlinkRemoveParentIfEmpty(file: string, root: string) {
     await fs.promises.unlink(file);
-    const dir = Path.dirname(file);
-    const files = await fs.promises.readdir(dir);
-    if(files.length <= 0) await fs.promises.rmdir(dir)
+
+    // delete parents, if they are empty. Stops after the installation directory.
+    const rootParent = Path.dirname(root);
+    let parent = Path.dirname(file);
+
+    while (parent.includes(rootParent)) {
+        const files = await fs.promises.readdir(parent);
+        if (files.length > 0) return;
+    
+        // delete empty parent
+        await fs.promises.rmdir(parent)
+        parent = Path.dirname(parent);
+    }
+}
+
+export async function isDirectory(file: string): Promise<boolean> {
+    return await fs.promises.stat(file)
+        .then(stats => stats.isDirectory())
+        .catch(() => false);
 }
 
 export async function exists(file: string): Promise<boolean> {
@@ -50,6 +66,10 @@ export function getAppStartupFile(app: App | number) {
 
 export function getAppInputMapFile(app: App | number) {
     return Path.join(getInstallerAppDir(app), 'input_map.json');
+}
+
+export function getAppUninstallPropsFile(app: App | number) {
+    return Path.join(getInstallerAppDir(app), 'uninstall_properties.json');
 }
 
 export function getAppUninstallerDir(appId: number) {

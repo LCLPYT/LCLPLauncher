@@ -57,7 +57,8 @@ export type ExecuteProgramPostAction = GeneralPostAction & {
     makeExecutable?: boolean
 }
 export type TrackExistingFilePostAction = GeneralPostAction & {
-    path: SegmentedPath
+    path: SegmentedPath,
+    skipUninstall?: boolean
 }
 export type AddMCProfilePostAction = GeneralPostAction & {
     /** The id of the profile */

@@ -1,25 +1,26 @@
-import { AddMCProfilePostAction, Artifact, ExecuteProgramPostAction, ExtractZipPostAction, PostAction, PrepareMCProfilePostAction, SegmentedPath, TrackExistingFilePostAction } from "../types/Installation";
-import * as fs from 'fs';
-import { checksumFile } from "../utils/checksums";
-import { backupFile, exists, rename, resolveSegmentedPath } from "../utils/fshelper";
-import { unzip } from "../utils/zip";
-import { SingleFileTracker } from "./tracker/SingleFileTracker";
-import { ExtractedArchiveTracker } from "./tracker/ExtractedArchiveTracker";
-import { ArtifactTrackerVariables, TrackerWriter } from "./tracker/ArtifactTracker";
-import App from "../../common/types/App";
-import { isPlatform } from "../utils/oshooks";
-import { parseProfilesFromJson, Profile } from "../types/MCLauncherProfiles";
-import { getBase64DataURL } from "../utils/resources";
 import execa from "execa";
-import { ExistingFileTracker } from "./tracker/ExistingFileTracker";
-import { UninstallMCProfile } from "./tracker/uninstall/UninstallMCProfile";
-import { UninstallTracker } from "./tracker/uninstall/UninstallTracker";
-import { Dependencies } from "./dependencies";
+import * as fs from 'fs';
+import App from "../../common/types/App";
 import { InputMap } from "../../common/types/InstallationInputResult";
 import { isDevelopment } from "../../common/utils/env";
-import { getAppImagePath } from "../utils/env";
-import { replaceArraySubstitutes, replaceSubstitutes, Substitution, SubstitutionFunctions, SubstitutionVariables } from "../utils/substitute";
 import { getMinecraftLauncherProfiles } from "../../renderer/utils/gameEnv";
+import { AddMCProfilePostAction, Artifact, ExecuteProgramPostAction, ExtractZipPostAction, PostAction, PrepareMCProfilePostAction, SegmentedPath, TrackExistingFilePostAction } from "../types/Installation";
+import { parseProfilesFromJson, Profile } from "../types/MCLauncherProfiles";
+import { checksumFile } from "../utils/checksums";
+import { getAppImagePath } from "../utils/env";
+import { backupFile, exists, rename, resolveSegmentedPath } from "../utils/fshelper";
+import { isPlatform } from "../utils/oshooks";
+import { getBase64DataURL } from "../utils/resources";
+import { replaceArraySubstitutes, replaceSubstitutes, Substitution, SubstitutionFunctions, SubstitutionVariables } from "../utils/substitute";
+import { unzip } from "../utils/zip";
+import { Dependencies } from "./dependencies";
+import { ArtifactTrackerVariables, TrackerWriter } from "./tracker/ArtifactTracker";
+import { ExistingFileTracker } from "./tracker/ExistingFileTracker";
+import { ExtractedArchiveTracker } from "./tracker/ExtractedArchiveTracker";
+import { SingleFileTracker } from "./tracker/SingleFileTracker";
+import { UninstallMCProfile } from "./tracker/uninstall/UninstallMCProfile";
+import { UninstallTracker } from "./tracker/uninstall/UninstallTracker";
+import { registerUninstallExceptionPath } from "./uninstall";
 
 export type GeneralActionArgument = {
     app: App;
@@ -131,7 +132,8 @@ export namespace ActionFactory {
             case 'executeProgram':
                 return new ExecuteProgramAction(<ExecuteProgramPostAction> action, child);
             case 'trackExistingFile':
-                return new TrackExistingFileAction((<TrackExistingFilePostAction> action).path, installer.installationDirectory, child);
+                const trackExistingFile = <TrackExistingFilePostAction> action;
+                return new TrackExistingFileAction(trackExistingFile.path, installer.installationDirectory, trackExistingFile.skipUninstall, child);
             default:
                 throw new Error(`Unimplemented action: '${action.type}'`);
         }
@@ -188,7 +190,14 @@ export namespace ActionFactory {
                 arg.tracker = tracker;
                 await tracker.beginExtractedArchive(zipFile, targetDirectory);
                 // await unzip(zipFile, targetDirectory, progress => console.log(`${((progress.transferredBytes / progress.totalBytes) * 100).toFixed(2)}% - ${progress.transferredBytes} / ${progress.totalBytes}`));
-                await unzip(zipFile, targetDirectory, tracker);
+                const err = await unzip(zipFile, targetDirectory, tracker).catch(err => err);
+                if (err) {
+                    console.error(`Could not unzip '${zipFile}':`, err);
+                    await fs.promises.unlink(zipFile);
+                    await tracker.deleteFile();
+                    throw err;
+                }
+
                 tracker.finishExtractedArchive();
                 console.log(`Unzipped '${zipFile}'. Deleting it...`);
                 await fs.promises.unlink(zipFile);
@@ -230,7 +239,7 @@ export namespace ActionFactory {
     }
 
     class TrackExistingFileAction extends PostActionHandle<ArtifactActionArgument> {
-        constructor(relPath: SegmentedPath, rootDir: string, child: PostActionHandle<GeneralActionArgument> | null) {
+        constructor(relPath: SegmentedPath, rootDir: string, skipUninstall: boolean | undefined, child: PostActionHandle<GeneralActionArgument> | null) {
             super(async (arg) => {
                 const subst = arg.substitution ? arg.substitution : {};
                 const substPath = replaceArraySubstitutes(relPath, subst);
@@ -242,6 +251,9 @@ export namespace ActionFactory {
                 const tracker = new (ExistingFileTracker.Writer.getConstructor())(arg.artifact.id, arg.app.id, arg.trackerVars)
                 await tracker.trackSinglePath(file);
                 arg.tracker = tracker;
+
+                if (!!skipUninstall) 
+                    registerUninstallExceptionPath(arg.app, file);
 
                 console.log(`Successfully tracked '${file}'.`)
 

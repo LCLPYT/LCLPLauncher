@@ -27,6 +27,13 @@ export namespace SimpleFile {
         public doesFileExist() {
             return exists(this.getFile());
         }
+
+        public async deleteFile() {
+            const file = this.getFile();
+            if (await exists(file)) {
+                await fs.promises.unlink(file);
+            }
+        }
     }
     
     export interface AbstractWriter<Vars> extends MixinBufferWriter {} // make the compiler aware of the mixin with declaration merging
@@ -54,6 +61,11 @@ export namespace SimpleFile {
     
         protected ensureFileNotOpen() {
             if (this.stream) throw new Error('File is already open (write)');
+        }
+
+        public async deleteFile() {
+            if (this.stream) this.closeFile();
+            return super.deleteFile();
         }
     }
     
@@ -95,7 +107,7 @@ export namespace SimpleFile {
     
         public async deleteFile() {
             if (this.stream) this.closeFile();
-            if(await exists(this.getFile())) await fs.promises.unlink(this.getFile());
+            return super.deleteFile();
         }
     }
 }

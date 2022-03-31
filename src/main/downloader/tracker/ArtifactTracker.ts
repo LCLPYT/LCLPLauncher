@@ -1,12 +1,12 @@
 import { Artifact } from "../../types/Installation";
-import { exists, getAppArtifactFile, unlinkRemoveParentIfEmpty } from "../../utils/fshelper";
+import { exists, getAppArtifactFile, isDirectory, rmdirRecusive, unlinkRemoveParentIfEmpty } from "../../utils/fshelper";
 import * as fs from 'fs';
 import { ERR_EOS } from "../../utils/constants";
 import { withBufferWriteMethods } from "../../utils/buffer";
 import { SimpleFile } from "../../utils/SimpleFile";
 
 // if a tracker file has a version older than this string, it will be deleted and an update of the artifact will be required
-const TRACKER_VERSION = 4;
+const TRACKER_VERSION = 5;
 
 export type ArtifactTrackerVariables = {
     installationDir: string;
@@ -103,11 +103,49 @@ export abstract class TrackerReader extends SimpleFile.AbstractReader<ArtifactTr
 
     public abstract isArtifactUpToDate(artifact: Artifact): Promise<boolean>;
 
-    public async deleteEntries(reuseReader?: TrackerReader, atBeginning?: boolean) {
+    /**
+     * 
+     * @param reuseReader A TrackerReader that should be reused for performance.
+     * @param atBeginning Whether the passed reuse Tracker reader has it's cursor on the beginning of the entries.
+     * @param skipPaths Optional paths that should not be deleted.
+     * @returns A promise with a boolean result, indicating if all tracked files were deleted.
+     */
+    public async deleteEntries(reuseReader?: TrackerReader, atBeginning?: boolean, skipPaths?: string[]) {
+        let didSkips = false;
+
         const deleteItems = async (trackerReader: TrackerReader) => {
             // delete all old files
             try {
-                while (true) await unlinkRemoveParentIfEmpty(trackerReader.readPath()).catch(() => undefined);
+                let deletedDirectories: string[] = [];
+
+                // if there is no path remaining, the promise will throw ERR_EOS
+                while (true) {
+                    const path = trackerReader.readPath();
+                    if (skipPaths && skipPaths.includes(path)) {
+                        console.log(`Skipping '${path}', because it was registered as persistent.`);
+                        didSkips = true;
+                        continue;
+                    }
+
+                    if (!await exists(path)) {
+                        // check if file was deleted previously by a recursive directory deletion, or not
+                        if (!deletedDirectories.find(dir => path.startsWith(dir))) {
+                            console.warn(`Could not find tracked file '${path}', ignoring it.`);
+                        }
+                        continue;
+                    }
+
+                    if (await isDirectory(path)) {
+                        if ((await fs.promises.readdir(path)).length > 0) {
+                            deletedDirectories.push(path);
+                        }
+
+                        await rmdirRecusive(path);
+                        return;
+                    }
+
+                    await unlinkRemoveParentIfEmpty(path, this.vars.installationDir).catch();
+                }
             } catch (err) {
                 if (err !== ERR_EOS) throw err;
             }
@@ -125,6 +163,8 @@ export abstract class TrackerReader extends SimpleFile.AbstractReader<ArtifactTr
             await deleteItems(reader);
             reader.closeFile();
         }
+
+        return !didSkips;
     }
 }
 

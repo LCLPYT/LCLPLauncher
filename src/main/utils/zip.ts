@@ -20,7 +20,7 @@ export async function unzip(zipFile: string, destination: string, tracker?: Extr
 
 function unzipWithTotalSize(zipFile: string, destination: string, tracker?: ExtractedArchiveTracker.Writer, progressListener?: ProgressCallback): Promise<void> {
     const getPath = (path: string) => Path.join(destination, path);
-
+    
     return new Promise((resolve, reject) => {
         yauzl.open(zipFile, {
             lazyEntries: true
@@ -29,46 +29,67 @@ function unzipWithTotalSize(zipFile: string, destination: string, tracker?: Extr
                 reject(err);
                 return;
             }
+
+            let rejected = false;
+            const onError = (err: any) => {
+                rejected = true;
+                zip.close();
+                reject(err);
+                return err;
+            };
+
             let totallyTransferred = 0;
             zip.readEntry();
             zip.on('entry', (entry: yauzl.Entry) => {
-                if (/\/$/.test(entry.fileName)) { // entry is a directory
-                    // create the directory if it does not yet exists, then continue
-                    mkdirp(getPath(entry.fileName)).then(() => zip.readEntry()).catch(err => reject(err));
-                    return;
-                }
-                // entry is a file
-                // determine extracted path
                 const unzippedPath = getPath(entry.fileName);
 
+                if (/\/$/.test(entry.fileName)) { // entry is a directory
+                    // create the directory if it does not yet exists, then continue
+                    mkdirp(unzippedPath).then(async () => {
+                        // track the created directory
+                        if (tracker && await tracker.pushArchivePath(unzippedPath).catch(onError)) return;
+
+                        zip.readEntry();
+                    }).catch(onError);
+                    return;
+                }
+
+                // entry is a file
                 // ensure parent directory exists
                 mkdirp(Path.dirname(unzippedPath)).then(async () => {
                     // actually extract the entry
                     if (progressListener) {
-                        await extractZipEntry(zip, entry, unzippedPath, progress => {
+                        if (await extractZipEntry(zip, entry, unzippedPath, progress => {
                             totallyTransferred += progress.delta;
                             progressListener.onProgress({
                                 totalBytes: progressListener.totalUncompressedSize,
                                 transferredBytes: totallyTransferred,
                                 speed: progress.speed
                             });
-                        });
+                        }).catch(onError)) return;
 
-                        if (tracker) await tracker.pushArchivePath(unzippedPath); // track the extracted file
-
+                        // track the extracted file
+                        if (tracker) {
+                            
+                            if (await tracker.pushArchivePath(unzippedPath).catch(onError)) return;
+                        }
+                        
                         zip.readEntry(); // continue
                     } else {
-                        await extractZipEntry(zip, entry, unzippedPath);
-
-                        if (tracker) await tracker.pushArchivePath(unzippedPath); // track the extracted file
-
+                        if (await extractZipEntry(zip, entry, unzippedPath).catch(onError)) return;
+                        
+                        // track the extracted file
+                        if (tracker && await tracker.pushArchivePath(unzippedPath).catch(onError)) return;
+                        
                         zip.readEntry(); // continue
                     }
-                }).catch(err => reject(err));
+                }).catch(onError);
             });
+            zip.on('err', onError)
             zip.once('end', () => {
                 zip.close();
-                resolve();
+
+                if (!rejected) resolve();
             });
         });
     });
@@ -82,11 +103,12 @@ function extractZipEntry(zip: yauzl.ZipFile, entry: yauzl.Entry, unzippedPath: s
                 reject(err);
                 return;
             }
-
+            
             readStream.on('end', () => resolve()); // entry read process finished
-
+            readStream.on('error', err => reject(err));
+            
             const writeStream = fs.createWriteStream(unzippedPath);
-
+            
             if (onProgress) {
                 // setup progress middleware stream
                 const progressStream = progress_stream({
@@ -103,10 +125,10 @@ function extractZipEntry(zip: yauzl.ZipFile, entry: yauzl.Entry, unzippedPath: s
 }
 
 /**
- * Calculate the sum of all entries' uncompressed size.
- * @param zipFile The zip file.
- * @returns The sum of all entries' uncompressed size, in bytes.
- */
+* Calculate the sum of all entries' uncompressed size.
+* @param zipFile The zip file.
+* @returns The sum of all entries' uncompressed size, in bytes.
+*/
 export function getTotalUncompressedSize(zipFile: string): Promise<number> {
     return new Promise((resolve, reject) => {
         let totalBytes = 0;
