@@ -461,6 +461,10 @@ export const UTILITIES = registerHandler(new class extends IPCActionHandler {
                 if (args.length < 1) throw new Error('Hash argument does not exist.');
                 window.location.hash = args[0];
                 break;
+            case ACTIONS.utilities.console_log:
+                if (args.length < 1) throw new Error('Message segments do not exist.');
+                console.log(...args);
+                break;
             default:
                 throw new Error(`Action '${action}' not implemented.`);
         }

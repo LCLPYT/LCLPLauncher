@@ -29,7 +29,7 @@ import { ActionFactory, ArtifactActionArgument, GeneralActionArgument, PostActio
 import { AppTracker } from "./tracker/AppTracker";
 import { ArtifactTrackerVariables } from "./tracker/ArtifactTracker";
 import { createReader } from "./tracker/ArtifactTrackers";
-import { uninstallApp } from "./uninstall";
+import { registerUninstallExceptionPath, uninstallApp } from "./uninstall";
 import { resolveUrl } from "./urlResolver";
 
 const queue: [App, string, InputMap, (err: any) => void][] = [];
@@ -403,6 +403,12 @@ export class Installer {
             // ensure installation directory exists (for apps which have no files in their directory)
             await fs.promises.mkdir(this.installationDirectory).catch(() => undefined);
 
+            if (this.installation.keepFiles) {
+                for (const file of this.installation.keepFiles) {
+                    await registerUninstallExceptionPath(this.app, Path.join(this.installationDirectory, file));
+                }
+            }
+
             resolve();
         });
     }
@@ -478,7 +484,14 @@ export class Installer {
         const artifact = this.downloadQueue[0];
         this.downloadQueue.splice(0, 1);
 
-        console.log(`Resolving artifact '${artifact.id}...'`);
+        // delete old artifact data, if it exists
+        const reader = await createReader(this.app.id, artifact.id, this.getArtifactTrackerVars()).catch(() => undefined);
+        if (reader) {
+            console.log(`Deleting old artifact data of '${artifact.id}'...`);
+            await reader.deleteFile();
+        }
+
+        console.log(`Resolving artifact '${artifact.id}'...`);
 
         // determine directory to place the downloaded file into; if md5 validation should be done, the file will be put in the .tmp dir first
         const dir = artifact.md5 || !artifact.destination ? this.tmpDir : this.toActualPath(artifact.destination);

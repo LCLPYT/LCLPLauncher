@@ -9,7 +9,8 @@ type Installation = {
     dependencies?: DependencyDescriptor[],
     artifacts?: Artifact[],
     finalize?: PostAction[],
-    startup: AppStartup
+    startup: AppStartup,
+    keepFiles?: string[]
 }
 
 export type Artifact = {

@@ -60,7 +60,8 @@ export const ACTIONS = {
         toggleDevTools: 'toggle-dev-tools',
         toggleFullScreen: 'toggle-full-screen',
         doesFileExist: 'does-file-exist',
-        changeLocationHash: 'change-location-hash'
+        changeLocationHash: 'change-location-hash',
+        console_log: 'log'
     },
     toasts: {
         addToast: 'add-toast',

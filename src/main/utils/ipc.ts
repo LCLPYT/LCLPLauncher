@@ -277,6 +277,10 @@ export const UTILITIES = registerHandler(new class extends IPCActionHandler {
     public changeLocationHash(hash: string) {
         this.sendAction(ACTIONS.utilities.changeLocationHash, hash);
     }
+
+    public log(...message: any[]) {
+        this.sendAction(ACTIONS.utilities.console_log, ...message);
+    }
 }('utilities'));
 
 export const TOASTS = registerHandler(new class extends IPCActionHandler {

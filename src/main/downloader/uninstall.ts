@@ -73,7 +73,26 @@ export async function uninstallApp(app: App) {
             console.error(err);
             return undefined;
         });
-        if (files !== undefined && files.length <= 0) await fs.promises.rmdir(installationDir);
+        
+        if (files !== undefined) {
+            if (files.length <= 0) {
+                await fs.promises.rmdir(installationDir);
+            } else {
+                if (!uninstallProps.skip) {
+                    await rmdirRecusive(installationDir);
+                } else {
+                    // skip files are configured, check them manually
+                    for (const child of files) {
+                        const childPath = Path.resolve(installationDir, child);
+                        if (uninstallProps.skip.includes(childPath)) continue;
+
+                        // only consider the first level directory in the installation directory, for performance and simplicity
+
+                        await rmdirRecusive(childPath);
+                    }
+                }
+            }
+        }
     }
 
     // delete app info file

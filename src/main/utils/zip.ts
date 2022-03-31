@@ -29,7 +29,7 @@ function unzipWithTotalSize(zipFile: string, destination: string, tracker?: Extr
                 reject(err);
                 return;
             }
-
+            
             let rejected = false;
             const onError = (err: any) => {
                 rejected = true;
@@ -37,23 +37,25 @@ function unzipWithTotalSize(zipFile: string, destination: string, tracker?: Extr
                 reject(err);
                 return err;
             };
-
+            
             let totallyTransferred = 0;
             zip.readEntry();
             zip.on('entry', (entry: yauzl.Entry) => {
                 const unzippedPath = getPath(entry.fileName);
-
+                
                 if (/\/$/.test(entry.fileName)) { // entry is a directory
                     // create the directory if it does not yet exists, then continue
                     mkdirp(unzippedPath).then(async () => {
                         // track the created directory
-                        if (tracker && await tracker.pushArchivePath(unzippedPath).catch(onError)) return;
-
+                        if (tracker) {
+                            await tracker.pushArchivePath(unzippedPath).catch(() => undefined);
+                        }
+                        
                         zip.readEntry();
                     }).catch(onError);
                     return;
                 }
-
+                
                 // entry is a file
                 // ensure parent directory exists
                 mkdirp(Path.dirname(unzippedPath)).then(async () => {
@@ -67,28 +69,27 @@ function unzipWithTotalSize(zipFile: string, destination: string, tracker?: Extr
                                 speed: progress.speed
                             });
                         }).catch(onError)) return;
-
-                        // track the extracted file
-                        if (tracker) {
-                            
-                            if (await tracker.pushArchivePath(unzippedPath).catch(onError)) return;
-                        }
-                        
-                        zip.readEntry(); // continue
                     } else {
                         if (await extractZipEntry(zip, entry, unzippedPath).catch(onError)) return;
-                        
-                        // track the extracted file
-                        if (tracker && await tracker.pushArchivePath(unzippedPath).catch(onError)) return;
-                        
-                        zip.readEntry(); // continue
                     }
+                    
+                    // track the extracted file
+                    if (tracker) {
+                        /* 
+                            Don't care, if the tracker could not be written.
+                            Sometimes the nodejs stream 'end' event is fired before the file is actually written to disk, this seems to be a bug.
+                            This could leed to small files not being deleted when they are removed through an update (negligible)
+                        */
+                        await tracker.pushArchivePath(unzippedPath).catch(() => undefined);
+                    }
+                    
+                    zip.readEntry(); // continue
                 }).catch(onError);
             });
             zip.on('err', onError)
             zip.once('end', () => {
                 zip.close();
-
+                
                 if (!rejected) resolve();
             });
         });
