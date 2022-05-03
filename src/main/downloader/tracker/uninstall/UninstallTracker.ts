@@ -38,9 +38,14 @@ export namespace UninstallTracker {
 
         public async writeContent() {
             await this.openFile();
-            await this.writeHeader(this.uninstallType);
-            await this.writeSpecific();
-            this.closeFile();
+            let err = await this.writeHeader(this.uninstallType).catch(err => err);
+            if (err) {
+                this.closeFile();
+                throw err;
+            }
+            err = await this.writeSpecific().catch(err => err);
+            this.closeFile(); // be sure to close the tracker
+            if (err) throw err;
         }
 
         protected abstract writeSpecific(): Promise<void>;

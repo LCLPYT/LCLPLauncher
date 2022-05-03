@@ -14,12 +14,17 @@ export namespace ExtractedArchiveTracker {
         public async beginExtractedArchive(archiveFile: string, extractedRoot: string) {
             this.ensureFileNotOpen();
             await this.openFile();
-            await this.writeHeader(ArtifactType.EXTRACTED_ARCHIVE);
-
-            const md5 = await checksumFile(archiveFile, 'md5').catch(() => undefined); // on error, return undefined
-            await this.writeBoolean(md5 !== undefined);
-            if (md5) await this.writeString(md5);
-            await this.writeString(extractedRoot);
+            try {
+                await this.writeHeader(ArtifactType.EXTRACTED_ARCHIVE);
+    
+                const md5 = await checksumFile(archiveFile, 'md5').catch(() => undefined); // on error, return undefined
+                await this.writeBoolean(md5 !== undefined);
+                if (md5) await this.writeString(md5);
+                await this.writeString(extractedRoot);
+            } catch (err) {
+                this.closeFile();
+                throw err;
+            }
         }
 
         public async pushArchivePath(path: string) {
@@ -54,15 +59,26 @@ export namespace ExtractedArchiveTracker {
         }
 
         public async readUntilEntries(headerRead?: boolean): Promise<void> {
-            if(!headerRead) {
+            if (!headerRead) {
                 this.ensureFileNotOpen();
                 await this.openFile();
-                const header = this.readHeader(); // header
-                if (!header) throw new Error('Header could not be read');
+                try {
+                    const header = this.readHeader(); // header
+                    if (!header) throw new Error('Header could not be read');
+                } catch (err) {
+                    this.closeFile();
+                    throw err;
+                }
             }
-            const md5Exists = this.readBoolean(); // md5 exists
-            if (md5Exists) this.readString(); // md5 string
-            this.readString(); // extraction root
+
+            try {
+                const md5Exists = this.readBoolean(); // md5 exists
+                if (md5Exists) this.readString(); // md5 string
+                this.readString(); // extraction root
+            } catch (err) {
+                this.closeFile();
+                throw err;
+            }
         }
 
         protected isSameExtractionRoot(artifact: Artifact, oldExtractionRoot: string): boolean {
@@ -102,9 +118,10 @@ export namespace ExtractedArchiveTracker {
                 const reader = this.cloneThisReader();
                 await reader.readUntilEntries();
                 // actually check the entries
-                const allExist = await checkItems(reader);
-                reader.closeFile();
-                return allExist;
+                const allExist = await checkItems(reader).catch(err => err);
+                reader.closeFile(); // be sure to close the reader
+                if (typeof allExist !== 'boolean') throw allExist;
+                else return allExist;
             }
         }
     }

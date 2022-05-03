@@ -162,8 +162,9 @@ export abstract class TrackerReader extends SimpleFile.AbstractReader<ArtifactTr
             const reader = reuseReader ? reuseReader : this.cloneThisReader();
             await reader.readUntilEntries(reuseReader ? true : false);
             // actually delete the entries
-            await deleteItems(reader);
-            reader.closeFile();
+            const err = await deleteItems(reader).catch(err => err);
+            reader.closeFile(); // be sure to close the file
+            if (err) throw err;
         }
 
         return !didSkips;

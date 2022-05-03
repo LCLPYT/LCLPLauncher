@@ -45,8 +45,9 @@ export namespace AppTracker {
     
         public async writeAppTracker() {
             await this.openFile();
-            await this.writeHeader();
-            this.closeFile();
+            const err = await this.writeHeader().catch(err => err);
+            this.closeFile(); // be sure to close the reader
+            if (err) throw err;
         }
     }
     

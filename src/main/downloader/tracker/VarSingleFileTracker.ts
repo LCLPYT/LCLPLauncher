@@ -15,15 +15,21 @@ export namespace VarSingleFileTracker {
 
         public async trackSinglePath(finalLocation: string, version: number) {
             await this.openFile();
-            await this.writeHeader(ArtifactType.VAR_SINGLE_FILE);
 
-            // write version
-            const buffer = Buffer.alloc(2); // 16 bit
-            buffer.writeInt16LE(version);
-            await this.writeBuffer(buffer);
+            try {
+                await this.writeHeader(ArtifactType.VAR_SINGLE_FILE);
 
-            // always write paths last, as they are read indefinitely on deletion
-            await this.writePath(finalLocation);
+                // write version
+                const buffer = Buffer.alloc(2); // 16 bit
+                buffer.writeInt16LE(version);
+                await this.writeBuffer(buffer);
+    
+                // always write paths last, as they are read indefinitely on deletion
+                await this.writePath(finalLocation);
+            } catch(err) {
+                this.closeFile(); // be sure to close the file
+                throw err;
+            }
 
             this.closeFile();
         }
@@ -77,12 +83,22 @@ export namespace VarSingleFileTracker {
             if (!headerRead) {
                 this.ensureFileNotOpen();
                 await this.openFile();
-                const header = this.readHeader();
-                if (!header) throw new Error('Header could not be read');
+                try {
+                    const header = this.readHeader();
+                    if (!header) throw new Error('Header could not be read');
+                } catch (err) {
+                    this.closeFile();
+                    throw err;
+                }
             }
 
-            const extra = this.readBuffer(2);
-            if (!extra) throw new Error('Could not read extra');
+            try {
+                const extra = this.readBuffer(2);
+                if (!extra) throw new Error('Could not read extra');
+            } catch (err) {
+                this.closeFile();
+                throw err;
+            }
         }
 
         protected hasArtifactPathChanged(artifact: Artifact, oldPath: string): boolean {

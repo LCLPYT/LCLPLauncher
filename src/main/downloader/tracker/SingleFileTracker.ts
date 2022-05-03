@@ -14,8 +14,13 @@ export namespace SingleFileTracker {
 
         public async trackSinglePath(finalLocation: string) {
             await this.openFile();
-            await this.writeHeader(ArtifactType.SINGLE_FILE);
-            await this.writePath(finalLocation);
+            try {
+                await this.writeHeader(ArtifactType.SINGLE_FILE);
+                await this.writePath(finalLocation);
+            } catch (err) {
+                this.closeFile();
+                throw err;
+            }
             this.closeFile();
         }
     }
@@ -48,11 +53,16 @@ export namespace SingleFileTracker {
         }
 
         public async readUntilEntries(headerRead?: boolean): Promise<void> {
-            if(!headerRead) {
+            if (!headerRead) {
                 this.ensureFileNotOpen();
                 await this.openFile();
-                const header = this.readHeader();
-                if (!header) throw new Error('Header could not be read');
+                try {
+                    const header = this.readHeader();
+                    if (!header) throw new Error('Header could not be read');
+                } catch (err) {
+                    this.closeFile();
+                    throw err;
+                }
             }
         }
 

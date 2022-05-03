@@ -49,7 +49,10 @@ class DummyTrackerReader extends TrackerReader {
         }
 
         const readerFactory = TRACKER_READERS.get(header.type);
-        if (!readerFactory) throw new TypeError(`No reader factory defined for artifact type '${header.type}'`);
+        if (!readerFactory) {
+            this.closeFile();
+            throw new TypeError(`No reader factory defined for artifact type '${header.type}'`);
+        }
 
         return <T> readerFactory(this.artifactId, this.appId, this.vars, this.stream); // reuse this stream, therefore do not close the file here.
     }

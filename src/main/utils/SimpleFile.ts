@@ -50,11 +50,13 @@ export namespace SimpleFile {
     
             const file = this.getFile();
             await mkdirp(Path.dirname(file));
+
             this.stream = fs.createWriteStream(file);
         }
     
         protected closeFile() {
             if (!this.stream) return; // already closed
+
             this.stream.close();
             this.stream = undefined;
         }
@@ -85,6 +87,7 @@ export namespace SimpleFile {
             if (!await exists(file)) throw new Error(`Version safe file does not exist: '${file}'`);
     
             this.stream = fs.createReadStream(file);
+
             await new Promise<void>(resolve => {
                 if (!this.stream) throw new Error('File is not opened (read)');
                 this.stream.on('readable', () => resolve());
@@ -93,6 +96,7 @@ export namespace SimpleFile {
     
         public closeFile(): void {
             if (!this.stream) return; // file is already closed
+
             this.stream.close();
             this.stream = undefined;
         }
