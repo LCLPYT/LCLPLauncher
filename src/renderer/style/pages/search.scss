@@ -112,9 +112,9 @@ a.search-item.list-group-item:first-child.is-offset {
     z-index: 1;
 }
 
-#acItems .list-group-item {
+#acItems .list-group-item, .list-item-wrapper .search-list-item {
     background-color: $gray-700;
-    border-color: $gray-600;
+    border: 1px solid $gray-600;
     transition: background-color .1s ease-in-out,
         border-color .1s ease-in-out;
 

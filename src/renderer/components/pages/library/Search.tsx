@@ -1,6 +1,7 @@
 import React, { Component } from 'react';
 import { Link } from 'react-router-dom';
 import tippy from 'tippy.js';
+import App from '../../../../common/types/App';
 import { getBackendHost } from '../../../../common/utils/settings';
 import '../../../style/pages/search.scss';
 
@@ -10,14 +11,20 @@ interface IProps {
 
 interface IState {
     autoCompleteItems: AppAutoComplete[];
+    listItems: App[];
+    showList: boolean
 }
 
 class Search extends Component<IProps, IState> {
     constructor(props: IProps) {
         super(props);
         this.state = {
-            autoCompleteItems: []
+            autoCompleteItems: [],
+            listItems: [],
+            showList: true
         };
+
+        this.fetchListItems(1);
     }
 
     private query: string = '';
@@ -25,8 +32,7 @@ class Search extends Component<IProps, IState> {
     render() {
         return (
             <div className="container-lg p-3">
-                <h2 className="text-lighter">Search Apps</h2>
-                <div id="autocomplete" className="d-flex align-items-center mt-3">
+                <div id="autocomplete" className="d-flex align-items-center">
                     <div className="ac-wrapper-prefix">
                         <button className="ac-submit h-100 d-flex align-items-center" id="searchBtn">
                             <svg className="ac-search-icon cursor-pointer" viewBox="0 0 24 24" width="20" height="20" fill="currentColor">
@@ -50,9 +56,19 @@ class Search extends Component<IProps, IState> {
                         this.state.autoCompleteItems.map((item, idx) => <AutoCompleteItem item={item} query={this.query} index={idx} key={item.key} />)
                     }
                 </ul>
+
+                {!this.state.showList ? undefined : (
+                    <>
+                        <h1 className="text-lighter mt-4 fs-4">Popular</h1>
+                        <div className="list-item-wrapper mt-1">
+                            {this.state.listItems.map(app => <ListItem app={app} key={app.id} />)}
+                        </div>
+                    </>
+                )}
             </div>
         );
     }
+
     componentDidMount() {
         const container = document.getElementById('autocomplete');
         const input = document.getElementById('searchInput') as HTMLInputElement;
@@ -63,6 +79,10 @@ class Search extends Component<IProps, IState> {
             const query = input.value.trim();
             if (clearBtn) clearBtn.hidden = query.length <= 0;
             this.onInputChanged(query);
+
+            this.setState({
+                showList: query.length <= 0
+            });
         });
         container?.addEventListener('focusin', () => {
             const acItems = document.getElementById('acItems');
@@ -112,6 +132,18 @@ class Search extends Component<IProps, IState> {
         }
 
         this.setState({ autoCompleteItems: items });
+    }
+
+    fetchListItems(page: number) {
+        fetch(`${getBackendHost()}/api/lclplauncher/apps/search?page=${page}`)
+            .then(response => response.json())
+            .then(result => {
+                if ('data' in result && Array.isArray(result.data)) {
+                    this.setState({
+                        listItems: result.data
+                    });
+                }
+            })
     }
 }
 
@@ -167,6 +199,41 @@ class AutoCompleteItem extends Component<{ item: AppAutoComplete, query: string,
             content: 'Go to store page',
             animation: 'scale'
         });
+    }
+}
+
+type ListItemProps = {
+    app: App
+}
+
+class ListItem extends Component<ListItemProps> {
+    protected imgRef: React.RefObject<HTMLImageElement>;
+
+    constructor(props: ListItemProps) {
+        super(props);
+        this.imgRef = React.createRef();
+    }
+
+    render() {
+        const isAppFree = this.props.app.cost !== undefined && this.props.app.cost <= 0.00;
+
+        return (
+            <Link to={`/library/store/app/${this.props.app.key}`} className="search-list-item search-item cursor-pointer p-2 d-flex align-items-center mt-1 rounded text-lighter no-underline">
+                <img src={`${getBackendHost()}/api/lclplauncher/apps/assets/banner-small/${this.props.app.key}`} alt="App preview" ref={this.imgRef} className="rounded" width="120" height="45" />
+                <div className="ms-3 flex-grow-1 fw-bold">{ this.props.app.title }</div>
+                <div className="fw-bold me-1 text-light">{isAppFree ? 'FREE' : this.props.app.cost!.toFixed(2)}</div>
+            </Link>
+        );
+    }
+
+    componentDidMount() {
+        this.imgRef.current
+        if (this.imgRef.current) {
+            tippy(this.imgRef.current, {
+                content: this.props.app.title,
+                animation: 'scale'
+            });
+        }
     }
 }
 
