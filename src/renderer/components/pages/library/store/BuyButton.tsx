@@ -60,7 +60,10 @@ class BuyButton extends Component<Props, State> {
 
             this.setState({ btnState: 'loading' });
 
-            LIBRARY.addAppToLibrary(this.props.app).then(success => this.setState({ btnState: success ? 'added' : undefined }));
+            LIBRARY.addAppToLibrary(this.props.app).then(success => {
+                // this.setState({ btnState: success ? 'added' : undefined })
+                if (success) this.props.onClick(); // execute action directly
+            });
         });
 
         LIBRARY.isAppInLibrary(this.props.app).then(inLibrary => this.setState({ btnState: inLibrary ? 'added' : undefined }));
