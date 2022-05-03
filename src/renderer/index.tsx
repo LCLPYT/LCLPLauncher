@@ -14,6 +14,11 @@ import './img/logo.png';
 import UpdateChecking from './components/UpdateChecking';
 import { updaterManager } from './utils/updater';
 import { setWindowMaximizable } from './utils/windowEvents';
+import log from 'electron-log';
+
+// configure logger
+log.transports.console.level = 'info';
+log.transports.file.level = 'debug';
 
 // init IPC
 Ipc.initIPC();
@@ -33,10 +38,10 @@ if ('serviceWorker' in navigator) {
     Ipc.UTILITIES.getAppPath().then(appPath => {
         window.addEventListener('load', () => {
             const workerPath = isDevelopment ? '/service-worker.js' : path.resolve(appPath, 'service-worker.js');
-            console.log('Registring service worker:', workerPath);
+            log.info('Registring service worker:', workerPath);
             navigator.serviceWorker.register(workerPath)
-                .then(registration => console.log('ServiceWorker registration successful with scope:', registration.scope),
-                    error => console.error('ServiceWorker registration failed:', error)
+                .then(registration => log.info('ServiceWorker registration successful with scope:', registration.scope),
+                    error => log.error('ServiceWorker registration failed:', error)
                 );
         });
     })
@@ -58,7 +63,7 @@ Ipc.UPDATER.isUpdateChecking().then(checkingResult => {
         ReactDOM.render(<App />, document.getElementById('app'));
     }
 }).catch(err => {
-    console.error('Could not fetch whether currently update-checking:', err);
+    log.error('Could not fetch whether currently update-checking:', err);
     ReactDOM.render(<UpdateChecking error={err} />, document.getElementById('app'));
 });
 

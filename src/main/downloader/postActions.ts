@@ -20,7 +20,9 @@ import { ExtractedArchiveTracker } from "./tracker/ExtractedArchiveTracker";
 import { SingleFileTracker } from "./tracker/SingleFileTracker";
 import { UninstallMCProfile } from "./tracker/uninstall/UninstallMCProfile";
 import { UninstallTracker } from "./tracker/uninstall/UninstallTracker";
+import { VarSingleFileTracker } from "./tracker/VarSingleFileTracker";
 import { registerUninstallExceptionPath } from "./uninstall";
+import log from 'electron-log';
 
 export type GeneralActionArgument = {
     app: App;
@@ -142,11 +144,11 @@ export namespace ActionFactory {
     export function createDefaultTrackerHandle() {
         return new PostActionHandle<ArtifactActionArgument>(async (arg) => {
             if (!arg.tracker) {
-                const tracker = new (SingleFileTracker.Writer.getConstructor())(arg.artifact.id, arg.app.id, arg.trackerVars);
-                arg.tracker = tracker;
-
-                const file = arg.result;
-                tracker.trackSinglePath(file);
+                if (arg.artifact.options?.variableBaseVersion !== undefined) {
+                    trackVarSingleFile(arg);
+                } else {
+                    trackSingleFile(arg);
+                }
 
                 return arg;
             }
@@ -154,17 +156,33 @@ export namespace ActionFactory {
         }, null);
     }
 
+    function trackSingleFile(arg: ArtifactActionArgument) {
+        const tracker = new (SingleFileTracker.Writer.getConstructor())(arg.artifact.id, arg.app.id, arg.trackerVars);
+        arg.tracker = tracker;
+
+        const file = arg.result;
+        tracker.trackSinglePath(file);
+    }
+
+    function trackVarSingleFile(arg: ArtifactActionArgument) {
+        const tracker = new (VarSingleFileTracker.Writer.getConstructor())(arg.artifact.id, arg.app.id, arg.trackerVars);
+        arg.tracker = tracker;
+
+        const file = arg.result;
+        tracker.trackSinglePath(file, arg.artifact.options!.variableBaseVersion!);
+    }
+
     class ValidateMD5Action extends PostActionHandle<ArtifactActionArgument> {
         constructor(child: PostActionHandle<GeneralActionArgument> | null) {
             super(async ({result: file, artifact: { md5 }}) => {
                 if(!md5) return;
-                console.log(`Checking integrity of '${file}'...`);
+                log.verbose(`Checking integrity of '${file}'...`);
                 const calculatedMd5 = await checksumFile(file, 'md5');
                 if(calculatedMd5 !== md5) {
                     await fs.promises.unlink(file);
-                    throw new Error(`Checksum mismatch '${file}'. File was deleted.`);
+                    throw new Error(`Checksum mismatch '${file}'. ${calculatedMd5} != ${md5}. File was deleted.`);
                 }
-                console.log(`Integrity valid: '${file}'`);
+                log.verbose(`Integrity valid: '${file}'`);
             }, child);
         }
     }
@@ -172,9 +190,9 @@ export namespace ActionFactory {
     class MoveAction extends PostActionHandle<GeneralActionArgument> {
         constructor(targetFile: string, child: PostActionHandle<GeneralActionArgument> | null) {
             super(async ({result: file}) => {
-                console.log(`Moving '${file}' to '${targetFile}'`);
+                log.verbose(`Moving '${file}' to '${targetFile}'`);
                 await rename(file, targetFile);
-                console.log(`Moved '${file}' to '${targetFile}' successfully.`);
+                log.verbose(`Moved '${file}' to '${targetFile}' successfully.`);
                 return targetFile;
             }, child);
         }
@@ -184,7 +202,7 @@ export namespace ActionFactory {
         constructor(targetDirectory: string, child: PostActionHandle<GeneralActionArgument> | null) {
             super(async (arg) => {
                 const zipFile = arg.result;
-                console.log(`Unzipping '${zipFile}'...`);
+                log.verbose(`Unzipping '${zipFile}'...`);
 
                 const tracker = new (ExtractedArchiveTracker.Writer.getConstructor())(arg.artifact.id, arg.app.id, arg.trackerVars);
                 arg.tracker = tracker;
@@ -192,16 +210,16 @@ export namespace ActionFactory {
                 // await unzip(zipFile, targetDirectory, progress => console.log(`${((progress.transferredBytes / progress.totalBytes) * 100).toFixed(2)}% - ${progress.transferredBytes} / ${progress.totalBytes}`));
                 const err = await unzip(zipFile, targetDirectory, tracker).catch(err => err);
                 if (err) {
-                    console.error(`Could not unzip '${zipFile}':`, err);
+                    log.error(`Could not unzip '${zipFile}':`, err);
                     await fs.promises.unlink(zipFile);
                     await tracker.deleteFile();
                     throw err;
                 }
 
                 tracker.finishExtractedArchive();
-                console.log(`Unzipped '${zipFile}'. Deleting it...`);
+                log.verbose(`Unzipped '${zipFile}'. Deleting it...`);
                 await fs.promises.unlink(zipFile);
-                console.log(`Deleted '${zipFile}'.`);
+                log.verbose(`Deleted '${zipFile}'.`);
 
                 return arg;
             }, child)
@@ -217,23 +235,23 @@ export namespace ActionFactory {
 
                 if (action.makeExecutable && isPlatform('linux') && await exists(program)) {
                     // program is a file, make it executable
-                    console.log(`Making '${program}' executable...`);
+                    log.verbose(`Making '${program}' executable...`);
                     const childProcess = execa('chmod', ['+x', program]);
                     childProcess.stdout?.pipe(process.stdout);
                     childProcess.stderr?.pipe(process.stderr);
     
                     await childProcess;
-                    console.log(`Made '${program}' executable.`);
+                    log.verbose(`Made '${program}' executable.`);
                 }
 
-                console.log(`Executing program: "${program} ${args.join(' ')}"`);
+                log.debug(`Executing program: "${program} ${args.join(' ')}"`);
 
                 const childProcess = execa(program, args);
                 childProcess.stdout?.pipe(process.stdout);
                 childProcess.stderr?.pipe(process.stderr);
 
                 await childProcess;
-                console.log(`Program exitted with code ${childProcess.exitCode}.`);
+                log.debug(`Program exitted with code ${childProcess.exitCode}.`);
             }, child);
         }
     }
@@ -246,7 +264,7 @@ export namespace ActionFactory {
                 const file = resolveSegmentedPath(rootDir, substPath);
                 if (!await exists(file)) throw new Error(`Can't track non-existent file '${file}'`);
 
-                console.log(`Tracking existing file '${file}'...`);
+                log.verbose(`Tracking existing file '${file}'...`);
 
                 const tracker = new (ExistingFileTracker.Writer.getConstructor())(arg.artifact.id, arg.app.id, arg.trackerVars)
                 await tracker.trackSinglePath(file);
@@ -255,7 +273,7 @@ export namespace ActionFactory {
                 if (!!skipUninstall) 
                     registerUninstallExceptionPath(arg.app, file);
 
-                console.log(`Successfully tracked '${file}'.`)
+                log.verbose(`Successfully tracked '${file}'.`)
 
                 return arg;
             }, child);
@@ -265,7 +283,7 @@ export namespace ActionFactory {
     class AddMCProfileAction extends PostActionHandle<GeneralActionArgument> {
         constructor(options: AddMCProfilePostAction, child: PostActionHandle<GeneralActionArgument> | null) {
             super(async (arg) => {
-                console.log(`Adding launcher profile '${options.name}'...`);
+                log.info(`Adding launcher profile '${options.name}'...`);
 
                 if (!arg.inputMap) throw new Error('Input map is undefined');
                 const minecraftDir = arg.inputMap['minecraftDir']; // universal minecraftDir identifier. Apps using it should always name it this way
@@ -285,7 +303,7 @@ export namespace ActionFactory {
                 const beforeNow = new Date(now.getTime() - diff);
 
                 if (options.ensureLatest) {
-                    console.log('Ensuring that the newly created profile will be the most recent...');
+                    log.verbose('Ensuring that the newly created profile will be the most recent...');
                     Object.entries(launcherProfiles.profiles).forEach(([_id, profile]) => {
                         if (!profile.lastUsed || !profile.lastUsed.getTime || profile.lastUsed.getTime() > beforeNow.getTime()) profile.lastUsed = beforeNow;
                     });
@@ -320,7 +338,7 @@ export namespace ActionFactory {
                 // write an uninstall tracker
                 await UninstallTracker.writeUninstallTracker(new (UninstallMCProfile.Writer.getConstructor())(options.id, arg.app.id, {}));
 
-                console.log(`Launcher profile '${options.name}' added.`);
+                log.info(`Launcher profile '${options.name}' added.`);
             }, child);
         }
     }
@@ -328,7 +346,7 @@ export namespace ActionFactory {
     class PrepareMCProfileAction extends PostActionHandle<GeneralActionArgument> {
         constructor(options: PrepareMCProfilePostAction, child: PostActionHandle<GeneralActionArgument> | null) {
             super(async (arg) => {
-                console.log(`Preparing launcher profile '${options.id}'...`);
+                log.info(`Preparing launcher profile '${options.id}'...`);
 
                 if (!arg.inputMap) throw new Error('Input map is undefined');
                 const minecraftDir = arg.inputMap['minecraftDir']; // universal minecraftDir identifier. Apps using it should always name it this way
@@ -356,7 +374,7 @@ export namespace ActionFactory {
                 await backupFile(profilesFile);
                 await fs.promises.writeFile(profilesFile, JSON.stringify(launcherProfiles, undefined, 2));
     
-                console.log(`Launcher profile '${options.id}' was successfully prepared.`);
+                log.info(`Launcher profile '${options.id}' was successfully prepared.`);
             }, child);
         }
     }

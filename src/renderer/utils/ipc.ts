@@ -10,6 +10,7 @@ import { updateInstallationProgress, updateInstallationState, updatePackageDownl
 import { addToast, removeToast } from "./toasts";
 import { postUpdateError, postUpdateProgress, postUpdateState } from "./updater";
 import { setWindowMaximizable } from "./windowEvents";
+import log from 'electron-log';
 
 abstract class IPCActionHandler extends GenericIPCActionHandler<IpcRendererEvent, IpcRendererEvent> {
     protected getIpcEvent(event: IpcRendererEvent): IpcRendererEvent {
@@ -463,7 +464,7 @@ export const UTILITIES = registerHandler(new class extends IPCActionHandler {
                 break;
             case ACTIONS.utilities.console_log:
                 if (args.length < 1) throw new Error('Message segments do not exist.');
-                console.log(...args);
+                log.info(...args);
                 break;
             default:
                 throw new Error(`Action '${action}' not implemented.`);

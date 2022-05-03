@@ -18,7 +18,7 @@ import { DependencyFragment } from "../types/Dependency";
 import Installation, { Artifact, SegmentedPath } from "../types/Installation";
 import { fetchApp } from "../utils/backend";
 import { getAppVersion } from "../utils/env";
-import { exists, getAppStartupFile, getDependencyDir, getInstallerAppDir, mkdirp, resolveSegmentedPath, rmdirRecusive } from "../utils/fshelper";
+import { exists, getAppArtifactsDir, getAppStartupFile, getDependencyDir, mkdirp, resolveSegmentedPath, rmdirRecusive } from "../utils/fshelper";
 import { DOWNLOADER, TOASTS } from "../utils/ipc";
 import { isAppRunning } from "../utils/runningApps";
 import { replaceArraySubstitutes, Substitution, SubstitutionFunctions, SubstitutionVariables } from "../utils/substitute";
@@ -31,6 +31,7 @@ import { ArtifactTrackerVariables } from "./tracker/ArtifactTracker";
 import { createReader } from "./tracker/ArtifactTrackers";
 import { registerUninstallExceptionPath, uninstallApp } from "./uninstall";
 import { resolveUrl } from "./urlResolver";
+import log from 'electron-log';
 
 const queue: [App, string, InputMap, (err: any) => void][] = [];
 let currentInstaller: Installer | null = null;
@@ -190,7 +191,7 @@ export async function startInstallationProcess(app: App, installationDir: string
         return;
     }
 
-    console.log(`Starting installation process of '${app.title}'...`);
+    log.info(`Starting installation process of '${app.title}'...`);
 
     const installation = await fetchInstallation(app);
 
@@ -200,14 +201,14 @@ export async function startInstallationProcess(app: App, installationDir: string
         const result = await Dependencies.downloadDependencies(installation.dependencies, map);
         if (result) dependencyInfos = result[1];
 
-        console.log('Checking dependencies...');
+        log.info('Checking dependencies...');
         currentPreinstalling = true;
         dependencyStructure = result ? result[0] : undefined;
         currentPreinstalling = false;
-        console.log('Dependencies are now up-to-date.');
+        log.info('Dependencies are now up-to-date.');
     }
 
-    console.log('Installing to:', installationDir);
+    log.info('Installing to:', installationDir);
     const toastId = TOASTS.getNextToastId();
     TOASTS.addToast({
         id: toastId,
@@ -273,7 +274,7 @@ export async function startInstallationProcess(app: App, installationDir: string
     }
 
     resetInstallation();
-    console.log(`Installation of '${app.title}' finished successfully.`);
+    log.info(`Installation of '${app.title}' finished successfully.`);
 
     // provide finish notification
     TOASTS.addToast({
@@ -351,7 +352,7 @@ export class Installer {
             header = reader.readHeader();
             this.installedVersion = header;
         } catch (err) {
-            console.error('Could not read app tracker header.');
+            log.error('Could not read app tracker header.', err);
         }
 
         reader.closeFile();
@@ -362,11 +363,17 @@ export class Installer {
     }
 
     public async prepare() {
-        console.log('Scanning for old unused artifacts...');
+        log.info('Scanning for old unused artifacts...');
         await this.removeOldArtifacts();
 
-        console.log('Checking for updates...');
+        log.info('Checking for updates...');
         await this.filterDownloadQueue();
+
+        if (this.downloadQueue.length <= 0) {
+            log.info(`App '${this.app.key}' is up-to-date.`);
+        } else {
+            log.info(`App '${this.app.key}' needs an update.`)
+        }
 
         this.downloadReady = true;
     }
@@ -382,17 +389,17 @@ export class Installer {
 
             const needsUpdate = !this.isUpToDate();
             if (needsUpdate) {
-                console.log('Updates found. Downloading...');
+                log.info('Updates found. Downloading...');
     
                 this.downloadQueue.forEach(artifact => this.totalBytes += Math.max(0, artifact.size));
                 await this.downloadNextArtifact().catch(err => reject(err));
-                console.log('Updates downloaded.')
-            } else console.log('Everything is already up-to-date.');
+                log.info('Updates downloaded.')
+            } else log.info('Everything is already up-to-date.');
     
-            console.log('Finalizing...');
+            log.info('Finalizing...');
             this.enqueueFinalization();
             await this.completePostActions();
-            console.log('Finalization complete.');
+            log.info('Finalization complete.');
     
             if (needsUpdate) await this.writeTracker();
     
@@ -419,7 +426,7 @@ export class Installer {
     }
 
     protected async removeOldArtifacts() {
-        const artifactDir = Path.resolve(getInstallerAppDir(this.app), 'artifacts');
+        const artifactDir = Path.resolve(getAppArtifactsDir(this.app));
         if (!await exists(artifactDir)) return; // no artifacts downloaded
 
         const trackerVars = this.getArtifactTrackerVars();
@@ -435,9 +442,9 @@ export class Installer {
             const reader = await createReader(this.app.id, artifactId, trackerVars).catch(() => undefined); // in case of an error, return undefined
             if (!reader) return; // if there was an error, do nothing
 
-            console.log(`Deleting old unused artifact '${artifactId}'...`);
+            log.verbose(`Deleting old unused artifact '${artifactId}'...`);
             await reader.deleteEntries(reader, true);
-            console.log(`Old Unused artifact '${artifactId}' deleted successfully.`);
+            log.verbose(`Old Unused artifact '${artifactId}' deleted successfully.`);
         }));
     }
 
@@ -465,13 +472,13 @@ export class Installer {
 
         await Promise.all(artifacts.map(async (artifact) => {
             if (await this.doesArtifactNeedUpdate(artifact, trackerVars).catch((err: Error) => {
-                if (err.name === 'VersionError') console.error(err.message);
-                else console.error(err);
+                if (err.name === 'VersionError') log.error(err.message);
+                else log.error(err);
                 return true;
             })) {
-                console.log(`Artifact '${artifact.id}' needs an update.`);
+                log.verbose(`Artifact '${artifact.id}' needs an update.`);
             } else {
-                console.log(`Artifact '${artifact.id}' is up-to-date. Skipping it...`);
+                log.verbose(`Artifact '${artifact.id}' is up-to-date. Skipping it...`);
 
                 const index = this.downloadQueue.indexOf(artifact);
                 if (index >= 0) this.downloadQueue.splice(index, 1);
@@ -487,11 +494,11 @@ export class Installer {
         // delete old artifact data, if it exists
         const reader = await createReader(this.app.id, artifact.id, this.getArtifactTrackerVars()).catch(() => undefined);
         if (reader) {
-            console.log(`Deleting old artifact data of '${artifact.id}'...`);
+            log.verbose(`Deleting old artifact data of '${artifact.id}'...`);
             await reader.deleteFile();
         }
 
-        console.log(`Resolving artifact '${artifact.id}'...`);
+        log.verbose(`Resolving artifact '${artifact.id}'...`);
 
         // determine directory to place the downloaded file into; if md5 validation should be done, the file will be put in the .tmp dir first
         const dir = artifact.md5 || !artifact.destination ? this.tmpDir : this.toActualPath(artifact.destination);
@@ -525,7 +532,7 @@ export class Installer {
             }
         });
 
-        console.log(`Downloading '${url}'...`);
+        log.verbose(`Downloading '${url}'...`);
         this.currentDownloader = downloader;
         try {
             const trusted = isDomainTrusted(url);
@@ -536,7 +543,7 @@ export class Installer {
             throw new Error(`Error downloading '${url}': ${err}`);
         }
         this.currentDownloader = undefined;
-        console.log(`Downloaded '${url}'.`);
+        log.verbose(`Downloaded '${url}'.`);
 
         const downloadedPath = downloadedName ? Path.resolve(dir, downloadedName) : null;
 
@@ -651,9 +658,9 @@ export class Installer {
     }
 
     protected async cleanUp() {
-        console.log('Cleaning up...')
+        log.info('Cleaning up...')
         await rmdirRecusive(this.tmpDir);
-        console.log('Cleaned up.');
+        log.info('Cleaned up.');
     }
 
     protected async doesArtifactNeedUpdate(artifact: Artifact, trackerVars: ArtifactTrackerVariables): Promise<boolean> {
@@ -662,7 +669,7 @@ export class Installer {
 
         let needsUpdate = true;
         if (!artifact.md5) {
-            console.info('Artifact does not provide a MD5 checksum; cannot check if the artifact is already up-to-date. Artifact will be updated.');
+            log.warn('Artifact does not provide a MD5 checksum; cannot check if the artifact is already up-to-date. Artifact will be updated.');
         } else {
             needsUpdate = !await reader.isArtifactUpToDate(artifact);
         }
@@ -679,13 +686,13 @@ export class Installer {
     }
 
     protected async writeStartup() {
-        console.log('Writing startup file...');
+        log.info('Writing startup file...');
         const startupFile = getAppStartupFile(this.app);
         await mkdirp(Path.dirname(startupFile));
 
         const data = JSON.stringify(this.installation.startup);
         await fs.promises.writeFile(startupFile, data, 'utf8');
-        console.log('Startup file written.');
+        log.info('Startup file written.');
     }
 
     public getSubstitution(mixinVariables?: SubstitutionVariables, mixinFunctions?: SubstitutionFunctions): Substitution {

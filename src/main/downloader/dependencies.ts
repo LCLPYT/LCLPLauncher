@@ -13,6 +13,7 @@ import AppDependency from "../../common/types/AppDependency";
 import { DOWNLOADER, TOASTS } from "../utils/ipc";
 import { ToastType } from "../../common/types/Toast";
 import { InputMap } from "../../common/types/InstallationInputResult";
+import log from 'electron-log';
 
 export namespace Dependencies {
     export async function getUninstalledDependencies(dependencies: DependencyDescriptor[]): Promise<AppDependency[]> {
@@ -226,7 +227,7 @@ export namespace Dependencies {
             this.queuePosition++;
             const info = getInfoForOperatingSystem(dependency);
     
-            console.log(`Resolving dependency '${dependency.id}...'`);
+            log.verbose(`Resolving dependency '${dependency.id}...'`);
     
             if (!info.url) throw new Error('No dependency URL given');
             if (!info.size) throw new Error('No dependency download size given');
@@ -261,9 +262,9 @@ export namespace Dependencies {
                 }
             });
     
-            console.log(`Downloading '${url}'...`);
+            log.verbose(`Downloading '${url}'...`);
             await downloader.download();
-            console.log(`Downloaded '${url}'.`);
+            log.verbose(`Downloaded '${url}'.`);
     
             if(!downloadedName) throw new Error('Downloaded name is null.');
     
@@ -346,12 +347,12 @@ export namespace Dependencies {
         constructor(targetDirectory: string, child: PostActionHandle<GeneralActionArgument> | null) {
             super(async (arg) => {
                 const zipFile = arg.result;
-                console.log(`Unzipping '${zipFile}'...`);
+                log.verbose(`Unzipping '${zipFile}'...`);
                 // await unzip(zipFile, targetDirectory, progress => console.log(`${((progress.transferredBytes / progress.totalBytes) * 100).toFixed(2)}% - ${progress.transferredBytes} / ${progress.totalBytes}`));
                 await unzip(zipFile, targetDirectory);
-                console.log(`Unzipped '${zipFile}'. Deleting it...`);
+                log.verbose(`Unzipped '${zipFile}'. Deleting it...`);
                 await fs.promises.unlink(zipFile);
-                console.log(`Deleted '${zipFile}'.`);
+                log.verbose(`Deleted '${zipFile}'.`);
             }, child);
         }
     }
@@ -360,7 +361,7 @@ export namespace Dependencies {
         constructor(targetDirectory: string, totalUncompressedSize: number | undefined, child: PostActionHandle<GeneralActionArgument> | null) {
             super(async (arg) => {
                 const tarFile = arg.result;
-                console.log(`Extracting tarball '${tarFile}'...`);
+                log.verbose(`Extracting tarball '${tarFile}'...`);
     
                 const progress = undefined;/*totalUncompressedSize !== undefined ? {
                     totalUncompressedSize: totalUncompressedSize,
@@ -369,9 +370,9 @@ export namespace Dependencies {
     
                 await extractTar(tarFile, targetDirectory, progress);
     
-                console.log(`Extracted tarball '${tarFile}'. Deleting it...`);
+                log.verbose(`Extracted tarball '${tarFile}'. Deleting it...`);
                 await fs.promises.unlink(tarFile);
-                console.log(`Deleted '${tarFile}'.`);
+                log.verbose(`Deleted '${tarFile}'.`);
             }, child);
         }
     }

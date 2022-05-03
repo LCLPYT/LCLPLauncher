@@ -4,6 +4,7 @@ import { SingleFileTracker } from "./SingleFileTracker";
 import { ExtractedArchiveTracker } from "./ExtractedArchiveTracker";
 import { ExistingFileTracker } from "./ExistingFileTracker";
 import { withBufferReadMethods } from "../../utils/buffer";
+import { VarSingleFileTracker } from "./VarSingleFileTracker";
 
 type TrackerFactory = (artifactId: string, appId: number, vars: ArtifactTrackerVariables, reuseStream?: fs.ReadStream) => TrackerReader;
 
@@ -19,6 +20,10 @@ const TRACKER_READERS = new Map<ArtifactType, TrackerFactory>([
     [
         ArtifactType.EXISTING_FILE,
         (artifactId, appId, vars, reuseStream) => new (ExistingFileTracker.Reader.getConstructor())(artifactId, appId, vars, reuseStream)
+    ],
+    [
+        ArtifactType.VAR_SINGLE_FILE,
+        (artifactId, appId, vars, reuseStream) => new (VarSingleFileTracker.Reader.getConstructor())(artifactId, appId, vars, reuseStream)
     ]
 ]);
 

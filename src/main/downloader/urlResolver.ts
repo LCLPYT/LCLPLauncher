@@ -1,11 +1,13 @@
 import fetch from "electron-fetch";
 import parseHtml from "node-html-parser";
 import { CurseForgeUrlResolverArgs, OptifineUrlResolverArgs, UrlResolverArgs } from "../types/Installation";
+import log from 'electron-log';
+
 export async function resolveUrl(urlArgument: string | UrlResolverArgs): Promise<string> {
     if (typeof urlArgument === 'string') return urlArgument;
 
     const type = urlArgument.type;
-    console.log(`Resolving url of type '${type}'...`);
+    log.debug(`Resolving url of type '${type}'...`);
 
     const resolverFactory = RESOLVERS.get(type);
     if (!resolverFactory) throw new Error(`Unknown url resolver with type '${type}'`);
@@ -13,7 +15,7 @@ export async function resolveUrl(urlArgument: string | UrlResolverArgs): Promise
     const resolver = resolverFactory(urlArgument);
     const url = await resolver.getUrl();
 
-    console.log(`Resolved to '${url}'.`);
+    log.debug(`Resolved to '${url}'.`);
 
     return url;
 }
@@ -43,7 +45,7 @@ class OptifineUrlResolver implements UrlResolver {
     }
 
     async getUrl() {
-        console.log(`Looking for '${this.args.id}'...`);
+        log.debug(`Looking for '${this.args.id}'...`);
         const result = await fetch(`https://optiFine.net/adloadx?f=${this.args.id}`).then(response => response.text());
         const document = parseHtml(result);
         const downloadBtn = document.querySelector('a[onclick="onDownload()"]');
@@ -62,11 +64,11 @@ class CurseForgeUrlResolver implements UrlResolver {
     }
 
     async getUrl(): Promise<string> {
-        console.log(`Looking for curse forge artifact of projectId=${this.args.projectId} with fileId=${this.args.fileId}...`);
+        log.debug(`Looking for curse forge artifact of projectId=${this.args.projectId} with fileId=${this.args.fileId}...`);
         const downloaderServiceUrl = `https://addons-ecs.forgesvc.net/api/v2/addon/${this.args.projectId}/file/${this.args.fileId}/download-url`;
         const downloadUrl = await fetch(downloaderServiceUrl).then(response => response.text());
 
-        console.log(`Fetched download url "${downloadUrl}"`);
+        log.debug(`Fetched download url "${downloadUrl}"`);
 
         const url = new URL(downloadUrl);
 

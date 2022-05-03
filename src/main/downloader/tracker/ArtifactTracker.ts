@@ -4,6 +4,7 @@ import * as fs from 'fs';
 import { ERR_EOS } from "../../utils/constants";
 import { withBufferWriteMethods } from "../../utils/buffer";
 import { SimpleFile } from "../../utils/SimpleFile";
+import log from 'electron-log';
 
 // if a tracker file has a version older than this string, it will be deleted and an update of the artifact will be required
 const TRACKER_VERSION = 5;
@@ -16,7 +17,8 @@ export type ArtifactTrackerVariables = {
 export enum ArtifactType {
     SINGLE_FILE,
     EXTRACTED_ARCHIVE,
-    EXISTING_FILE
+    EXISTING_FILE,
+    VAR_SINGLE_FILE
 }
 
 export type TrackerHeader = {
@@ -122,7 +124,7 @@ export abstract class TrackerReader extends SimpleFile.AbstractReader<ArtifactTr
                 while (true) {
                     const path = trackerReader.readPath();
                     if (skipPaths && skipPaths.includes(path)) {
-                        console.log(`Skipping '${path}', because it was registered as persistent.`);
+                        log.verbose(`Skipping '${path}', because it was registered as persistent.`);
                         didSkips = true;
                         continue;
                     }
@@ -130,7 +132,7 @@ export abstract class TrackerReader extends SimpleFile.AbstractReader<ArtifactTr
                     if (!await exists(path)) {
                         // check if file was deleted previously by a recursive directory deletion, or not
                         if (!deletedDirectories.find(dir => path.startsWith(dir))) {
-                            console.warn(`Could not find tracked file '${path}', ignoring it.`);
+                            log.warn(`Could not find tracked file '${path}', ignoring it.`);
                         }
                         continue;
                     }

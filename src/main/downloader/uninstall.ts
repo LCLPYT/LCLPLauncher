@@ -9,6 +9,7 @@ import { DOWNLOADER } from "../utils/ipc";
 import { UninstallTrackers } from "./tracker/uninstall/UninstallTrackers";
 import { UninstallTracker } from "./tracker/uninstall/UninstallTracker";
 import { readInputMap } from "./inputs";
+import log from 'electron-log';
 
 export async function uninstallApp(app: App) {
     const installedApp = await InstalledApplication.query().where('app_id', app.id).first();
@@ -30,12 +31,12 @@ export async function uninstallApp(app: App) {
             const reader = await createReader(app.id, file, artifactTrackerVars).catch(() => undefined); // file is equal to artifact id; in case of an error, return undefined
             if (!reader) return; // if there was an error, do nothing
     
-            console.log(`Deleting artifact '${file}'...`);
+            log.verbose(`Deleting artifact '${file}'...`);
             const uninstalledCompletely = await reader.deleteEntries(reader, true, uninstallProps.skip).catch(err => {
-                console.error(`Could not delete artifact '${file}':`, err);
+                log.error(`Could not delete artifact '${file}':`, err);
                 return true;  // loose tracker, to fix artifact on next installation
             });
-            console.log(`Artifact '${file}' deleted successfully.`);
+            log.verbose(`Artifact '${file}' deleted successfully.`);
 
             // if all files of the tracker have been removed, there is no need to keep the tracker any longer
             if (uninstalledCompletely || uninstalledCompletely === undefined) {
@@ -63,14 +64,14 @@ export async function uninstallApp(app: App) {
             reader.closeFile();
         }
 
-        await rmdirRecusive(uninstallTrackerDir).catch(err => console.error(err));
+        await rmdirRecusive(uninstallTrackerDir).catch(err => log.error(err));
     }
 
     // remove installation directory (only if empty, so user-generated files can persist)
     if (await exists(installationDir)) {
         // check for remaining files
         const files = await fs.promises.readdir(installationDir).catch(err => {
-            console.error(err);
+            log.error(err);
             return undefined;
         });
         
@@ -98,13 +99,13 @@ export async function uninstallApp(app: App) {
     // delete app info file
     const appInfoFile = getAppTrackerFile(app.id);
     if (await exists(appInfoFile)) 
-        await fs.promises.unlink(appInfoFile).catch(err => console.error('Could not remove app info file:', err));
+        await fs.promises.unlink(appInfoFile).catch(err => log.error('Could not remove app info file:', err));
 
     await InstalledApplication.query().where('app_id', app.id).delete(); // remove from database
 
     const uninstallPropsFile = getAppUninstallPropsFile(app);
     if (await exists(uninstallPropsFile))
-        await fs.promises.unlink(uninstallPropsFile).catch(err => console.error('Could not remove uninstall properties file', err))
+        await fs.promises.unlink(uninstallPropsFile).catch(err => log.error('Could not remove uninstall properties file', err))
 
     // TODO clean packages
 

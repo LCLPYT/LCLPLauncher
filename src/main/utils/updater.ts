@@ -10,6 +10,7 @@ import { isDevelopment } from "../../common/utils/env";
 import { isPlatform } from "./oshooks";
 import * as YAML from 'yaml';
 import AppLatestInfo from "../types/AppLatestInfo";
+import log from 'electron-log';
 
 let updateChecking = false;
 let updateCheckResult: UpdateCheckResult | undefined;
@@ -42,7 +43,7 @@ export function freeWindow(window: BrowserWindow) {
 export function checkForUpdates(windowSupplier: WindowSupplier) {
     if (!isDevelopment) {
         if (isPlatform('linux') && !isRunningAsAppImage()) {
-            console.log('Checking for updates manually...');
+            log.info('Checking for updates manually...');
 
             updateChecking = true;
 
@@ -60,7 +61,7 @@ export function checkForUpdates(windowSupplier: WindowSupplier) {
                     (semver.gte(currentAppVersion, info.version) ? onNoUpdateAvailable : onUpdateAvailable)(windowSupplier);
                 })
                 .catch(err => {
-                    console.error('Error while updating:', err);
+                    log.error('Error while updating:', err);
                     updateError = err;
                     const mainWindow = windowSupplier();
                     if (mainWindow) {
@@ -77,7 +78,7 @@ export function checkForUpdates(windowSupplier: WindowSupplier) {
         autoUpdater.on('update-available', () => onUpdateAvailable(windowSupplier));
         autoUpdater.on('update-not-available', () => onNoUpdateAvailable(windowSupplier));
         autoUpdater.on('error', err => {
-            console.error('Error while updating:', err);
+            log.error('Error while updating:', err);
             updateError = err;
             const mainWindow = windowSupplier();
             if (mainWindow) {
@@ -87,7 +88,7 @@ export function checkForUpdates(windowSupplier: WindowSupplier) {
             }
             UPDATER.sendUpdateError(err);
         });
-        autoUpdater.on('checking-for-update', () => console.log('Checking for updates...'));
+        autoUpdater.on('checking-for-update', () => log.info('Checking for updates...'));
         autoUpdater.on('download-progress', (progress: ProgressInfo) => UPDATER.sendUpdateProgress(progress));
         autoUpdater.on('update-downloaded', () => autoUpdater.quitAndInstall());
         updateChecking = true;
@@ -113,7 +114,7 @@ export function checkForUpdates(windowSupplier: WindowSupplier) {
 }
 
 function onNoUpdateAvailable(windowSupplier: WindowSupplier) {
-    console.log('No update available; already up-to-date.');
+    log.info('No update available; already up-to-date.');
     updateCheckResult = {
         updateAvailable: false
     };
@@ -122,7 +123,7 @@ function onNoUpdateAvailable(windowSupplier: WindowSupplier) {
 }
 
 function onUpdateAvailable(windowSupplier: WindowSupplier) {
-    console.log('Update available. Checking for minimum launcher version...');
+    log.info('Update available. Checking for minimum launcher version...');
 
     fetchMandatoryUpdateRequired().then(mandatory => {
         updateCheckResult = {
@@ -132,7 +133,7 @@ function onUpdateAvailable(windowSupplier: WindowSupplier) {
         updateChecking = false;
         if (isWindowReady()) sendUpdateAvailability(windowSupplier);
     }).catch(err => {
-        console.error('Could not fetch launcher info:', err);
+        log.error('Could not fetch launcher info:', err);
         updateCheckResult = { updateAvailable: true };
         updateChecking = false;
         if (isWindowReady()) sendUpdateAvailability(windowSupplier);

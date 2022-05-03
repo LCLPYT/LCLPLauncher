@@ -9,18 +9,19 @@ import { ActionFactory, GeneralActionArgument, PostActionHandle, PostActionWrapp
 import { readInputMap } from "../downloader/inputs";
 import { InputMap } from "../../common/types/InstallationInputResult";
 import { Substitution, SubstitutionFunctions, SubstitutionVariables } from "./substitute";
+import log from 'electron-log';
 
 const LAUNCHER_COMPAT = 0;
 
 export function stopApp(app: App) {
-    console.log(`Stopping '${app.title}'...`);
+    log.info(`Stopping '${app.title}'...`);
 
     const process = getRunningProcess(app);
     if (!process) throw new Error('App is not running or process handle got lost.');
 
     const stopped = process.kill('SIGINT');
-    if (stopped) console.log(`Stopped '${app.title}'.`);
-    else console.log(`Could not stop '${app.title}'.`);
+    if (stopped) log.info(`Stopped '${app.title}'.`);
+    else log.warn(`Could not stop '${app.title}'.`);
 
     return stopped;
 }
@@ -34,7 +35,7 @@ async function readAppStartup(app: App): Promise<AppStartup> {
 }
 
 export async function startApp(app: App) {
-    console.log(`Starting '${app.title}'...`);
+    log.info(`Starting '${app.title}'...`);
     const appStartup = await readAppStartup(app);
     if (LAUNCHER_COMPAT < appStartup.launcherCompat) throw new Error(`Your launcher is to outdated to start '${app.title}'. Please update.`);
 
@@ -43,7 +44,7 @@ export async function startApp(app: App) {
     if (!handler) throw new Error(`The installed version of '${app.title}' is too old and no longer supported by LCLPLauncher. Please update the app or consult our developers.`);
 
     await handler.startApp(app, appStartup);
-    console.log(`Started '${app.title}'.`);
+    log.info(`Started '${app.title}'.`);
 }
 
 interface CompatHandler {
@@ -157,7 +158,7 @@ class PreActionExecutor {
 }*/
 
 function runProgram(app: App, executable: string, args?: string[]) {
-    console.log(`Executing '${executable}'...`);
+    log.debug(`Executing '${executable}'...`);
 
     const process = childProcess.spawn(executable, args ? args : [], {
         detached: true

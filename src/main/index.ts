@@ -12,8 +12,16 @@ import { setMainWindow, setWindowReady } from './utils/window';
 import { Settings } from '../common/utils/settings';
 import { checkForUpdates, notifyWindowReady } from './utils/updater';
 import { executeUrlCommand, getParsedArgv, handleArgv, parseArgv } from './utils/argv';
+import log from 'electron-log';
 
 import logoData from '../renderer/img/logo.png';
+
+// configure logger
+log.transports.console.level = 'info';
+log.transports.file.level = 'verbose';
+log.catchErrors({
+    showDialog: false
+});
 
 // Handle programm arguments
 handleArgv().then(exitCode => {
@@ -143,7 +151,7 @@ async function createMainWindow(): Promise<BrowserWindow> {
     const tag = location ? location : '';
 
     if (isDevelopment) {
-        console.log(`Loading content from: http://localhost:${process.env.ELECTRON_WEBPACK_WDS_PORT}...`);
+        log.debug(`Loading content from: http://localhost:${process.env.ELECTRON_WEBPACK_WDS_PORT}...`)
         window.loadURL(`http://localhost:${process.env.ELECTRON_WEBPACK_WDS_PORT}/#${tag}`).catch(e => console.error(e));
     } else {
         window.loadFile(`${__dirname}/index.html`, {

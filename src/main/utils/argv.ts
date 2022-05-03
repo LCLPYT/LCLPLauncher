@@ -4,9 +4,7 @@ import { doesAppNeedUpdate } from '../downloader/downloader';
 import { isInLibrary } from './library';
 import { fetchMandatoryUpdateRequired } from './updater';
 
-const commands: {
-    [key: string]: Command
-} = {
+const commands: Record<string, Command> = {
     'check-for-app-update': {
         description: 'Performs an update check for the given application.',
         positionals: [
@@ -25,9 +23,11 @@ const commands: {
 
             try {
                 const needsUpdate = await doesAppNeedUpdate(positionals[0])
+                // keep this console.log, as it is used by other software
                 console.log(`[update-check]: Result -> ${needsUpdate ? 'NEEDS_UPDATE' : 'UP_TO_DATE'}`);
                 return 0;
             } catch (err) {
+                // keep this console.log, as it is used by other software
                 console.error('Error while update checking: ', err);
                 return 1;
             }

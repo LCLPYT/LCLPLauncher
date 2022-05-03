@@ -4,6 +4,7 @@ import * as fs from 'fs';
 import { parseProfilesFromJson } from "../../../types/MCLauncherProfiles";
 import { backupFile, exists } from "../../../utils/fshelper";
 import { getMinecraftLauncherProfiles } from "../../../../renderer/utils/gameEnv";
+import log from 'electron-log';
 
 export namespace UninstallMCProfile {
     export class Writer extends UninstallTracker.Writer {
@@ -40,7 +41,7 @@ export namespace UninstallMCProfile {
         public async uninstall() {
             if (!this.loaded || !this.profileId) throw new Error('Not loaded');
 
-            console.log(`Removing launcher profile '${this.profileId}'...`);
+            log.info(`Removing launcher profile '${this.profileId}'...`);
 
             if (!this.vars.inputMap) throw new Error('Input map is undefined');
             const minecraftDir = this.vars.inputMap['minecraftDir']; // universal minecraftDir identifier. Apps using it should always name it this way
@@ -58,7 +59,7 @@ export namespace UninstallMCProfile {
             await backupFile(profilesFile);
             await fs.promises.writeFile(profilesFile, JSON.stringify(launcherProfiles, undefined, 2));
 
-            console.log(`Launcher profile '${this.profileId}' was successfully removed.`);
+            log.info(`Launcher profile '${this.profileId}' was successfully removed.`);
         }
     }
 }

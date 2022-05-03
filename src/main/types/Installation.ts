@@ -26,13 +26,25 @@ export type Artifact = {
     fileName?: string;
     /** Path segments for the destination directory; If omitted, file will remain in the .temp directory */
     destination?: SegmentedPath;
+    /** Artifact options */
+    options?: ArtifactOptions,
     /** Action to execute after the download is finished */
     post?: PostAction;
 }
 
+export type ArtifactOptions = {
+    /** 
+     * Indicates that this artifact contains user changeable content.
+     * When the installation already contains the artifact, it will only be updated, if variableBaseVersion indicates an older version.
+     * Basically, increment this number when there was an important update to the artifact.
+     * The old artifact's contents will be lost on update.
+     */
+    variableBaseVersion?: number
+}
+
 export type UrlResolverArgs = OptifineUrlResolverArgs;
 export type AbstractUrlResolverArgs = {
-    type: 'optifine'
+    type: 'optifine' | 'curseforge'
 }
 export type OptifineUrlResolverArgs = AbstractUrlResolverArgs & {
     id: string

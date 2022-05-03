@@ -34,6 +34,7 @@ export function withBufferWriteMethods<T extends MixinConstructor<WriteStreamCon
 export interface MixinBufferReader {
     readString(): string;
     readBoolean(): boolean;
+    readBuffer(bytes: number): Buffer | null;
 }
 
 export function withBufferReadMethods<T extends MixinConstructor<ReadStreamContainer>>(Base: T) {
@@ -52,6 +53,11 @@ export function withBufferReadMethods<T extends MixinConstructor<ReadStreamConta
         public readBoolean() {
             if (!this.stream) throw new Error('File is not opened (read)');
             return BufferUnwrapper.unwrapBoolean(this.bufferSupplier);
+        }
+
+        public readBuffer(bytes: number) {
+            if (!this.stream) throw new Error('File is not opened (read)');
+            return this.bufferSupplier(bytes);
         }
     };
 }

@@ -80,7 +80,7 @@ export function getAppUninstallFile(appId: number, uninstallId: string) {
     return Path.join(getAppUninstallerDir(appId), uninstallId);
 }
 
-export function getAppArtifactsDir(appId: number) {
+export function getAppArtifactsDir(appId: number | App) {
     return Path.join(getInstallerAppDir(appId), 'artifacts');
 }
 
