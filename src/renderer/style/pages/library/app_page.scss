@@ -57,11 +57,22 @@
 
 #appDetails {
     background-color: rgba(white, 0.02);
-    width: 30%;
     border-bottom-left-radius: 0.25rem;
     padding-top: 0.75rem;
     padding-bottom: 0.75rem;
     height: fit-content;
+}
+
+@media screen and (max-width: 1600px) {
+    #appDetails {
+        max-width: 40%;
+    }
+}
+
+@media screen and (min-width: 1601px) {
+    #appDetails {
+        max-width: 30%;
+    }
 }
 
 .feed-yt-wrapper {
