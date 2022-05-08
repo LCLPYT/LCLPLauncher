@@ -15,6 +15,12 @@ import { executeUrlCommand, getParsedArgv, handleArgv, parseArgv } from './utils
 import log from 'electron-log';
 
 import logoData from '../renderer/img/logo.png';
+import { getAppName } from './utils/env';
+
+// set app name manually, if in development environment
+if (isDevelopment) {
+    app.setName(`${getAppName()}-dev`);
+}
 
 // configure logger
 log.transports.console.level = 'info';
