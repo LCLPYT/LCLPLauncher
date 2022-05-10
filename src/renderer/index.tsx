@@ -1,20 +1,20 @@
+import 'bootstrap'; // bootstrap js
+import log from 'electron-log';
+import path from 'path';
 import React from 'react';
 import ReactDOM from 'react-dom';
-import { registerKeybinds } from './utils/keybinds';
+import { isDevelopment } from '../common/utils/env';
+import { loadTranslations, setTranslationProvider } from '../main/utils/i18n';
 import App from './components/App';
 import Titlebar from './components/Titlebar';
-import { isDevelopment } from '../common/utils/env';
-import path from 'path';
-import * as Ipc from './utils/ipc';
-
-import 'bootstrap'; // bootstrap js
-import './style/material-icons/material-icons.css'; // material-icons
-import './style/app.scss'; // general application style
-import './img/logo.png';
 import UpdateChecking from './components/UpdateChecking';
+import './img/logo.png';
+import './style/app.scss'; // general application style
+import './style/material-icons/material-icons.css'; // material-icons
+import * as Ipc from './utils/ipc';
+import { registerKeybinds } from './utils/keybinds';
 import { updaterManager } from './utils/updater';
 import { setWindowMaximizable } from './utils/windowEvents';
-import log from 'electron-log';
 
 // configure logger
 log.transports.console.level = 'info';
@@ -22,6 +22,10 @@ log.transports.file.level = 'debug';
 
 // init IPC
 Ipc.initIPC();
+
+// configure I18n
+setTranslationProvider(() => Ipc.UTILITIES.getTranslations());
+loadTranslations();  // no need to specify a locale, since the translations are only synced with the main thread here.
 
 /* Add keybinds */
 registerKeybinds();

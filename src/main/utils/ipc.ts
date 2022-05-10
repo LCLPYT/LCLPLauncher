@@ -15,6 +15,7 @@ import { getInstallationDirectory } from "../downloader/installedApps";
 import { uninstallApp } from "../downloader/uninstall";
 import { isRunningAsAppImage } from "./env";
 import { exists, getOrCreateDefaultInstallationDir } from "./fshelper";
+import { getTranslations } from "./i18n";
 import { addToLibary, getLibraryApps, isInLibrary } from "./library";
 import { isPlatform } from "./oshooks";
 import { startApp, stopApp } from "./startup";
@@ -264,6 +265,9 @@ export const UTILITIES = registerHandler(new class extends IPCActionHandler {
                 exists(args[0])
                     .then(exists => event.reply(args[0], exists))
                     .catch(err => event.reply(args[0], null, err));
+                break;
+            case ACTIONS.utilities.getTranslations:
+                event.reply(getTranslations());
                 break;
             default:
                 throw new Error(`Action '${action}' not implemented.`);
