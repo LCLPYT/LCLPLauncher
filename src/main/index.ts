@@ -1,6 +1,7 @@
 // set NODE_ENV correctly for react-router-dom, so it will work in production...
 process.env['NODE_' + 'ENV'] = process.env.NODE_ENV;
 
+import NativeImage = Electron.NativeImage;
 import { app, shell, BrowserWindow, nativeTheme, nativeImage } from 'electron'
 import { isDevelopment } from '../common/utils/env';
 import * as Database from './database/database';
@@ -131,7 +132,7 @@ function startAppGUI() {
  * @returns The main window.
  */
 async function createMainWindow(): Promise<BrowserWindow> {
-    let icon: nativeImage | undefined;
+    let icon: NativeImage | undefined;
     if (isDevelopment) icon = nativeImage.createFromDataURL(logoData);
 
     const window = new BrowserWindow({
