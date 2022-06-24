@@ -408,6 +408,11 @@ export const UTILITIES = registerHandler(new class extends IPCActionHandler {
         reject: (error: any) => void
     }[]> = new Map();
 
+    protected getTranslationsCB: {
+        resolve: (translations: Record<string, string>) => void,
+        reject: (error: any) => void
+    }[] = [];
+
     protected onAction(action: string, _event: Electron.IpcRendererEvent, args: any[]): void {
         switch (action) {
             case ACTIONS.utilities.chooseFile:
@@ -465,6 +470,14 @@ export const UTILITIES = registerHandler(new class extends IPCActionHandler {
             case ACTIONS.utilities.console_log:
                 if (args.length < 1) throw new Error('Message segments do not exist.');
                 log.info(...args);
+                break;
+            case ACTIONS.utilities.getTranslations:
+                if (args.length < 1) throw new Error('Translations argument does not exist.');
+                if (this.getTranslationsCB) {
+                    const path: Record<string, string> = args[0];
+                    this.getTranslationsCB.forEach(cb => cb.resolve(path));
+                    this.getTranslationsCB = [];
+                } else console.warn('No callback defined for', ACTIONS.utilities.getTranslations);
                 break;
             default:
                 throw new Error(`Action '${action}' not implemented.`);
@@ -557,6 +570,16 @@ export const UTILITIES = registerHandler(new class extends IPCActionHandler {
 
             if (callbacks.length === 1) this.sendAction(ACTIONS.utilities.doesFileExist, file);
         });
+    }
+
+    public getTranslations(): Promise<Record<string, string>> {
+        return new Promise((resolve, reject) => {
+            this.getTranslationsCB.push({
+                resolve: translations => resolve(translations),
+                reject: err => reject(err)
+            });
+            if (this.getTranslationsCB.length === 1) this.sendAction(ACTIONS.utilities.getTranslations);
+        })
     }
     
 }('utilities'));

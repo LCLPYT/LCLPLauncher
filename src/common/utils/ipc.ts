@@ -61,7 +61,8 @@ export const ACTIONS = {
         toggleFullScreen: 'toggle-full-screen',
         doesFileExist: 'does-file-exist',
         changeLocationHash: 'change-location-hash',
-        console_log: 'log'
+        console_log: 'log',
+        getTranslations: 'get-translations'
     },
     toasts: {
         addToast: 'add-toast',

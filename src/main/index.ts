@@ -16,11 +16,15 @@ import log from 'electron-log';
 
 import logoData from '../renderer/img/logo.png';
 import { getAppName } from './utils/env';
+import { loadTranslations } from './utils/i18n';
 
 // set app name manually, if in development environment
 if (isDevelopment) {
     app.setName(`${getAppName()}-dev`);
 }
+
+// TODO remove
+app.commandLine.appendSwitch('lang', 'de-DE');
 
 // configure logger
 log.transports.console.level = 'info';
@@ -94,7 +98,10 @@ function startGUI() {
     if (appWasReady) startAppGUI();
 
     // create main BrowserWindow when electron is ready
-    app.on('ready', () => startAppGUI());
+    app.on('ready', () => {
+        loadTranslations(app.getLocale());
+        startAppGUI()
+    });
 
     // quit application when all windows are closed
     app.on('window-all-closed', () => {
