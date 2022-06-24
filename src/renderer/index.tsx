@@ -3,8 +3,8 @@ import log from 'electron-log';
 import path from 'path';
 import React from 'react';
 import ReactDOM from 'react-dom';
-import { isDevelopment } from '../common/utils/env';
-import { loadTranslations, setTranslationProvider } from '../main/utils/i18n';
+import {isDevelopment} from '../common/utils/env';
+import {loadTranslations, setTranslationProvider} from '../main/utils/i18n';
 import App from './components/App';
 import Titlebar from './components/Titlebar';
 import UpdateChecking from './components/UpdateChecking';
@@ -12,9 +12,14 @@ import './img/logo.png';
 import './style/app.scss'; // general application style
 import './style/material-icons/material-icons.css'; // material-icons
 import * as Ipc from './utils/ipc';
-import { registerKeybinds } from './utils/keybinds';
-import { updaterManager } from './utils/updater';
-import { setWindowMaximizable } from './utils/windowEvents';
+import {registerKeybinds} from './utils/keybinds';
+import {updaterManager} from './utils/updater';
+import {setWindowMaximizable} from './utils/windowEvents';
+
+// accept code hot updates in development
+if (module.hot) {
+    module.hot.accept();
+}
 
 // configure logger
 log.transports.console.level = 'info';
