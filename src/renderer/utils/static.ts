@@ -1,10 +1,7 @@
-import path from 'path'
-import * as url from 'url'
+import path from "path";
+import {isDevelopment} from "../../common/utils/env";
 
-const isDevelopment = process.env.NODE_ENV !== 'production'
-
-// see https://github.com/electron-userland/electron-webpack/issues/99#issuecomment-459251702
-export function getStatic(relativePath: string) {
-    if (isDevelopment) return url.resolve(window.location.origin, relativePath)
+export function getStaticRender(relativePath: string) {
+    if (isDevelopment) return new URL(relativePath, `http://localhost:${process.env.ELECTRON_WEBPACK_WDS_PORT}`).toString();
     return path.resolve(__static, relativePath)
 }

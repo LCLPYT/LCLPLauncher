@@ -1,5 +1,5 @@
 import { Artifact } from "../../types/Installation";
-import { exists, getAppArtifactFile, isDirectory, rmdirRecusive, unlinkRemoveParentIfEmpty } from "../../utils/fshelper";
+import { exists, getAppArtifactFile, isDirectory, rmdirRecursive, unlinkRemoveParentIfEmpty } from "../../utils/fshelper";
 import * as fs from 'fs';
 import { ERR_EOS } from "../../utils/constants";
 import { withBufferWriteMethods } from "../../utils/buffer";
@@ -142,7 +142,7 @@ export abstract class TrackerReader extends SimpleFile.AbstractReader<ArtifactTr
                             deletedDirectories.push(path);
                         }
 
-                        await rmdirRecusive(path);
+                        await rmdirRecursive(path);
                         return;
                     }
 

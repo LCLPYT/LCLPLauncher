@@ -18,7 +18,7 @@ import { DependencyFragment } from "../types/Dependency";
 import Installation, { Artifact, SegmentedPath } from "../types/Installation";
 import { fetchApp } from "../utils/backend";
 import { getAppVersion } from "../utils/env";
-import { exists, getAppArtifactsDir, getAppStartupFile, getDependencyDir, mkdirp, resolveSegmentedPath, rmdirRecusive } from "../utils/fshelper";
+import { exists, getAppArtifactsDir, getAppStartupFile, getDependencyDir, mkdirp, resolveSegmentedPath, rmdirRecursive } from "../utils/fshelper";
 import { DOWNLOADER, TOASTS } from "../utils/ipc";
 import { isAppRunning } from "../utils/runningApps";
 import { replaceArraySubstitutes, Substitution, SubstitutionFunctions, SubstitutionVariables } from "../utils/substitute";
@@ -659,7 +659,7 @@ export class Installer {
 
     protected async cleanUp() {
         log.info('Cleaning up...')
-        await rmdirRecusive(this.tmpDir);
+        await rmdirRecursive(this.tmpDir);
         log.info('Cleaned up.');
     }
 

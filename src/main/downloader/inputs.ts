@@ -1,8 +1,10 @@
-import App from "../../common/types/App";
-import InstallationInput, { CompiledInstallationInput } from "../../common/types/InstallationInput";
+import type App from "../../common/types/App";
+import type { InputMap } from "../../common/types/InstallationInputResult";
+import type InstallationInput from "../../common/types/InstallationInput";
+import type { CompiledInstallationInput } from "../../common/types/InstallationInput";
+
 import { exists, getAppInputMapFile, resolveSegmentedPath } from "../utils/fshelper";
 import * as fs from 'fs';
-import { InputMap } from "../../common/types/InstallationInputResult";
 
 export async function compileAdditionalInputs(inputs: InstallationInput[], installationDir: string, map: InputMap) {
     return await new Compiler(installationDir, map).compile(inputs);

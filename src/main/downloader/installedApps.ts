@@ -1,4 +1,4 @@
-import App from "../../common/types/App";
+import type App from "../../common/types/App";
 import { InstalledApplication } from "../database/models/InstalledApplication";
 import { exists } from "../utils/fshelper";
 

@@ -31,6 +31,7 @@ export class UpdaterManager implements EventTarget {
         if (!(type in this.listeners)) this.listeners[type] = [];
         this.listeners[type].push(listener);
     }
+
     dispatchEvent(event: UpdaterEvent): boolean {
         if (!(event.type in this.listeners)) return true;
         const stack = this.listeners[event.type].slice();
@@ -42,6 +43,7 @@ export class UpdaterManager implements EventTarget {
         }
         return !event.defaultPrevented;
     }
+
     removeEventListener(type: UpdaterEvents, listener: UpdaterEventListenerOrObject | null): void {
         if (!listener || !(type in this.listeners)) return;
         const stack = this.listeners[type];

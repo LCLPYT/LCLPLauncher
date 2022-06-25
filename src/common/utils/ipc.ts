@@ -62,7 +62,8 @@ export const ACTIONS = {
         doesFileExist: 'does-file-exist',
         changeLocationHash: 'change-location-hash',
         console_log: 'log',
-        getTranslations: 'get-translations'
+        appReady: 'app-ready',
+        requestAppReady: 'request-app-ready'
     },
     toasts: {
         addToast: 'add-toast',

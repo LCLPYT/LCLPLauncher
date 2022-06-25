@@ -78,7 +78,7 @@ type FormatSpecifier = 's' | 'd' | 'i' | 'f' | string;
 export function formatString(text: string, ...substitutes: any[]): string {
 
     // check for format specifiers
-    const matches = text.matchAll(/%(s|d|i|f)/g)
+    const matches = text.matchAll(/%([sdif])/g)
     if (!matches) return text;
 
     // replace identifiers

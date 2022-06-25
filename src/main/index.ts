@@ -1,3 +1,6 @@
+console.time('show')
+console.time('startup')
+
 import {app} from 'electron'
 import {isDevelopment} from '../common/utils/env';
 import {handleArgv} from './utils/argv';
@@ -30,7 +33,7 @@ log.catchErrors({
 // Handle program arguments
 handleArgv().then(exitCode => {
     if (exitCode === undefined) {
-        import('./gui').then(({startGUI}) => startGUI());
+        import('./gui').then(({startup}) => startup());
     }
     else process.exit(exitCode);
 }).catch(err => {

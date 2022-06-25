@@ -21,7 +21,7 @@ const commands: Record<string, Command> = {
             await initDb();
 
             try {
-                const {doesAppNeedUpdate} = await import(/* webpackChunkName: "io" */ '../downloader/downloader');
+                const {doesAppNeedUpdate} = await import(/* webpackChunkName: "lib" */ '../downloader/downloader');
                 const needsUpdate = await doesAppNeedUpdate(positionals[0]);
                 // keep this console.log, as it is used by other software
                 console.log(`[update-check]: Result -> ${needsUpdate ? 'NEEDS_UPDATE' : 'UP_TO_DATE'}`);
@@ -46,7 +46,7 @@ const urlCommands: URLCommandChildContainer = {
 
                 await initDb();
 
-                const {isInLibrary} = await import('./library');
+                const {isInLibrary} = await import(/* webpackChunkName: "lib" */ './library');
 
                 if (await isInLibrary(appKey)) {
                     argv.location = `/library/app/${appKey}`;
@@ -172,7 +172,7 @@ function findCommandRecursive(commandArgs: string[], container: URLCommandChildC
 }
 
 async function checkMandatoryUpdate(): Promise<boolean> {
-    const {fetchMandatoryUpdateRequired} = await import(/* webpackChunkName: "io" */ './updater');
+    const {fetchMandatoryUpdateRequired} = await import(/* webpackChunkName: "lib" */ './updater');
 
     if (await fetchMandatoryUpdateRequired()) {
         console.error('LCLPLauncher requires a mandatory update. Please update first!');

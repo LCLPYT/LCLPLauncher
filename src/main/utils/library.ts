@@ -1,7 +1,7 @@
-import App from "../../common/types/App";
+import type App from "../../common/types/App";
 import { LibaryApplication } from "../database/models/LibraryApplication";
 
-export async function addToLibary(app: App): Promise<void> {
+export async function addToLibrary(app: App): Promise<void> {
     const apps = await LibaryApplication.query().findById(app.id);
     if(!apps) await LibaryApplication.query().insert(app);
 }
@@ -12,7 +12,7 @@ export async function isInLibrary(app: App | string): Promise<boolean> {
 }
 
 export async function getLibraryApps(): Promise<App[]> {
-    return await LibaryApplication.query();
+    return LibaryApplication.query();
 }
 
 function isApp(app: App | any): app is App {
