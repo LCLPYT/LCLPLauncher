@@ -1,19 +1,20 @@
 import fetch from "electron-fetch";
-import { getBackendHost } from "../../common/utils/settings";
-import { DependencyDescriptor, DependencyFragment, DependencyInfo, SpecificInfo } from "../types/Dependency";
+import log from 'electron-log';
+import * as fs from 'fs';
+import Downloader from "nodejs-file-downloader";
 import * as os from 'os';
 import * as Path from 'path';
-import * as fs from 'fs';
-import { exists, getDependencyDir, getDependencyTemporaryDir } from "../utils/fshelper";
-import Downloader from "nodejs-file-downloader";
-import { ActionFactory, ArtifactActionArgument, GeneralActionArgument, PostActionHandle, PostActionWrapper } from "./postActions";
-import { unzip } from "../utils/zip";
-import { extractTar } from "../utils/tar";
 import AppDependency from "../../common/types/AppDependency";
-import { DOWNLOADER, TOASTS } from "../utils/ipc";
-import { ToastType } from "../../common/types/Toast";
 import { InputMap } from "../../common/types/InstallationInputResult";
-import log from 'electron-log';
+import { ToastType } from "../../common/types/Toast";
+import { getBackendHost } from "../../common/utils/settings";
+import { Toast } from "../core/service/toast";
+import { DependencyDescriptor, DependencyFragment, DependencyInfo, SpecificInfo } from "../types/Dependency";
+import { exists, getDependencyDir, getDependencyTemporaryDir } from "../core/io/fshelper";
+import { DOWNLOADER } from "../utils/ipc";
+import { extractTar } from "../core/service/tar";
+import { unzip } from "../core/service/zip";
+import { ActionFactory, ArtifactActionArgument, GeneralActionArgument, PostActionHandle, PostActionWrapper } from "./postActions";
 
 export namespace Dependencies {
     export async function getUninstalledDependencies(dependencies: DependencyDescriptor[]): Promise<AppDependency[]> {
@@ -191,9 +192,7 @@ export namespace Dependencies {
 
             if (this.downloadQueue.length <= 0) return [this.structure, store]; // no artifacts to download
     
-            const toastId = TOASTS.getNextToastId();
-            TOASTS.addToast({
-                id: toastId,
+            const toastId = Toast.add({
                 icon: 'file_download',
                 title: 'Downloading dependencies',
                 type: ToastType.PACKAGE_DOWNLOAD_STATUS,
@@ -210,7 +209,7 @@ export namespace Dependencies {
 
             DOWNLOADER.updateInstallationState('preinstalling');
 
-            TOASTS.removeToast(toastId);
+            Toast.remove(toastId);
     
             return [this.structure, store];
         }

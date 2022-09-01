@@ -3,7 +3,7 @@ import { InstalledApplication } from "../database/models/InstalledApplication";
 import { ArtifactTrackerVariables } from "./tracker/ArtifactTracker";
 import * as Path from 'path';
 import * as fs from 'fs';
-import { exists, getAppArtifactsDir, getAppTrackerFile, getAppUninstallerDir, getAppUninstallPropsFile, mkdirp, rmdirRecusive } from "../utils/fshelper";
+import { exists, getAppArtifactsDir, getAppTrackerFile, getAppUninstallerDir, getAppUninstallPropsFile, mkdirp, rmdirRecursive } from "../core/io/fshelper";
 import { createReader } from "./tracker/ArtifactTrackers";
 import { DOWNLOADER } from "../utils/ipc";
 import { UninstallTrackers } from "./tracker/uninstall/UninstallTrackers";
@@ -64,7 +64,7 @@ export async function uninstallApp(app: App) {
             reader.closeFile();
         }
 
-        await rmdirRecusive(uninstallTrackerDir).catch(err => log.error(err));
+        await rmdirRecursive(uninstallTrackerDir).catch(err => log.error(err));
     }
 
     // remove installation directory (only if empty, so user-generated files can persist)
@@ -80,7 +80,7 @@ export async function uninstallApp(app: App) {
                 await fs.promises.rmdir(installationDir);
             } else {
                 if (!uninstallProps.skip) {
-                    await rmdirRecusive(installationDir);
+                    await rmdirRecursive(installationDir);
                 } else {
                     // skip files are configured, check them manually
                     for (const child of files) {
@@ -89,7 +89,7 @@ export async function uninstallApp(app: App) {
 
                         // only consider the first level directory in the installation directory, for performance and simplicity
 
-                        await rmdirRecusive(childPath);
+                        await rmdirRecursive(childPath);
                     }
                 }
             }

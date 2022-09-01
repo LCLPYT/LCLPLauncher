@@ -3,7 +3,7 @@ import * as fs from 'fs';
 import { SingleFileTracker } from "./SingleFileTracker";
 import { ExtractedArchiveTracker } from "./ExtractedArchiveTracker";
 import { ExistingFileTracker } from "./ExistingFileTracker";
-import { withBufferReadMethods } from "../../utils/buffer";
+import { withBufferReadMethods } from "../../core/io/buffer";
 import { VarSingleFileTracker } from "./VarSingleFileTracker";
 
 type TrackerFactory = (artifactId: string, appId: number, vars: ArtifactTrackerVariables, reuseStream?: fs.ReadStream) => TrackerReader;

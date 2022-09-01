@@ -20,6 +20,8 @@ export interface ToastEventListenerObject {
 export type ToastEventListenerOrObject = ToastEventListener | ToastEventListenerObject;
 
 export class ToastManager implements EventTarget {
+    protected queue: ToastEvent[] = [];
+    protected mounted = false;
     protected listeners: {
         [type: string]: ToastEventListenerOrObject[]
     } = {};
@@ -28,8 +30,25 @@ export class ToastManager implements EventTarget {
         if (!listener) return;
         if (!(type in this.listeners)) this.listeners[type] = [];
         this.listeners[type].push(listener);
+
+        if (!this.mounted) {
+            this.mounted = true;
+
+            while (this.queue.length > 0) {
+                const next = this.queue.shift();
+                if (!next) break;
+
+                this.dispatchEvent(next);
+            }
+        }
     }
     dispatchEvent(event: ToastEvent): boolean {
+        if (!this.mounted) {
+            if (this.queue.length >= 100) this.queue.shift();
+            this.queue.push(event);
+            return true;
+        }
+
         if (!(event.type in this.listeners)) return true;
         const stack = this.listeners[event.type].slice();
 

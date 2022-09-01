@@ -2,7 +2,7 @@ import { Modal } from "bootstrap";
 import React, { Component } from "react";
 import App from "../../../../../common/types/App";
 import AppState from "../../../../../common/types/AppState";
-import { installationProgressManager, InstallerEvent } from "../../../../utils/downloads";
+import { installationProgressManager, InstallerEvent } from "../../../../event/downloads";
 import { DOWNLOADER } from "../../../../utils/ipc";
 import LoadingSpinner from "../../../utility/LoadingSpinner";
 

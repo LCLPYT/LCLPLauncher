@@ -1,6 +1,6 @@
-import App from "../../common/types/App";
+import type App from "../../common/types/App";
 import { InstalledApplication } from "../database/models/InstalledApplication";
-import { exists } from "../utils/fshelper";
+import { exists } from "../core/io/fshelper";
 
 export async function getInstallationDirectory(app: App) {
     const installedApp = await InstalledApplication.query().where('app_id', app.id).first();

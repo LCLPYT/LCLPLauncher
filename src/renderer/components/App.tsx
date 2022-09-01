@@ -1,17 +1,22 @@
 import { Toast } from 'bootstrap';
 import React, { Component } from 'react';
 import { HashRouter, Redirect, Route, Switch } from 'react-router-dom';
-import { ToastEvent, toastManager } from '../utils/toasts';
+import ToastOptions, { ToastType } from '../../common/types/Toast';
+import { ToastEvent, toastManager } from '../event/toasts';
 import Menubar from './Menubar';
 import Home from './pages/Home';
 import Library from './pages/Library';
 import Settings from './pages/Settings';
-import ToastOptions, { ToastType } from '../../common/types/Toast';
 
-import toastSound from '../sound/toast.ogg';
-import { installationProgressManager, InstallerEvent } from '../utils/downloads';
 import DownloadProgress, { PackageDownloadProgress } from '../../common/types/DownloadProgress';
 import { shouldPlayToastSound } from '../../common/utils/settings';
+import toastSound from '../sound/toast.ogg';
+import { installationProgressManager, InstallerEvent } from '../event/downloads';
+import { UPDATER } from '../utils/ipc';
+import ElectronLog from 'electron-log';
+import { UpdaterEventListenerOrObject, updaterManager } from '../event/updater';
+import { ProgressInfo } from 'electron-updater';
+import LoadingSpinner from './utility/LoadingSpinner';
 
 class App extends Component {
     render() {
@@ -68,14 +73,20 @@ class ToastStack extends Component<{}, ToastState> {
         toastManager.addEventListener('add-toast', this.toastListeners['add-toast'] = (event: ToastEvent) => {
             if (!event.detail.toast) throw new Error('Add toast: Toast is null');
 
+            const toast = event.detail.toast;
+
             this.setState({
                 toasts: [...this.state.toasts, {
-                    toast: event.detail.toast,
+                    toast: toast,
                     createdAt: new Date().getTime()
                 }]
             });
 
-            if (shouldPlayToastSound()) new Audio(toastSound).play();
+            if (!toast.noSound && shouldPlayToastSound()) {
+                const audio = new Audio(toastSound);
+                audio.volume = 0.35;
+                audio.play();
+            }
         });
 
         toastManager.addEventListener('remove-toast', this.toastListeners['remove-toast'] = (event: ToastEvent) => {
@@ -132,6 +143,7 @@ class ToastStack extends Component<{}, ToastState> {
             case ToastType.TEXT: return <TextToast {...props} />;
             case ToastType.DOWNLOAD_STATUS: return <DownloadToast {...props} />;
             case ToastType.PACKAGE_DOWNLOAD_STATUS: return <PackageDownloadToast {...props} />;
+            case ToastType.UPDATE_AVAILABLE: return <UpdateAvailableToast {...props} />
             default:
                 throw new Error(`Unimplemented toast type: '${memory.toast.type}'`);
         }
@@ -305,6 +317,94 @@ class PackageDownloadToast extends AbstractToastComponent<PackageDownloadToastSt
     componentWillUnmount() {
         super.componentWillUnmount();
         if (this.progressListener) installationProgressManager.removeEventListener('update-package-progress', this.progressListener);
+    }
+}
+
+class UpdateAvailableToast extends AbstractToastComponent<{
+    updateInProgress: boolean,
+    progress?: ProgressInfo
+}> {
+    
+    private dlBtnRef = React.createRef<HTMLButtonElement>();
+    private dlProgress = React.createRef<HTMLDivElement>();
+    private clickListener?: () => void;
+    private progressListener?: UpdaterEventListenerOrObject;
+
+    constructor(props: ToastProps) {
+        super(props);
+        this.state = {
+            updateInProgress: false
+        };
+    }
+
+    getBody(): JSX.Element {
+        if (!this.state.updateInProgress) {
+            const versionName = this.props.memory.toast ? this.props.memory.toast.detail as string : undefined;
+            const text = versionName ? `Version ${versionName} is available. ` : '';
+
+            return (
+                <div className="py-1 text-lighter">
+                    {text + 'Do you want to download the update?'}
+                    <div className="mt-1">
+                        <button type="button" className="btn btn-primary btn-sm me-2" ref={this.dlBtnRef}>Download</button>
+                        <button type="button" className="btn btn-dark btn-sm" data-bs-dismiss="toast" aria-label="Close">Later</button>
+                    </div>
+                </div>
+            );
+        }
+
+        if (!this.state.progress) {
+            return (
+                <div className="py-1 text-lighter d-flex align-items-center justify-content-center">
+                    <span>Starting download</span>
+                    <LoadingSpinner className="spinner-border-sm ms-2" />
+                </div>
+            );
+        }
+        
+        const progress = Math.floor(this.state.progress.percent);
+
+        return (
+            <div className="py-1 text-lighter">
+                {`Update Progress: ${this.state.progress.percent.toFixed(2)}%`}
+
+                <div className="progress mt-1">
+                    <div className="progress-bar progress-bar-striped progress-bar-animated" 
+                        role="progressbar" style={{width: `${progress}%`}} 
+                        aria-valuenow={progress} aria-valuemin={0} aria-valuemax={100} 
+                        ref={this.dlProgress} />
+                </div>
+            </div>
+        );
+    }
+
+    componentDidMount(): void {
+        this.dlBtnRef.current?.addEventListener('click', this.clickListener = () => {
+            UPDATER.startUpdate().then(updateStarted => {
+                if (updateStarted) {
+                    this.setState({updateInProgress: true});
+                    ElectronLog.info('Update started.');
+                }
+            }).catch(err => ElectronLog.error('Could not start download:', err));
+        });
+
+        updaterManager.addEventListener('update-progress', this.progressListener = event => {
+            if (event.detail.progress) {
+                this.setState({
+                    progress: event.detail.progress
+                });
+            }
+        });
+    }
+
+    componentWillUnmount(): void {
+        if (this.clickListener) {
+            this.dlBtnRef.current?.removeEventListener('click', this.clickListener);
+        }
+
+        if (this.progressListener) {
+            updaterManager.removeEventListener('update-progress', this.progressListener);
+        }
     }
 }
 

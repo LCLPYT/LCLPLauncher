@@ -85,7 +85,7 @@
   "build": {
     "appId": "work.lclpnet.lclplauncher",
     "productName": "LCLPLauncher",
-    "copyright": "Copyright © 2021 LCLP",
+    "copyright": "Copyright © 2022 LCLP",
     "directories": {
       "buildResources": "build_resources"
     },

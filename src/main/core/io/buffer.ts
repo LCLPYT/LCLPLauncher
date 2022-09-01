@@ -1,5 +1,5 @@
-import { ERR_EOS } from "./constants";
-import { MixinConstructor } from "./mixin";
+import { ERR_EOS } from "../../utils/constants";
+import { MixinConstructor } from "../../utils/mixin";
 import { ReadStreamContainer, WriteStreamContainer } from "./streams";
 
 export interface MixinBufferWriter {

@@ -1,7 +1,7 @@
 import React, { Component } from 'react';
 import logo from '../img/logo.svg';
 import { UTILITIES } from '../utils/ipc';
-import { WindowEvent, windowManager } from '../utils/windowEvents';
+import { WindowEvent, windowManager } from '../event/windowEvents';
 
 interface Props {
     maximizable?: boolean

@@ -53,7 +53,6 @@ class Content extends Component<ContentProps> {
                 <div id="appsFlexContainer" className="pt-3 d-flex flex-column">
                     <div className="d-flex align-items-center">
                         <h3 className="text-lighter mb-0 me-2">Your apps</h3>
-                        <div className="section-seperator border-top border-light flex-fill mt-1" />
                     </div>
                     <div className="text-light section-desc">Every app you added to your library is shown here.</div>
                     {this.props.apps.length <= 0 ? (

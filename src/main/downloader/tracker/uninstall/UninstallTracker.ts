@@ -1,6 +1,6 @@
-import { SimpleFile } from "../../../utils/SimpleFile";
+import { SimpleFile } from "../../../core/io/SimpleFile";
 import * as fs from 'fs';
-import { getAppUninstallFile } from "../../../utils/fshelper";
+import { getAppUninstallFile } from "../../../core/io/fshelper";
 import { ERR_EOS } from "../../../utils/constants";
 import { InputMap } from "../../../../common/types/InstallationInputResult";
 

@@ -1,7 +1,7 @@
 import { ProgressInfo } from "electron-updater";
 import UpdateCheckResult from "../../common/types/UpdateCheckResult";
 
-export type UpdaterEvents = 'update-state' | 'update-error' | 'update-progress';
+export type UpdaterEvents = 'update-error' | 'update-progress';
 
 export type UpdaterDetails = {
     state?: UpdateCheckResult,
@@ -22,6 +22,8 @@ export interface UpdaterEventListenerObject {
 export type UpdaterEventListenerOrObject = UpdaterEventListener | UpdaterEventListenerObject;
 
 export class UpdaterManager implements EventTarget {
+    protected queue: UpdaterEvent[] = [];
+    protected mounted = false;
     protected listeners: {
         [type: string]: UpdaterEventListenerOrObject[]
     } = {};
@@ -30,8 +32,26 @@ export class UpdaterManager implements EventTarget {
         if (!listener) return;
         if (!(type in this.listeners)) this.listeners[type] = [];
         this.listeners[type].push(listener);
+
+        if (!this.mounted) {
+            this.mounted = true;
+
+            while (this.queue.length > 0) {
+                const next = this.queue.shift();
+                if (!next) break;
+
+                this.dispatchEvent(next);
+            }
+        }
     }
+
     dispatchEvent(event: UpdaterEvent): boolean {
+        if (!this.mounted) {
+            if (this.queue.length >= 100) this.queue.shift();
+            this.queue.push(event);
+            return true;
+        }
+        
         if (!(event.type in this.listeners)) return true;
         const stack = this.listeners[event.type].slice();
 
@@ -42,6 +62,7 @@ export class UpdaterManager implements EventTarget {
         }
         return !event.defaultPrevented;
     }
+
     removeEventListener(type: UpdaterEvents, listener: UpdaterEventListenerOrObject | null): void {
         if (!listener || !(type in this.listeners)) return;
         const stack = this.listeners[type];
@@ -64,13 +85,14 @@ function isEventListener(listener: UpdaterEventListenerOrObject): listener is Up
 }
 
 export const updaterManager = new UpdaterManager();
+let updateState: UpdateCheckResult | undefined = undefined;
 
-export function postUpdateState(state: UpdateCheckResult) {
-    updaterManager.dispatchEvent(new CustomEvent('update-state', {
-        detail: {
-            state: state
-        }
-    }));
+export function setUpdateState(state: UpdateCheckResult) {
+    updateState = state;
+}
+
+export function getUpdateState() {
+    return updateState;
 }
 
 export function postUpdateError(err: any) {

@@ -1,5 +1,5 @@
 import * as fs from 'fs';
-import { withBufferReadMethods } from "../../../utils/buffer";
+import { withBufferReadMethods } from "../../../core/io/buffer";
 import { UninstallMCProfile } from './UninstallMCProfile';
 import { UninstallTracker } from './UninstallTracker';
 

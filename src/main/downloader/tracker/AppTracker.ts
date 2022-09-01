@@ -1,8 +1,8 @@
 import { ERR_EOS } from "../../utils/constants";
-import { BufferWrapper, withBufferReadMethods, withBufferWriteMethods } from "../../utils/buffer";
+import { BufferWrapper, withBufferReadMethods, withBufferWriteMethods } from "../../core/io/buffer";
 import { VersionError } from "./ArtifactTracker";
-import { SimpleFile } from "../../utils/SimpleFile";
-import { getAppTrackerFile } from "../../utils/fshelper";
+import { SimpleFile } from "../../core/io/SimpleFile";
+import { getAppTrackerFile } from "../../core/io/fshelper";
 import * as fs from 'fs';
 
 // if a tracker file has a version older than this string, it will be deleted and an update of the artifact will be required

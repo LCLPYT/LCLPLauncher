@@ -1,4 +1,4 @@
-import { exists } from "../../main/utils/fshelper";
+import { exists } from "../core/io/fshelper";
 import * as Path from 'path';
 
 let cachedLauncherProfiles: string | undefined = undefined;

@@ -24,6 +24,9 @@ export abstract class GenericIPCActionHandler<T extends ElectronIpcEvent, U> ext
 }
 
 export const ACTIONS = {
+    system: {
+        ipcReady: 'ipc-ready'
+    },
     library: {
         addAppToLibrary: 'add-app-to-libary',
         isAppInLibrary: 'is-app-in-library',
@@ -61,7 +64,9 @@ export const ACTIONS = {
         toggleFullScreen: 'toggle-full-screen',
         doesFileExist: 'does-file-exist',
         changeLocationHash: 'change-location-hash',
-        console_log: 'log'
+        console_log: 'log',
+        appReady: 'app-ready',
+        requestAppReady: 'request-app-ready'
     },
     toasts: {
         addToast: 'add-toast',
@@ -69,10 +74,9 @@ export const ACTIONS = {
     },
     updater: {
         sendUpdateState: 'send-update-state',
-        isUpdateChecking: 'is-update-checking',
         startUpdate: 'start-update',
-        skipUpdate: 'skip-update',
         sendError: 'send-error',
-        sendProgress: 'send-progress'
+        sendProgress: 'send-progress',
+        getCachedUpdateState: 'get-cached-update-state'
     }
 }

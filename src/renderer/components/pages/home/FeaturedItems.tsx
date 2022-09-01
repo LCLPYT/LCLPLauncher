@@ -4,12 +4,13 @@ import tippy, { followCursor } from 'tippy.js';
 import 'tippy.js/dist/tippy.css';
 import 'tippy.js/animations/scale.css';
 import { getBackendHost } from '../../../../common/utils/settings';
+import {translate} from "../../../../common/utils/i18n";
 
 class FeaturedItems extends Component<{ items: FeaturedItem[] }> {
     render() {
         return (
             <div className="card shadow">
-                <div className="card-header no-border text-light">Featured</div>
+                <div className="card-header no-border text-light">{translate('component.featured.title')}</div>
                 <div className="card-body p-0">
                     <div id="featuredSlider" className="carousel slide" data-bs-ride="carousel">
                         <div className="carousel-indicators">

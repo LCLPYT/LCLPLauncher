@@ -1,9 +1,9 @@
-import { withBufferReadMethods, withBufferWriteMethods } from "../../../utils/buffer";
+import { withBufferReadMethods, withBufferWriteMethods } from "../../../core/io/buffer";
 import { UninstallTracker } from "./UninstallTracker";
 import * as fs from 'fs';
 import { parseProfilesFromJson } from "../../../types/MCLauncherProfiles";
-import { backupFile, exists } from "../../../utils/fshelper";
-import { getMinecraftLauncherProfiles } from "../../../../renderer/utils/gameEnv";
+import { backupFile, exists } from "../../../core/io/fshelper";
+import { getMinecraftLauncherProfiles } from "../../../utils/gameEnv";
 import log from 'electron-log';
 
 export namespace UninstallMCProfile {
