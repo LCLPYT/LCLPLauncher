@@ -76,7 +76,7 @@ class Titlebar extends Component<Props, State> {
         const closeButton = document.getElementById('close-button');
 
         minButton?.addEventListener('click', () => UTILITIES.minimizeWindow());
-        restoreButton?.addEventListener('click', () => UTILITIES.unmaximizeWindow());
+        restoreButton?.addEventListener('click', () => UTILITIES.unMaximizeWindow());
         closeButton?.addEventListener('click', () => UTILITIES.closeWindow());
 
         // Toggle maximise/restore buttons when maximisation/unmaximisation occurs

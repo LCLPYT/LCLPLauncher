@@ -60,7 +60,7 @@ interface SideTabProps {
     icon: string,
     title: string,
     route: string
-};
+}
 
 class SideTab extends Component<SideTabProps> {
     render() {

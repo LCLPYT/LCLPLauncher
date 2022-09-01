@@ -160,7 +160,7 @@ export abstract class TrackerReader extends SimpleFile.AbstractReader<ArtifactTr
         } else {
             // create a new reader and read it to the entries offset
             const reader = reuseReader ? reuseReader : this.cloneThisReader();
-            await reader.readUntilEntries(reuseReader ? true : false);
+            await reader.readUntilEntries(!!reuseReader);
             // actually delete the entries
             const err = await deleteItems(reader).catch(err => err);
             reader.closeFile(); // be sure to close the file

@@ -1,27 +1,42 @@
 import execa from "execa";
 import * as fs from 'fs';
 import App from "../../common/types/App";
-import { InputMap } from "../../common/types/InstallationInputResult";
-import { isDevelopment } from "../../common/utils/env";
-import { getMinecraftLauncherProfiles } from "../utils/gameEnv";
-import { AddMCProfilePostAction, Artifact, ExecuteProgramPostAction, ExtractZipPostAction, PostAction, PrepareMCProfilePostAction, SegmentedPath, TrackExistingFilePostAction } from "../types/Installation";
-import { parseProfilesFromJson, Profile } from "../types/MCLauncherProfiles";
-import { checksumFile } from "../core/service/checksum";
-import { getAppImagePath } from "../utils/env";
-import { backupFile, exists, rename, resolveSegmentedPath } from "../core/io/fshelper";
-import { isPlatform } from "../utils/oshooks";
-import { getBase64DataURL } from "../core/service/resource";
-import { replaceArraySubstitutes, replaceSubstitutes, Substitution, SubstitutionFunctions, SubstitutionVariables } from "../utils/substitute";
-import { unzip } from "../core/service/zip";
-import { Dependencies } from "./dependencies";
-import { ArtifactTrackerVariables, TrackerWriter } from "./tracker/ArtifactTracker";
-import { ExistingFileTracker } from "./tracker/ExistingFileTracker";
-import { ExtractedArchiveTracker } from "./tracker/ExtractedArchiveTracker";
-import { SingleFileTracker } from "./tracker/SingleFileTracker";
-import { UninstallMCProfile } from "./tracker/uninstall/UninstallMCProfile";
-import { UninstallTracker } from "./tracker/uninstall/UninstallTracker";
-import { VarSingleFileTracker } from "./tracker/VarSingleFileTracker";
-import { registerUninstallExceptionPath } from "./uninstall";
+import {InputMap} from "../../common/types/InstallationInputResult";
+import {isDevelopment} from "../../common/utils/env";
+import {getMinecraftLauncherProfiles} from "../utils/gameEnv";
+import {
+    AddMCProfilePostAction,
+    Artifact,
+    ExecuteProgramPostAction,
+    ExtractZipPostAction,
+    PostAction,
+    PrepareMCProfilePostAction,
+    SegmentedPath,
+    TrackExistingFilePostAction
+} from "../types/Installation";
+import {parseProfilesFromJson} from "../types/MCLauncherProfiles";
+import {checksumFile} from "../core/service/checksum";
+import {getAppImagePath} from "../utils/env";
+import {backupFile, exists, rename, resolveSegmentedPath} from "../core/io/fshelper";
+import {isPlatform} from "../utils/oshooks";
+import {getBase64DataURL} from "../core/service/resource";
+import {
+    replaceArraySubstitutes,
+    replaceSubstitutes,
+    Substitution,
+    SubstitutionFunctions,
+    SubstitutionVariables
+} from "../utils/substitute";
+import {unzip} from "../core/service/zip";
+import {Dependencies} from "./dependencies";
+import {ArtifactTrackerVariables, TrackerWriter} from "./tracker/ArtifactTracker";
+import {ExistingFileTracker} from "./tracker/ExistingFileTracker";
+import {ExtractedArchiveTracker} from "./tracker/ExtractedArchiveTracker";
+import {SingleFileTracker} from "./tracker/SingleFileTracker";
+import {UninstallMCProfile} from "./tracker/uninstall/UninstallMCProfile";
+import {UninstallTracker} from "./tracker/uninstall/UninstallTracker";
+import {VarSingleFileTracker} from "./tracker/VarSingleFileTracker";
+import {registerUninstallExceptionPath} from "./uninstall";
 import log from 'electron-log';
 
 export type GeneralActionArgument = {
@@ -271,7 +286,7 @@ export namespace ActionFactory {
                 arg.tracker = tracker;
 
                 if (!!skipUninstall) 
-                    registerUninstallExceptionPath(arg.app, file);
+                    await registerUninstallExceptionPath(arg.app, file);
 
                 log.verbose(`Successfully tracked '${file}'.`)
 
@@ -290,7 +305,7 @@ export namespace ActionFactory {
                 if (!minecraftDir) throw new Error(`Input map does not contain an entry for 'minecraftDir'.`);
 
                 const profilesFile = await getMinecraftLauncherProfiles(minecraftDir);
-                if (!exists(profilesFile)) throw new Error('Profiles file does not exist');
+                if (!await exists(profilesFile)) throw new Error('Profiles file does not exist');
 
                 const jsonContent = await fs.promises.readFile(profilesFile, 'utf8');
                 const launcherProfiles = parseProfilesFromJson(jsonContent);
@@ -319,7 +334,7 @@ export namespace ActionFactory {
                     javaArgs = javaArgs ? javaArgs.trim().concat(' ').concat(joined) : joined;
                 }
 
-                const profile: Profile = {
+                launcherProfiles.profiles[options.id] = {
                     created: now,
                     gameDir: arg.result,
                     icon: icon ? icon : 'Furnace',
@@ -330,7 +345,6 @@ export namespace ActionFactory {
                     javaArgs: javaArgs
                     // TODO: on linux, add java dir
                 };
-                launcherProfiles.profiles[options.id] = profile;
 
                 await backupFile(profilesFile);
                 await fs.promises.writeFile(profilesFile, JSON.stringify(launcherProfiles, undefined, 2));
@@ -353,7 +367,7 @@ export namespace ActionFactory {
                 if (!minecraftDir) throw new Error(`Input map does not contain an entry for 'minecraftDir'.`);
 
                 const profilesFile = await getMinecraftLauncherProfiles(minecraftDir);
-                if (!exists(profilesFile)) throw new Error('Profiles file does not exist');
+                if (!await exists(profilesFile)) throw new Error('Profiles file does not exist');
 
                 const jsonContent = await fs.promises.readFile(profilesFile, 'utf8');
                 const launcherProfiles = parseProfilesFromJson(jsonContent);

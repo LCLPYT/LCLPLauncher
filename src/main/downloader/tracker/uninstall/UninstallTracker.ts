@@ -18,7 +18,7 @@ export namespace UninstallTracker {
         protected headerWritten = false;
         protected uninstallType: Type;
     
-        constructor(uninstallId: string, appId: number, vars: Variables, uninstallType: Type, reuseStream?: fs.WriteStream) {
+        protected constructor(uninstallId: string, appId: number, vars: Variables, uninstallType: Type, reuseStream?: fs.WriteStream) {
             super(getAppUninstallFile(appId, uninstallId), vars, reuseStream);
             this.uninstallId = uninstallId;
             this.appId = appId;

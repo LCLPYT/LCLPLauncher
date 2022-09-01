@@ -71,6 +71,7 @@ export const LIBRARY = registerHandler(new class extends IPCActionHandler {
                     this.addAppToLibraryCB = undefined;
                 } else console.warn('No callback defined for', ACTIONS.library.addAppToLibrary);
                 break;
+
             case ACTIONS.library.isAppInLibrary:
                 if(args.length < 1) throw new Error('Result argument does not exist.');
                 if(this.isAppInLibraryCB) {
@@ -78,6 +79,7 @@ export const LIBRARY = registerHandler(new class extends IPCActionHandler {
                     this.isAppInLibraryCB = undefined;
                 } else console.warn('No callback defined for', ACTIONS.library.isAppInLibrary);
                 break;
+
             case ACTIONS.library.getLibraryApps:
                 if(args.length < 1) throw new Error('Apps argument does not exist.');
                 if(this.getLibraryAppsCB) {
@@ -85,6 +87,7 @@ export const LIBRARY = registerHandler(new class extends IPCActionHandler {
                     this.getLibraryAppsCB = undefined;
                 } else console.warn('No callback defined for', ACTIONS.library.getLibraryApps);
                 break;
+
             case ACTIONS.library.startApp:
                 if (args.length < 1) throw new Error('Error argument does not exist.');
                 if (this.startAppCB) {
@@ -93,6 +96,7 @@ export const LIBRARY = registerHandler(new class extends IPCActionHandler {
                     this.startAppCB = undefined;
                 } else console.warn('No callback defined for', ACTIONS.library.startApp);
                 break;
+
             case ACTIONS.library.stopApp:
                 if (args.length < 1) throw new Error('Error argument does not exist.');
                 if (this.stopAppCB) {
@@ -101,6 +105,7 @@ export const LIBRARY = registerHandler(new class extends IPCActionHandler {
                     this.stopAppCB = undefined;
                 } else console.warn('No callback defined for', ACTIONS.library.stopApp);
                 break;
+
             default:
                 throw new Error(`Action '${action}' not implemented.`);
         }
@@ -205,6 +210,7 @@ export const DOWNLOADER = registerHandler(new class extends IPCActionHandler {
                     this.startInstallationProcessCB = undefined;
                 } else console.warn('No callback defined for', ACTIONS.downloader.startInstallationProcess);
                 break;
+
             case ACTIONS.downloader.getAppState:
                 if (args.length < 1) throw new Error('State result argument does not exist.');
                 if (this.getAppStateCB) {
@@ -214,6 +220,7 @@ export const DOWNLOADER = registerHandler(new class extends IPCActionHandler {
                     this.getAppStateCB = [];
                 } else console.warn('No callback defined for', ACTIONS.downloader.getAppState);
                 break;
+
             case ACTIONS.downloader.getInstallationDir:
                 if (args.length < 1) throw new Error('Installation dir argument does not exist.');
                 if (this.getInstallationDirCB) {
@@ -224,6 +231,7 @@ export const DOWNLOADER = registerHandler(new class extends IPCActionHandler {
                     this.getInstallationDirCB = [];
                 } else console.warn('No callback defined for', ACTIONS.downloader.getInstallationDir);
                 break;
+
             case ACTIONS.downloader.isValidInstallationDir:
                 if (args.length < 1) throw new Error('Validity argument does not exist.');
                 if (this.isValidInstallationDirCB) {
@@ -233,6 +241,7 @@ export const DOWNLOADER = registerHandler(new class extends IPCActionHandler {
                     this.isValidInstallationDirCB = undefined;
                 } else console.warn('No callback defined for', ACTIONS.downloader.isValidInstallationDir);
                 break;
+
             case ACTIONS.downloader.getDefaultInstallationDir:
                 if (args.length < 1) throw new Error('Default Installation dir argument does not exist.');
                 if (this.getDefaultInstallationDirCB) {
@@ -243,17 +252,21 @@ export const DOWNLOADER = registerHandler(new class extends IPCActionHandler {
                     this.getDefaultInstallationDirCB = undefined;
                 } else console.warn('No callback defined for', ACTIONS.downloader.getDefaultInstallationDir);
                 break;
+
             case ACTIONS.downloader.updateInstallationState:
                 updateInstallationState(args.length >= 1 ? args[0] : undefined);
                 break;
+
             case ACTIONS.downloader.updateInstallationProgress:
                 if (args.length < 1) throw new Error('Progress argument does not exist.');
                 updateInstallationProgress(args[0]);
                 break;
+
             case ACTIONS.downloader.updatePackageDownloadProgress:
                 if (args.length < 1) throw new Error('Progress argument does not exist.');
                 updatePackageDownloadProgress(args[0]);
                 break;
+
             case ACTIONS.downloader.uninstall:
                 if (args.length < 1) throw new Error('Error argument does not exist.');
                 if (this.uninstallCB) {
@@ -263,6 +276,7 @@ export const DOWNLOADER = registerHandler(new class extends IPCActionHandler {
                     this.uninstallCB = undefined;
                 } else console.warn('No callback defined for', ACTIONS.downloader.uninstall);
                 break;
+
             case ACTIONS.downloader.getUninstalledDependencies:
                 if (args.length < 1) throw new Error('Dependencies argument is missing.');
                 if (this.getUninstalledDependenciesCB) {
@@ -273,6 +287,7 @@ export const DOWNLOADER = registerHandler(new class extends IPCActionHandler {
                     this.getUninstalledDependenciesCB = undefined;
                 } else console.warn('No callback defined for', ACTIONS.downloader.getUninstalledDependencies);
                 break;
+
             case ACTIONS.downloader.isLauncherInstallerVersionValid:
                 if (args.length < 1) throw new Error('Validity argument is missing.');
                 if (this.isLauncherInstallerVersionValidCB) {
@@ -283,6 +298,7 @@ export const DOWNLOADER = registerHandler(new class extends IPCActionHandler {
                     this.isLauncherInstallerVersionValidCB = undefined;
                 } else console.warn('No callback defined for', ACTIONS.downloader.isLauncherInstallerVersionValid);
                 break;
+
             case ACTIONS.downloader.getAdditionalInputs:
                 if (args.length < 1) throw new Error('Result argument is missing.');
                 if (this.getAdditionalInputsCB) {
@@ -291,6 +307,7 @@ export const DOWNLOADER = registerHandler(new class extends IPCActionHandler {
                     this.getAdditionalInputsCB = undefined;
                 } else console.warn('No callback defined for', ACTIONS.downloader.getAdditionalInputs);
                 break;
+
             default:
                 throw new Error(`Action '${action}' not implemented.`);
         }
@@ -425,7 +442,6 @@ export const UTILITIES = registerHandler(new class extends IPCActionHandler {
         reject: (error: any) => void
     }[] = [];
 
-
     protected onAction(action: string, _event: Electron.IpcRendererEvent, args: any[]): void {
         switch (action) {
             case ACTIONS.utilities.chooseFile:
@@ -539,7 +555,7 @@ export const UTILITIES = registerHandler(new class extends IPCActionHandler {
         this.sendAction(ACTIONS.utilities.maximizeWindow);
     }
 
-    public unmaximizeWindow() {
+    public unMaximizeWindow() {
         this.sendAction(ACTIONS.utilities.unmaximizeWindow);
     }
 
@@ -617,7 +633,7 @@ export const UTILITIES = registerHandler(new class extends IPCActionHandler {
 
 }('utilities'));
 
-export const TOASTS = registerHandler(new class extends IPCActionHandler {
+registerHandler(new class extends IPCActionHandler {
     protected onAction(action: string, _event: Electron.IpcRendererEvent, args: any[]): void {
         switch (action) {
             case ACTIONS.toasts.addToast:
@@ -633,8 +649,6 @@ export const TOASTS = registerHandler(new class extends IPCActionHandler {
         }
     }
 }('toasts'));
-
-export type UpdateCheckingState = [boolean, UpdateCheckResult | undefined];
 
 export const UPDATER = registerHandler(new class extends IPCActionHandler {
 

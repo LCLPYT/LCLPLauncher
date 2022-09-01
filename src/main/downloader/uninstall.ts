@@ -40,7 +40,7 @@ export async function uninstallApp(app: App) {
 
             // if all files of the tracker have been removed, there is no need to keep the tracker any longer
             if (uninstalledCompletely || uninstalledCompletely === undefined) {
-                reader.deleteFile();  // no need to await file deletion, as the loop ends here
+                await reader.deleteFile();  // no need to await file deletion, as the loop ends here
             }
         }
     }
@@ -115,6 +115,7 @@ export async function uninstallApp(app: App) {
 
 /**
  * Registers a path that should be skipped when uninstalling.
+ * @param app The app or app id to consider.
  * @param path The path to be ignored during uninstallation.
  */
 export async function registerUninstallExceptionPath(app: App | number, path: string) {
@@ -124,7 +125,7 @@ export async function registerUninstallExceptionPath(app: App | number, path: st
     if (props.skip.includes(path)) return;
 
     props.skip.push(path);
-    writeUninstallProps(app, props);
+    await writeUninstallProps(app, props);
 }
 
 type UninstallProps = {

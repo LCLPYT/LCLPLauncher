@@ -1,21 +1,21 @@
-import { Toast } from 'bootstrap';
-import React, { Component } from 'react';
-import { HashRouter, Redirect, Route, Switch } from 'react-router-dom';
-import ToastOptions, { ToastType } from '../../common/types/Toast';
-import { ToastEvent, toastManager } from '../event/toasts';
+import {Toast} from 'bootstrap';
+import React, {Component} from 'react';
+import {HashRouter, Redirect, Route, Switch} from 'react-router-dom';
+import ToastOptions, {ToastType} from '../../common/types/Toast';
+import {ToastEvent, toastManager} from '../event/toasts';
 import Menubar from './Menubar';
 import Home from './pages/Home';
 import Library from './pages/Library';
 import Settings from './pages/Settings';
 
-import DownloadProgress, { PackageDownloadProgress } from '../../common/types/DownloadProgress';
-import { shouldPlayToastSound } from '../../common/utils/settings';
+import DownloadProgress, {PackageDownloadProgress} from '../../common/types/DownloadProgress';
+import {shouldPlayToastSound} from '../../common/utils/settings';
 import toastSound from '../sound/toast.ogg';
-import { installationProgressManager, InstallerEvent } from '../event/downloads';
-import { UPDATER } from '../utils/ipc';
+import {installationProgressManager, InstallerEvent} from '../event/downloads';
+import {UPDATER} from '../utils/ipc';
 import ElectronLog from 'electron-log';
-import { UpdaterEventListenerOrObject, updaterManager } from '../event/updater';
-import { ProgressInfo } from 'electron-updater';
+import {UpdaterEventListenerOrObject, updaterManager} from '../event/updater';
+import {ProgressInfo} from 'electron-updater';
 import LoadingSpinner from './utility/LoadingSpinner';
 
 class App extends Component {
@@ -118,7 +118,7 @@ class ToastStack extends Component<{}, ToastState> {
         const toastElements = document.querySelectorAll('.toast');
         Array.from(toastElements).forEach(element => {
             let instance = Toast.getInstance(element);
-            if (!instance) (instance = new Toast(element)).show();
+            if (!instance) new Toast(element).show();
         });
     }
 
@@ -167,8 +167,7 @@ abstract class AbstractToastComponent<State = {}> extends Component<ToastProps, 
         this.props.memory.alreadyShown = true;
 
         let ageText = 'Just now';
-        const step = Number(Math.ceil(age / AbstractToastComponent.timerUpdateInterval).toFixed(0));
-        this.lastTimeStep = step;
+        this.lastTimeStep = Number(Math.ceil(age / AbstractToastComponent.timerUpdateInterval).toFixed(0));
         if (this.lastTimeStep > 1) ageText = `${(age / 1000).toFixed(0)} seconds ago`
 
         return (

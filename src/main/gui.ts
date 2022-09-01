@@ -155,7 +155,7 @@ function openGui() {
  * @returns The main window.
  */
 async function displayMainWindow(): Promise<BrowserWindow> {
-    let icon: nativeImage | undefined;
+    let icon: Electron.NativeImage | undefined;
     if (isDevelopment) {
         const logoData = await import("../renderer/img/logo.png") as any;
         icon = nativeImage.createFromDataURL(<string> <unknown> logoData.default);

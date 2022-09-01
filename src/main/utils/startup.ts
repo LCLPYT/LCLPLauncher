@@ -8,8 +8,8 @@ import { getRunningProcess, handleRunningProcess } from "../core/runningApps";
 import { ActionFactory, GeneralActionArgument, PostActionHandle, PostActionWrapper } from "../downloader/postActions";
 import { readInputMap } from "../downloader/inputs";
 import { InputMap } from "../../common/types/InstallationInputResult";
-import { Substitution, SubstitutionFunctions, SubstitutionVariables } from "./substitute";
 import log from 'electron-log';
+import { Substitution, SubstitutionFunctions, SubstitutionVariables } from "./substitute";
 
 const LAUNCHER_COMPAT = 0;
 
@@ -148,14 +148,6 @@ class PreActionExecutor {
         };
     }
 }
-
-/*async function makeFileExecutable(executable: string) {
-    await doOnPlatformAsync(async () => {
-        const childProcess = execa('chmod', ['+x', executable]);
-        childProcess.stdout?.pipe(process.stdout);
-        await childProcess;
-    }, 'linux');
-}*/
 
 function runProgram(app: App, executable: string, args?: string[]) {
     log.debug(`Executing '${executable}'...`);

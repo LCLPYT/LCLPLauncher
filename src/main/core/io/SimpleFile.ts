@@ -9,7 +9,7 @@ export namespace SimpleFile {
         protected readonly file: string;
         protected readonly vars: Vars;
     
-        constructor(file: string, vars: Vars) {
+        protected constructor(file: string, vars: Vars) {
             this.file = file;
             this.vars = vars;
         }
@@ -35,12 +35,12 @@ export namespace SimpleFile {
             }
         }
     }
-    
+
     export interface AbstractWriter<Vars> extends MixinBufferWriter {} // make the compiler aware of the mixin with declaration merging
     export abstract class AbstractWriter<Vars> extends AbstractBase<Vars> implements WriteStreamContainer {
         public stream?: fs.WriteStream;
     
-        constructor(file: string, vars: Vars, reuseStream?: fs.WriteStream) {
+        protected constructor(file: string, vars: Vars, reuseStream?: fs.WriteStream) {
             super(file, vars)
             if(reuseStream) this.stream = reuseStream;
         }
@@ -75,7 +75,7 @@ export namespace SimpleFile {
     export abstract class AbstractReader<Vars> extends AbstractBase<Vars> implements ReadStreamContainer {
         public stream?: fs.ReadStream;
     
-        constructor(file: string, vars: Vars, reuseStream?: fs.ReadStream) {
+        protected constructor(file: string, vars: Vars, reuseStream?: fs.ReadStream) {
             super(file, vars);
             if(reuseStream) this.stream = reuseStream;
         }
