@@ -1,8 +1,8 @@
 import { Artifact, ExtractZipPostAction, PostAction, SegmentedPath } from "../../types/Installation";
-import { withBufferReadMethods, withBufferWriteMethods } from "../../utils/buffer";
-import { checksumFile } from "../../utils/checksums";
+import { withBufferReadMethods, withBufferWriteMethods } from "../../core/io/buffer";
+import { checksumFile } from "../../core/service/checksum";
 import { ERR_EOS } from "../../utils/constants";
-import { exists, resolveSegmentedPath } from "../../utils/fshelper";
+import { exists, resolveSegmentedPath } from "../../core/io/fshelper";
 import { ArtifactType, TrackerReader, TrackerWriter } from "./ArtifactTracker";
 
 export namespace ExtractedArchiveTracker {

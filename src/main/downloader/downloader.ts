@@ -1,5 +1,6 @@
 import { BrowserWindow, dialog } from "electron";
 import fetch, { Headers } from "electron-fetch";
+import log from 'electron-log';
 import * as fs from 'fs';
 import { jsoncSafe } from "jsonc/lib/jsonc.safe";
 import Downloader from 'nodejs-file-downloader';
@@ -12,15 +13,16 @@ import { CompiledInstallationInput } from "../../common/types/InstallationInput"
 import { InputMap } from "../../common/types/InstallationInputResult";
 import { ToastType } from "../../common/types/Toast";
 import { getBackendHost } from "../../common/utils/settings";
+import { Toast } from "../core/service/toast";
 import { InstalledApplication } from "../database/models/InstalledApplication";
 import AppInfo from "../types/AppInfo";
 import { DependencyFragment } from "../types/Dependency";
 import Installation, { Artifact, SegmentedPath } from "../types/Installation";
 import { fetchApp } from "../utils/backend";
 import { getAppVersion } from "../utils/env";
-import { exists, getAppArtifactsDir, getAppStartupFile, getDependencyDir, mkdirp, resolveSegmentedPath, rmdirRecursive } from "../utils/fshelper";
-import { DOWNLOADER, TOASTS } from "../utils/ipc";
-import { isAppRunning } from "../utils/runningApps";
+import { exists, getAppArtifactsDir, getAppStartupFile, getDependencyDir, mkdirp, resolveSegmentedPath, rmdirRecursive } from "../core/io/fshelper";
+import { DOWNLOADER } from "../utils/ipc";
+import { isAppRunning } from "../core/runningApps";
 import { replaceArraySubstitutes, Substitution, SubstitutionFunctions, SubstitutionVariables } from "../utils/substitute";
 import { isDomainTrusted } from "../utils/tls";
 import { Dependencies } from "./dependencies";
@@ -31,7 +33,6 @@ import { ArtifactTrackerVariables } from "./tracker/ArtifactTracker";
 import { createReader } from "./tracker/ArtifactTrackers";
 import { registerUninstallExceptionPath, uninstallApp } from "./uninstall";
 import { resolveUrl } from "./urlResolver";
-import log from 'electron-log';
 
 const queue: [App, string, InputMap, (err: any) => void][] = [];
 let currentInstaller: Installer | null = null;
@@ -209,9 +210,7 @@ export async function startInstallationProcess(app: App, installationDir: string
     }
 
     log.info('Installing to:', installationDir);
-    const toastId = TOASTS.getNextToastId();
-    TOASTS.addToast({
-        id: toastId,
+    const toastId = Toast.add({
         icon: 'file_download',
         title: 'Downloads active',
         type: ToastType.DOWNLOAD_STATUS,
@@ -231,7 +230,7 @@ export async function startInstallationProcess(app: App, installationDir: string
     function resetInstallation() {
         currentInstaller = null;
         currentIsUpdating = false;
-        TOASTS.removeToast(toastId);
+        Toast.remove(toastId);
     }
 
     function beginNextInstallation() {
@@ -262,13 +261,7 @@ export async function startInstallationProcess(app: App, installationDir: string
     } catch(err) {
         resetInstallation();
 
-        TOASTS.addToast({
-            id: TOASTS.getNextToastId(),
-            icon: 'error',
-            title: 'Installation failed',
-            type: ToastType.TEXT,
-            detail: `'${app.title}' could not be installed because of an unexpected error.`
-        });
+        Toast.add(Toast.createError('Installation failed', `'${app.title}' could not be installed because of an unexpected error.`));
         beginNextInstallation();
         throw err;
     }
@@ -277,8 +270,7 @@ export async function startInstallationProcess(app: App, installationDir: string
     log.info(`Installation of '${app.title}' finished successfully.`);
 
     // provide finish notification
-    TOASTS.addToast({
-        id: TOASTS.getNextToastId(),
+    Toast.add({
         icon: 'done',
         title: 'Installation finished',
         type: ToastType.TEXT,

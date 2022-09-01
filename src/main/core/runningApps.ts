@@ -1,6 +1,6 @@
 import * as childProcess from 'child_process';
 import App from '../../common/types/App';
-import { DOWNLOADER } from './ipc';
+import { DOWNLOADER } from '../utils/ipc';
 
 const runningApps = new Map<number, childProcess.ChildProcessWithoutNullStreams>();
 

@@ -2,7 +2,7 @@ import { Modal } from "bootstrap";
 import React, { Component } from "react";
 import App from "../../../../../common/types/App";
 import AppDependency from "../../../../../common/types/AppDependency";
-import { DependenciesEvent, dependenciesManager } from "../../../../utils/dependencies";
+import { DependenciesEvent, dependenciesManager } from "../../../../event/dependencies";
 
 interface Props {
     app: App

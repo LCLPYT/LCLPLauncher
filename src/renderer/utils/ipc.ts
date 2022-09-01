@@ -1,4 +1,5 @@
 import { ipcRenderer } from "electron";
+import log from 'electron-log';
 import { IpcRendererEvent } from "electron/renderer";
 import type App from "../../common/types/App";
 import type AppDependency from "../../common/types/AppDependency";
@@ -7,12 +8,11 @@ import type InstallationInputResult from "../../common/types/InstallationInputRe
 import type { InputMap } from "../../common/types/InstallationInputResult";
 import type UpdateCheckResult from "../../common/types/UpdateCheckResult";
 import { ACTIONS, GenericIPCActionHandler, GenericIPCHandler } from "../../common/utils/ipc";
-import { updateInstallationProgress, updateInstallationState, updatePackageDownloadProgress } from "./downloads";
-import { addToast, removeToast } from "./toasts";
-import { postUpdateError, postUpdateProgress, postUpdateState } from "./updater";
-import { setWindowMaximizable } from "./windowEvents";
-import log from 'electron-log';
-import {readyNotifier} from "./readyState";
+import { updateInstallationProgress, updateInstallationState, updatePackageDownloadProgress } from "../event/downloads";
+import { addToast, removeToast } from "../event/toasts";
+import { postUpdateError, postUpdateProgress, setUpdateState } from "../event/updater";
+import { readyNotifier } from "./readyState";
+import { setWindowMaximizable } from "../event/windowEvents";
 
 abstract class IPCActionHandler extends GenericIPCActionHandler<IpcRendererEvent, IpcRendererEvent> {
     protected getIpcEvent(event: IpcRendererEvent): IpcRendererEvent {
@@ -32,12 +32,22 @@ const IPC_HANDLERS: GenericIPCHandler<IpcRendererEvent>[] = [];
 
 export function initIPC() {
     IPC_HANDLERS.forEach(handler => ipcRenderer.on(handler.channel, (event, args) => handler.onMessage(event, args)));
+    SYSTEM.ipcReady();
 }
 
 function registerHandler<T extends GenericIPCHandler<IpcRendererEvent>>(handler: T) {
     IPC_HANDLERS.push(handler);
     return handler;
 }
+
+export const SYSTEM = registerHandler(new class extends IPCActionHandler {
+    protected onAction(): void {}
+
+    public ipcReady() {
+        this.sendAction(ACTIONS.system.ipcReady);
+    }
+
+}('system'));
 
 export const LIBRARY = registerHandler(new class extends IPCActionHandler {
     protected addAppToLibraryCB?: (success: boolean) => void;
@@ -627,66 +637,58 @@ export const TOASTS = registerHandler(new class extends IPCActionHandler {
 export type UpdateCheckingState = [boolean, UpdateCheckResult | undefined];
 
 export const UPDATER = registerHandler(new class extends IPCActionHandler {
-    protected isUpdateCheckingCB: {
-        resolve: (state: boolean, result: UpdateCheckResult | undefined) => void,
-        reject: (error: any) => void
-    }[] = [];
 
     protected startUpdateCB?: {
         resolve: () => void,
         reject: (error: any) => void
     };
 
+    protected getCachedUpdateStateCB?: {
+        resolve: (res: UpdateCheckResult) => void
+    };
+
     protected onAction(action: string, _event: Electron.IpcRendererEvent, args: any[]): void {
         switch (action) {
             case ACTIONS.updater.sendUpdateState:
                 if (args.length < 1) throw new Error('Update state argument does not exist.');
-                postUpdateState(args[0]);
+
+                setUpdateState(args[0]);
+
+                // echo back
+                this.sendAction(ACTIONS.updater.sendUpdateState, true);
                 break;
-            case ACTIONS.updater.isUpdateChecking:
-                if (args.length < 3) throw new Error('Update checking arguments do not exist.');
-                if (this.isUpdateCheckingCB) {
-                    const checking: boolean = args[0];
-                    const result: UpdateCheckResult | undefined = args[1];
-                    const err = args[2];
-                    if (err) this.isUpdateCheckingCB.forEach(cb => cb.reject(err));
-                    else this.isUpdateCheckingCB.forEach(cb => cb.resolve(checking, result));
-                    this.isUpdateCheckingCB = [];
-                } else console.warn('No callback defined for', ACTIONS.updater.isUpdateChecking);
-                break;
+
             case ACTIONS.updater.startUpdate:
                 if (args.length < 1) throw new Error('Error argument does not exist.');
                 if (this.startUpdateCB) {
                     const err = args[0];
                     if (err === null) this.startUpdateCB.resolve();
                     else this.startUpdateCB.reject(err);
+                    this.startUpdateCB = undefined;
                 } else console.warn('No callback defined for', ACTIONS.updater.startUpdate);
                 break;
+
             case ACTIONS.updater.sendError:
                 if (args.length < 1) throw new Error('Error argument does not exist.');
                 postUpdateError(args[0]);
                 break;
+
             case ACTIONS.updater.sendProgress:
                 if (args.length < 1) throw new Error('Progress info argument does not exist.');
                 postUpdateProgress(args[0]);
                 break;
+
+            case ACTIONS.updater.getCachedUpdateState:
+                if (args.length < 1) throw new Error('Cached state argument does not exist.');
+                if (this.getCachedUpdateStateCB) {
+                    this.getCachedUpdateStateCB.resolve(args[0]);
+                    this.getCachedUpdateStateCB = undefined;
+                } else console.warn('No callback defined for', ACTIONS.updater.getCachedUpdateState);
+                break;
+                
             default:
                 throw new Error(`Action '${action}' not implemented.`);
         }
-    }
-
-    public isUpdateChecking(): Promise<UpdateCheckingState> {
-        return new Promise((resolve, reject) => {
-            this.isUpdateCheckingCB.push({
-                resolve: (checking, result) => resolve([checking, result]),
-                reject: err => reject(err)
-            });
-            if (this.isUpdateCheckingCB.length === 1) this.sendAction(ACTIONS.updater.isUpdateChecking);
-        });
-    }
-
-    public skipUpdate() {
-        this.sendAction(ACTIONS.updater.skipUpdate);
     }
 
     public startUpdate(): Promise<boolean> {
@@ -697,6 +699,16 @@ export const UPDATER = registerHandler(new class extends IPCActionHandler {
                 reject: err => reject(err)
             }
             this.sendAction(ACTIONS.updater.startUpdate);
+        });
+    }
+
+    public getCachedUpdateState(): Promise<UpdateCheckResult | null> {
+        if (this.getCachedUpdateStateCB) return Promise.resolve(null);
+        return new Promise(resolve => {
+            this.getCachedUpdateStateCB = {
+                resolve: (res) => resolve(res)
+            }
+            this.sendAction(ACTIONS.updater.getCachedUpdateState);
         });
     }
 }('updater'));

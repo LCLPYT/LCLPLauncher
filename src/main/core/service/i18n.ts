@@ -1,8 +1,8 @@
 import fs from 'fs';
 import path from 'path';
-import { LanguageProvider, loadTranslations, setLanguageProvider } from "../../common/utils/i18n";
-import { exists } from './fshelper';
-import { getStaticMain } from "./static";
+import { LanguageProvider, loadTranslations, setLanguageProvider } from "../../../common/utils/i18n";
+import { exists } from '../io/fshelper';
+import { getStaticMain } from "../../utils/static";
 
 const loadLanguageFromFile: LanguageProvider = async (language) => {
     if (!language) throw new Error('no language provided');

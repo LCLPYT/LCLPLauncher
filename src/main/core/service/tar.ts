@@ -3,11 +3,11 @@ import * as Path from 'path';
 import gunzip from 'gunzip-maybe';
 import * as Tar from 'tar-stream';
 import * as Stream from 'stream';
-import { mkdirp } from './fshelper';
+import { mkdirp } from '../io/fshelper';
 import progress_stream from 'progress-stream';
-import { ProgressCallback } from './progress';
-import { isDevelopment } from '../../common/utils/env';
-import { osHandler } from './oshooks';
+import { ProgressCallback } from '../../types/Progress';
+import { isDevelopment } from '../../../common/utils/env';
+import { osHandler } from '../../utils/oshooks';
 
 export function extractTar(tarFile: string, targetDirectory: string, progressListener?: ProgressCallback) {
     const getPath = (path: string) => Path.join(targetDirectory, path);

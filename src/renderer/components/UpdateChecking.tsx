@@ -1,18 +1,15 @@
 import { ProgressInfo } from 'electron-updater';
 import React, { Component } from 'react';
-import UpdateCheckResult from '../../common/types/UpdateCheckResult';
 import { formatBytes } from '../../common/utils/utils';
 import { UPDATER, UTILITIES } from '../utils/ipc';
-import { UpdaterEvent, updaterManager } from '../utils/updater';
+import { UpdaterEvent, updaterManager } from '../event/updater';
 import LoadingSpinner from './utility/LoadingSpinner';
 
 interface Props {
-    result?: UpdateCheckResult,
     error?: any
 }
 
 interface State {
-    data?: UpdateCheckResult,
     downloading?: boolean,
     error?: any,
     progress?: ProgressInfo
@@ -22,7 +19,6 @@ class UpdateChecking extends Component<Props, State> {
     constructor(props: Props) {
         super(props);
         this.state = {
-            data: this.props.result,
             error: this.props.error
         };
     }
@@ -71,36 +67,16 @@ class UpdateChecking extends Component<Props, State> {
             );
         }
 
-        if (!this.state.data) return (
-            <div className="py-2 h-100 d-flex align-items-center justify-content-center text-lighter overflow-hidden">
-                <LoadingSpinner noMargin={true} />
-                <h4 className="ms-3 mb-0">Checking for Updates</h4>
+        return (
+            <div className="py-2 h-100 overflow-hidden d-flex flex-column align-items-center justify-content-center">
+                <h4 className="text-lighter mb-1">Mandatory update</h4>
+                <div className="text-light px-2">A mandatory update has to be installed. Do you want to install it now?</div>
+                <div className="d-flex w-100 mt-1 align-items-center justify-content-around">
+                    <button id="updateLater" className="btn btn-sm btn-danger">Exit</button>
+                    <button id="updateNow" className="btn btn-sm btn-success">Update</button>
+                </div>
             </div>
         );
-        else {
-            let title: string | undefined;
-            let desc: string | undefined;
-            let laterText: string | undefined;
-            if (!!this.state.data.mandatory) {
-                title = 'Mandatory update';
-                desc = 'A mandatory update has to be installed. Do you want to install it now?';
-                laterText = 'Exit';
-            } else {
-                title = 'Update available';
-                desc = 'An update is available. Do you want to install it now or later?';
-                laterText = 'Update later'
-            }
-            return (
-                <div className="py-2 h-100 overflow-hidden d-flex flex-column align-items-center justify-content-center">
-                    <h4 className="text-lighter mb-1">{title}</h4>
-                    <div className="text-light px-2">{desc}</div>
-                    <div className="d-flex w-100 mt-1 align-items-center justify-content-around">
-                        <button id="updateLater" className="btn btn-sm btn-danger">{laterText}</button>
-                        <button id="updateNow" className="btn btn-sm btn-success">Update</button>
-                    </div>
-                </div>
-            );
-        }
     }
 
     protected updaterListeners: {
@@ -108,12 +84,6 @@ class UpdateChecking extends Component<Props, State> {
     } = {};
 
     componentDidMount() {
-        updaterManager.addEventListener('update-state', this.updaterListeners['update-state'] = event => {
-            if (!event.detail.state) throw new Error('State is undefined');
-            if (event.detail.state.updateAvailable) this.setState({
-                data: event.detail.state
-            });
-        });
         updaterManager.addEventListener('update-error', this.updaterListeners['update-error'] = event => {
             if (!event.detail.error) throw new Error('Error is undefined');
             this.setState({
@@ -143,18 +113,14 @@ class UpdateChecking extends Component<Props, State> {
         const updateLater = document.getElementById('updateLater');
         if (updateLater) {
             this.lastLaterBtn = updateLater;
-            updateLater.addEventListener('click', this.laterListener = () => {
-                if (!this.state.data) return;
-                if (this.state.data.mandatory) UTILITIES.exitApp();
-                else UPDATER.skipUpdate();
-            });
+            updateLater.addEventListener('click', this.laterListener = () => UTILITIES.exitApp());
         }
 
         const updateNow = document.getElementById('updateNow');
         if (updateNow) {
             this.lastUpdateBtn = updateNow;
             updateNow.addEventListener('click', this.updateListener = () => {
-                if (this.state.data) UPDATER.startUpdate().then(updateStarted => {
+                UPDATER.startUpdate().then(updateStarted => {
                     if (updateStarted) this.setState({ downloading: true });
                 }).catch(err => console.error('Could not start download:', err));
             });

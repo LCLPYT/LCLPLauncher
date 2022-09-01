@@ -11,9 +11,11 @@ import type UpdateCheckResult from "../../common/types/UpdateCheckResult";
 import { isDevelopment } from "../../common/utils/env";
 import { ACTIONS, GenericIPCActionHandler, GenericIPCHandler } from "../../common/utils/ipc";
 import { isRunningAsAppImage } from "./env";
-import { exists, getOrCreateDefaultInstallationDir } from "./fshelper";
+import { exists, getOrCreateDefaultInstallationDir } from "../core/io/fshelper";
 import { isPlatform } from "./oshooks";
-import { getMainWindow } from "./window";
+import { getMainWindow } from "../core/window";
+import Notifier from "../../common/utils/notifier";
+import { getCachedUpdateCheckResult } from "../core/updater/updateResultCache";
 
 class IpcActionEvent {
     public readonly event: IpcMainEvent;
@@ -50,7 +52,10 @@ abstract class IPCActionHandler extends GenericIPCActionHandler<IpcMainEvent, Ip
 const IPC_HANDLERS: GenericIPCHandler<IpcMainEvent>[] = [];
 
 export function initIPC() {
-    IPC_HANDLERS.forEach(handler => ipcMain.on(handler.channel, (event, args) => handler.onMessage(event, args)));
+    IPC_HANDLERS.forEach(handler => ipcMain.on(
+        handler.channel, 
+        (event, args) => handler.onMessage(event, args)
+    ));
 }
 
 function registerHandler<T extends GenericIPCHandler<IpcMainEvent>>(handler: T) {
@@ -58,13 +63,40 @@ function registerHandler<T extends GenericIPCHandler<IpcMainEvent>>(handler: T) 
     return handler;
 }
 
+export const SYSTEM = registerHandler(new class extends IPCActionHandler {
+    protected ipcReady = false;
+    protected ipcReadyNotifier = new Notifier<void>();
+
+    protected onAction(action: string, _event: IpcActionEvent, _args: any[]): void {
+        switch (action) {
+            case ACTIONS.system.ipcReady:
+                if (this.ipcReady) return;
+
+                this.ipcReady = true;
+                this.ipcReadyNotifier.notify();
+                this.ipcReadyNotifier.unbind();
+
+                break;
+        
+            default:
+                throw new Error(`Action '${action}' not implemented.`);
+        }
+    }
+
+    public whenIpcReady(): Promise<void> {
+        if (this.ipcReady) return Promise.resolve();
+        return new Promise(resolve => this.ipcReadyNotifier.bind(resolve));
+    }
+
+}('system'));
+
 registerHandler(new class extends IPCActionHandler {
     protected onAction(action: string, event: IpcActionEvent, args: any[]): void {
         switch (action) {
             case ACTIONS.library.addAppToLibrary:
                 if (args.length < 1) throw new Error('App argument is missing');
 
-                import(/* webpackChunkName: "lib" */ './library').then(({addToLibrary}) =>
+                import(/* webpackChunkName: "lib" */ '../core/library').then(({addToLibrary}) =>
                     addToLibrary(<App>args[0])
                         .then(() => event.reply(true))
                         .catch(err => {
@@ -75,7 +107,7 @@ registerHandler(new class extends IPCActionHandler {
             case ACTIONS.library.isAppInLibrary:
                 if (args.length < 1) throw new Error('App argument is missing');
 
-                import(/* webpackChunkName: "lib" */ './library').then(({isInLibrary}) =>
+                import(/* webpackChunkName: "lib" */ '../core/library').then(({isInLibrary}) =>
                     isInLibrary(<App>args[0])
                         .then(inLibrary => event.reply(inLibrary))
                         .catch(err => {
@@ -85,7 +117,7 @@ registerHandler(new class extends IPCActionHandler {
                 break;
             case ACTIONS.library.getLibraryApps:
 
-                import(/* webpackChunkName: "lib" */ './library').then(({getLibraryApps}) =>
+                import(/* webpackChunkName: "lib" */ '../core/library').then(({getLibraryApps}) =>
                     getLibraryApps()
                         .then(apps => event.reply(apps))
                         .catch(err => {
@@ -356,13 +388,8 @@ export const UTILITIES = registerHandler(new class extends IPCActionHandler {
 }('utilities'));
 
 export const TOASTS = registerHandler(new class extends IPCActionHandler {
-    protected nextToastId = 0;
 
     protected onAction(): void { }
-
-    public getNextToastId() {
-        return this.nextToastId++;
-    }
 
     public addToast(toast: Toast) {
         this.sendAction(ACTIONS.toasts.addToast, toast);
@@ -375,41 +402,57 @@ export const TOASTS = registerHandler(new class extends IPCActionHandler {
 }('toasts'));
 
 export const UPDATER = registerHandler(new class extends IPCActionHandler {
-    protected onAction(action: string, event: IpcActionEvent): void {
+
+    protected sendUpdateStateCB?: {
+        resolve: () => void,
+        reject: () => void
+    };
+
+    protected onAction(action: string, event: IpcActionEvent, args: any[]): void {
         switch (action) {
-            case ACTIONS.updater.isUpdateChecking:
-
-                import(/* webpackChunkName: "lib" */ './updater').then(({getUpdateCheckResult, getUpdateError, isUpdateChecking}) => {
-                    event.reply(isUpdateChecking(), getUpdateCheckResult(), getUpdateError())
-                });
-
-                break;
-
-            case ACTIONS.updater.skipUpdate:
-                const mainWindow = getMainWindow();
-                if (!mainWindow) throw new Error('Could not find main window.');
-
-                this.sendUpdateState({ updateAvailable: false }); // continue to main window
-
-                break;
-
             case ACTIONS.updater.startUpdate:
                 try {
-                    if (isDevelopment) event.reply(null);
-                    else {
-                        if (isPlatform('linux') && !isRunningAsAppImage()) {
-                            const mainWindow = getMainWindow();
-                            if (!mainWindow) throw new Error('Could not get main window.');
+                    if (isDevelopment) {
+                        // debug progress update
+                        let progress = 0;
+                        let timer: NodeJS.Timer | undefined = undefined;
+                        
+                        setTimeout(() => timer = setInterval(() => {
+                            this.sendUpdateProgress({
+                                bytesPerSecond: 1024,
+                                delta: 1024,
+                                percent: progress,
+                                total: 100 * 1024,
+                                transferred: progress * 1024
+                            })
+                            if (progress < 100) {
+                                progress = Math.min(progress + (Math.random() * 5), 100);
+                            } else if (timer) {
+                                clearInterval(timer);
+                            }
+                        }, 1000), 3000);
 
-                            dialog.showMessageBox(mainWindow, {
-                                type: 'info',
-                                message: 'Your installation does not support internal auto updating. Please update the app manually; e.g. with your package manager.',
-                                title: 'Manual update required'
-                            });
-                        } else {
-                            autoUpdater.downloadUpdate();
-                            event.reply(null);
-                        }
+                        event.reply(null);
+                        return;
+                    }
+
+                    if (isPlatform('linux') && !isRunningAsAppImage()) {
+                        const mainWindow = getMainWindow();
+                        if (!mainWindow) throw new Error('Could not get main window.');
+
+                        dialog.showMessageBox(mainWindow, {
+                            type: 'info',
+                            message: 'Your installation does not support internal auto updating. Please update the app manually; e.g. with your package manager.',
+                            title: 'Manual update required'
+                        });
+                    } else {
+                        autoUpdater.removeAllListeners('download-progress').removeAllListeners('update-downloaded');
+
+                        autoUpdater.on('download-progress', (progress: ProgressInfo) => this.sendUpdateProgress(progress))
+                            .on('update-downloaded', () => autoUpdater.quitAndInstall());
+
+                        autoUpdater.downloadUpdate();
+                        event.reply(null);
                     }
                 } catch (err) {
                     event.reply(err);
@@ -417,20 +460,39 @@ export const UPDATER = registerHandler(new class extends IPCActionHandler {
 
                 break;
 
+            case ACTIONS.updater.sendUpdateState:
+                if (args.length < 1) throw new Error('Response argument does not exist.');
+                if (this.sendUpdateStateCB) {
+                    const resp = args[0];
+                    if (resp) this.sendUpdateStateCB.resolve();
+                    else this.sendUpdateStateCB.reject();
+                } else console.warn('No callback defined for', ACTIONS.updater.sendUpdateState);
+                break;
+
+            case ACTIONS.updater.getCachedUpdateState:
+                event.reply(getCachedUpdateCheckResult());
+                break;
+
             default:
                 throw new Error(`Action '${action}' not implemented.`);
         }
     }
 
-    public sendUpdateState(state: UpdateCheckResult) {
-        this.sendAction(ACTIONS.updater.sendUpdateState, state);
+    public sendUpdateState(state: UpdateCheckResult): Promise<void> {
+        return new Promise((resolve, reject) => {
+            this.sendUpdateStateCB = {
+                resolve: resolve,
+                reject: reject
+            };
+            this.sendAction(ACTIONS.updater.sendUpdateState, state);
+        });
     }
 
     public sendUpdateError(err: any) {
         this.sendAction(ACTIONS.updater.sendError, err);
     }
 
-    public sendUpdateProgress(progress: ProgressInfo) {
+    protected sendUpdateProgress(progress: ProgressInfo) {
         this.sendAction(ACTIONS.updater.sendProgress, progress);
     }
 }('updater'));

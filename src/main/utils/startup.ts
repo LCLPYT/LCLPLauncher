@@ -1,10 +1,10 @@
 import App from "../../common/types/App";
 import * as fs from 'fs';
 import { AppStartup, PostAction, SegmentedPath } from "../types/Installation";
-import { exists, getAppStartupFile, resolveSegmentedPath } from "./fshelper";
+import { exists, getAppStartupFile, resolveSegmentedPath } from "../core/io/fshelper";
 import { getInstallationDirectory } from "../downloader/installedApps";
 import * as childProcess from 'child_process';
-import { getRunningProcess, handleRunningProcess } from "./runningApps";
+import { getRunningProcess, handleRunningProcess } from "../core/runningApps";
 import { ActionFactory, GeneralActionArgument, PostActionHandle, PostActionWrapper } from "../downloader/postActions";
 import { readInputMap } from "../downloader/inputs";
 import { InputMap } from "../../common/types/InstallationInputResult";

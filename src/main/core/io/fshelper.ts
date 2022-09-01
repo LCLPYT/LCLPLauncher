@@ -2,9 +2,9 @@ import * as fs from 'fs';
 import * as path from 'path';
 import * as os from 'os';
 import rimraf from 'rimraf';
-import type App from '../../common/types/App';
-import type { SegmentedPath } from '../types/Installation';
-import type { DependencyDescriptor } from '../types/Dependency';
+import type App from '../../../common/types/App';
+import type { SegmentedPath } from '../../types/Installation';
+import type { DependencyDescriptor } from '../../types/Dependency';
 import { app as electronApp } from 'electron';
 
 export function rmdirRecursive(directory: string) {

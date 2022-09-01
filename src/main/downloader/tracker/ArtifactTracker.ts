@@ -1,9 +1,9 @@
 import { Artifact } from "../../types/Installation";
-import { exists, getAppArtifactFile, isDirectory, rmdirRecursive, unlinkRemoveParentIfEmpty } from "../../utils/fshelper";
+import { exists, getAppArtifactFile, isDirectory, rmdirRecursive, unlinkRemoveParentIfEmpty } from "../../core/io/fshelper";
 import * as fs from 'fs';
 import { ERR_EOS } from "../../utils/constants";
-import { withBufferWriteMethods } from "../../utils/buffer";
-import { SimpleFile } from "../../utils/SimpleFile";
+import { withBufferWriteMethods } from "../../core/io/buffer";
+import { SimpleFile } from "../../core/io/SimpleFile";
 import log from 'electron-log';
 
 // if a tracker file has a version older than this string, it will be deleted and an update of the artifact will be required

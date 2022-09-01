@@ -3,7 +3,7 @@ import { InstalledApplication } from "../database/models/InstalledApplication";
 import { ArtifactTrackerVariables } from "./tracker/ArtifactTracker";
 import * as Path from 'path';
 import * as fs from 'fs';
-import { exists, getAppArtifactsDir, getAppTrackerFile, getAppUninstallerDir, getAppUninstallPropsFile, mkdirp, rmdirRecursive } from "../utils/fshelper";
+import { exists, getAppArtifactsDir, getAppTrackerFile, getAppUninstallerDir, getAppUninstallPropsFile, mkdirp, rmdirRecursive } from "../core/io/fshelper";
 import { createReader } from "./tracker/ArtifactTrackers";
 import { DOWNLOADER } from "../utils/ipc";
 import { UninstallTrackers } from "./tracker/uninstall/UninstallTrackers";

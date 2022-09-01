@@ -1,12 +1,15 @@
 import { app, BrowserWindow, nativeImage, nativeTheme, shell } from "electron";
 import log from "electron-log";
 import path from "path";
+import { ToastType } from "../common/types/Toast";
 import { isDevelopment } from "../common/utils/env";
 import { Settings } from "../common/utils/settings";
 import { isExternalResource } from "../common/utils/urls";
+import { Toast } from "./core/service/toast";
+import { setCachedCheckResult } from "./core/updater/updateResultCache";
+import { setMainWindow, setWindowReady } from "./core/window";
 import { executeUrlCommand, getParsedArgv, parseArgv } from "./utils/argv";
 import { customWords } from "./utils/dictionary";
-import { setMainWindow, setWindowReady } from "./utils/window";
 
 // global reference to mainWindow (necessary to prevent window from being garbage collected)
 let mainWindow: BrowserWindow | null;
@@ -16,7 +19,7 @@ app.on('ready', () => {
     appWasReady = true;
 
     // app.getLocale() is only available after 'ready' event
-    import('./utils/i18n').then(({initI18n}) => initI18n(app.getLocale()));
+    import('./core/service/i18n').then(({initI18n}) => initI18n(app.getLocale()));
 });
 
 export function startup() {
@@ -60,15 +63,58 @@ async function initDependencies() {
     }
 
     // init IPC
-    const {initIPC, UTILITIES} = await import('./utils/ipc');
+    const {initIPC, UTILITIES, UPDATER, SYSTEM} = await import('./utils/ipc');
     initIPC();
+
+    const whenIpcReady = SYSTEM.whenIpcReady();
+    whenIpcReady.then(() => log.info('The window is now shown. IPC is now active.'));
+    whenIpcReady.then(() => Toast.flush());
 
     // init settings
     Settings.init();
 
     // auto update
-    const {checkForUpdates} = await import('./utils/updater')
-    await checkForUpdates(() => mainWindow);
+    const {checkForUpdates} = await import('./core/updater/updateChecker');
+    const update = await checkForUpdates().then(res => {
+        setCachedCheckResult(res);
+        return res;
+    }).catch(err => {
+        log.error('Could not check for updates:', err);
+
+        if (mainWindow) mainWindow.setTitle('LCLPLauncher - Update Error');
+        Toast.add(Toast.createError('Update error'));
+        whenIpcReady.then(() => UPDATER.sendUpdateError(err));
+
+        return null;
+    });
+
+    if (!update || (update.updateAvailable && !!update.mandatory)) {
+        // a mandatory update is required or an error occurred whilst checking.
+        // stop all other tasks and handle update in render thread
+        if (update) {
+            log.info('Mandatory update required.');
+
+            if (mainWindow) mainWindow.setTitle('LCLPLauncher - Mandatory Update');
+            await whenIpcReady.then(() => UPDATER.sendUpdateState(update));
+        }
+
+        whenIpcReady.then(() => UTILITIES.sendAppReadySignal());
+        return;
+    } else {
+        if (update.updateAvailable) {
+            log.info(update.versionName ? `Update available: Version ${update.versionName}` : 'Update available.');
+            Toast.add({
+                icon: 'info',
+                title: 'Update available',
+                type: ToastType.UPDATE_AVAILABLE,
+                detail: update.versionName,
+                noAutoHide: true,
+                noSound: true
+            });
+        } else {
+            log.info('No update available; already up-to-date.');
+        }
+    }
 
     // do those tasks in parallel
     await Promise.all([
@@ -79,7 +125,7 @@ async function initDependencies() {
     ]);
 
     // finally, send ready event
-    UTILITIES.sendAppReadySignal();
+    whenIpcReady.then(() => UTILITIES.sendAppReadySignal());
 }
 
 function openGuiWhenReady() {
@@ -152,9 +198,6 @@ async function displayMainWindow(): Promise<BrowserWindow> {
     window.once('ready-to-show', () => {
         window.show();
         setWindowReady(true);
-
-        import('./utils/updater').then(({notifyWindowReady}) =>
-            notifyWindowReady(() => mainWindow))
     });
 
     /* webContent events */

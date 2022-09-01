@@ -3,7 +3,7 @@ import type { InputMap } from "../../common/types/InstallationInputResult";
 import type InstallationInput from "../../common/types/InstallationInput";
 import type { CompiledInstallationInput } from "../../common/types/InstallationInput";
 
-import { exists, getAppInputMapFile, resolveSegmentedPath } from "../utils/fshelper";
+import { exists, getAppInputMapFile, resolveSegmentedPath } from "../core/io/fshelper";
 import * as fs from 'fs';
 
 export async function compileAdditionalInputs(inputs: InstallationInput[], installationDir: string, map: InputMap) {

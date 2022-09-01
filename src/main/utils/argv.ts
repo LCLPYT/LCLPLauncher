@@ -46,7 +46,7 @@ const urlCommands: URLCommandChildContainer = {
 
                 await initDb();
 
-                const {isInLibrary} = await import(/* webpackChunkName: "lib" */ './library');
+                const {isInLibrary} = await import(/* webpackChunkName: "lib" */ '../core/library');
 
                 if (await isInLibrary(appKey)) {
                     argv.location = `/library/app/${appKey}`;
@@ -172,9 +172,9 @@ function findCommandRecursive(commandArgs: string[], container: URLCommandChildC
 }
 
 async function checkMandatoryUpdate(): Promise<boolean> {
-    const {fetchMandatoryUpdateRequired} = await import(/* webpackChunkName: "lib" */ './updater');
+    const {isUpdateMandatory} = await import(/* webpackChunkName: "lib" */ '../core/updater/mandatoryUpdater');
 
-    if (await fetchMandatoryUpdateRequired()) {
+    if (await isUpdateMandatory()) {
         console.error('LCLPLauncher requires a mandatory update. Please update first!');
         return true;
     }

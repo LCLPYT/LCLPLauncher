@@ -1,6 +1,6 @@
 import { TrackerWriter, ArtifactType, TrackerReader } from "./ArtifactTracker";
-import { exists } from "../../utils/fshelper";
-import { withBufferReadMethods, withBufferWriteMethods } from "../../utils/buffer";
+import { exists } from "../../core/io/fshelper";
+import { withBufferReadMethods, withBufferWriteMethods } from "../../core/io/buffer";
 
 export namespace ExistingFileTracker {
     export class Writer extends TrackerWriter {

@@ -8,6 +8,7 @@ import {registerKeybinds} from './utils/keybinds';
 import {initI18n} from "./utils/i18n";
 import {renderCustomTitleBar, renderLoadingSpinner} from "./page";
 import {showWhenReady} from "./utils/readyState";
+import { setUpdateState } from './event/updater';
 
 // accept code hot updates in development
 if (module.hot) {
@@ -41,6 +42,9 @@ registerKeybinds();
     }
 
     await initI18n().catch(err => log.error('Error loading translations', err));
+
+    const state = await Ipc.UPDATER.getCachedUpdateState().catch(() => null);
+    if (state) setUpdateState(state);
 
     await showWhenReady(Ipc.UTILITIES.requestAppReadyState());
 })();

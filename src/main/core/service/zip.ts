@@ -2,9 +2,9 @@ import * as yauzl from 'yauzl';
 import Path from 'path';
 import fs from 'fs';
 import progress_stream from 'progress-stream';
-import { mkdirp } from './fshelper';
-import { ExtractedArchiveTracker } from '../downloader/tracker/ExtractedArchiveTracker';
-import { Progress, ProgressCallback } from './progress';
+import { mkdirp } from '../io/fshelper';
+import { ExtractedArchiveTracker } from '../../downloader/tracker/ExtractedArchiveTracker';
+import { Progress, ProgressCallback } from '../../types/Progress';
 
 export async function unzip(zipFile: string, destination: string, tracker?: ExtractedArchiveTracker.Writer, onProgress?: (progress: Progress) => void): Promise<void> {
     if (onProgress && tracker) {

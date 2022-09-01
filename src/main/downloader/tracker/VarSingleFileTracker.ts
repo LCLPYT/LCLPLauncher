@@ -1,10 +1,10 @@
 import { Artifact } from "../../types/Installation";
-import { checksumFile } from "../../utils/checksums";
+import { checksumFile } from "../../core/service/checksum";
 import { TrackerWriter, ArtifactType, TrackerReader } from "./ArtifactTracker";
 import * as fs from 'fs';
 import * as Path from 'path';
-import { exists, resolveSegmentedPath } from "../../utils/fshelper";
-import { withBufferReadMethods, withBufferWriteMethods } from "../../utils/buffer";
+import { exists, resolveSegmentedPath } from "../../core/io/fshelper";
+import { withBufferReadMethods, withBufferWriteMethods } from "../../core/io/buffer";
 import log from 'electron-log';
 
 export namespace VarSingleFileTracker {
