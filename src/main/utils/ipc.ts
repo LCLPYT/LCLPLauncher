@@ -1,13 +1,13 @@
-import type App from "../../common/types/App";
-import type AppState from "../../common/types/AppState";
-import type DownloadProgress from "../../common/types/DownloadProgress";
-import type {PackageDownloadProgress } from "../../common/types/DownloadProgress";
-import type InstallationInputResult from "../../common/types/InstallationInputResult";
-import type Toast from "../../common/types/Toast";
-import type UpdateCheckResult from "../../common/types/UpdateCheckResult";
 import { app, dialog, ipcMain } from "electron";
 import { autoUpdater, ProgressInfo } from "electron-updater";
 import { IpcMainEvent } from "electron/main";
+import type App from "../../common/types/App";
+import type AppState from "../../common/types/AppState";
+import type DownloadProgress from "../../common/types/DownloadProgress";
+import type { PackageDownloadProgress } from "../../common/types/DownloadProgress";
+import type InstallationInputResult from "../../common/types/InstallationInputResult";
+import type Toast from "../../common/types/Toast";
+import type UpdateCheckResult from "../../common/types/UpdateCheckResult";
 import { isDevelopment } from "../../common/utils/env";
 import { ACTIONS, GenericIPCActionHandler, GenericIPCHandler } from "../../common/utils/ipc";
 import { isRunningAsAppImage } from "./env";
@@ -389,10 +389,7 @@ export const UPDATER = registerHandler(new class extends IPCActionHandler {
                 const mainWindow = getMainWindow();
                 if (!mainWindow) throw new Error('Could not find main window.');
 
-                import(/* webpackChunkName: "lib" */ './updater').then(({freeWindow}) => {
-                    freeWindow(mainWindow);
-                    this.sendUpdateState({ updateAvailable: false }); // continue to main window
-                });
+                this.sendUpdateState({ updateAvailable: false }); // continue to main window
 
                 break;
 

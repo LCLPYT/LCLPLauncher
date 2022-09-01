@@ -2,7 +2,6 @@ import Notifier from "./notifier";
 import ReactDOM from "react-dom";
 import React from "react";
 import {updaterManager} from "./updater";
-import log from "electron-log";
 import type {UpdateCheckingState} from "./ipc";
 import type UpdateCheckResult from "../../common/types/UpdateCheckResult";
 
