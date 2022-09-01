@@ -408,14 +408,23 @@ export const UPDATER = registerHandler(new class extends IPCActionHandler {
         reject: () => void
     };
 
+    protected downloadingUpdate = false;
+
     protected onAction(action: string, event: IpcActionEvent, args: any[]): void {
         switch (action) {
             case ACTIONS.updater.startUpdate:
+                if (this.downloadingUpdate) {
+                    event.reply(null);
+                    return;
+                }
+
                 try {
                     if (isDevelopment) {
                         // debug progress update
                         let progress = 0;
                         let timer: NodeJS.Timer | undefined = undefined;
+
+                        this.downloadingUpdate = true;
                         
                         setTimeout(() => timer = setInterval(() => {
                             this.sendUpdateProgress({
@@ -429,6 +438,7 @@ export const UPDATER = registerHandler(new class extends IPCActionHandler {
                                 progress = Math.min(progress + (Math.random() * 5), 100);
                             } else if (timer) {
                                 clearInterval(timer);
+                                this.downloadingUpdate = false;
                             }
                         }, 1000), 3000);
 
@@ -446,15 +456,22 @@ export const UPDATER = registerHandler(new class extends IPCActionHandler {
                             title: 'Manual update required'
                         });
                     } else {
+                        this.downloadingUpdate = true;
+
                         autoUpdater.removeAllListeners('download-progress').removeAllListeners('update-downloaded');
 
                         autoUpdater.on('download-progress', (progress: ProgressInfo) => this.sendUpdateProgress(progress))
-                            .on('update-downloaded', () => autoUpdater.quitAndInstall());
+                            .on('update-downloaded', () => {
+                                this.downloadingUpdate = false;
+                                return autoUpdater.quitAndInstall();
+                            })
+                            .on('error', () => this.downloadingUpdate = false);
 
                         autoUpdater.downloadUpdate();
                         event.reply(null);
                     }
                 } catch (err) {
+                    this.downloadingUpdate = false;
                     event.reply(err);
                 }
 

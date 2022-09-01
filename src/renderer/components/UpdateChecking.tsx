@@ -40,28 +40,36 @@ class UpdateChecking extends Component<Props, State> {
         );
 
         if (this.state.downloading) {
-            let percent = '0';
-            let downloaded = '0 MB';
-            let total = '0 MB';
-            let downloadSpeed = '0 MB';
-
-            if (this.state.progress) {
-                percent = this.state.progress.percent.toFixed(2);
-                downloaded = formatBytes(this.state.progress.transferred);
-                total = formatBytes(this.state.progress.total);
-                downloadSpeed = formatBytes(this.state.progress.bytesPerSecond);
+            if (!this.state.progress) {
+                return (
+                    <div className="container h-100 p-2 d-flex align-items-center flex-column justify-content-center text-lighter overflow-hidden">
+                        <h2>Downloading Update</h2>
+                        <div className="d-flex align-items-center justify-content-center mt-2">
+                            <span>Starting download</span>
+                            <LoadingSpinner className="spinner-border-sm ms-2" />
+                        </div>
+                    </div>
+                );
             }
 
+            const percent = Math.floor(this.state.progress.percent);
+            const downloaded = formatBytes(this.state.progress.transferred);
+            const total = formatBytes(this.state.progress.total);
+            const downloadSpeed = formatBytes(this.state.progress.bytesPerSecond);
+
             return (
-                <div className="p-2 h-100 d-flex align-items-center flex-column justify-content-center text-lighter overflow-hidden">
-                    <div className="w-100 d-flex align-items-center justify-content-center text-lighter">
-                        <LoadingSpinner noMargin={true} />
-                        <h4 className="ms-3 mb-0">Downloading Update</h4>
-                    </div>
-                    <div className="w-100 mt-2 d-flex justify-content-between align-items-center text-light">
-                        <span className="ms-4">{percent}%</span>
-                        <span className="ps-5">{downloaded} / {total}</span>
-                        <span className="me-4">@{downloadSpeed}/s</span>
+                <div className="container h-100 p-2 d-flex align-items-center flex-column justify-content-center text-lighter overflow-hidden">
+                    <h2>Downloading Update</h2>
+                    <div className="w-75">
+                        <div className="progress">
+                            <div className="progress-bar progress-bar-striped progress-bar-animated" role="progressbar" 
+                                aria-valuenow={percent} aria-valuemin={0} aria-valuemax={100} style={{width: `${percent}%`}} />
+                        </div>
+                        <div className="d-flex align-items-center justify-content-around mt-2">
+                            <span>{this.state.progress.percent.toFixed(2)}%</span>
+                            <span>{downloaded} / {total}</span>
+                            <span>{downloadSpeed}/s</span>
+                        </div>
                     </div>
                 </div>
             );
@@ -71,7 +79,7 @@ class UpdateChecking extends Component<Props, State> {
             <div className="py-2 h-100 overflow-hidden d-flex flex-column align-items-center justify-content-center">
                 <h4 className="text-lighter mb-1">Mandatory update</h4>
                 <div className="text-light px-2">A mandatory update has to be installed. Do you want to install it now?</div>
-                <div className="d-flex w-100 mt-1 align-items-center justify-content-around">
+                <div className="d-flex w-50 mt-2 align-items-center justify-content-around">
                     <button id="updateLater" className="btn btn-sm btn-danger">Exit</button>
                     <button id="updateNow" className="btn btn-sm btn-success">Update</button>
                 </div>
@@ -92,9 +100,14 @@ class UpdateChecking extends Component<Props, State> {
         });
         updaterManager.addEventListener('update-progress', this.updaterListeners['update-progress'] = event => {
             if (!event.detail.progress) throw new Error('Progress is undefined');
-            this.setState({
+            
+            const stateUpdate: Partial<State> = {
                 progress: event.detail.progress
-            });
+            };
+
+            if (!this.state.downloading) stateUpdate.downloading = true;
+
+            this.setState(stateUpdate);
         });
 
         this.update();

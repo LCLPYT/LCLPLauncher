@@ -15,8 +15,8 @@ import { isUpdateMandatory } from "./mandatoryUpdater";
  */
 export async function checkForUpdates(): Promise<UpdateCheckResult> {
     if (isDevelopment) {
-        return {updateAvailable: true, versionName: '2.0.0-dev', mandatory: true};
-        // return {updateAvailable: false};
+        // return {updateAvailable: true, versionName: '2.0.0-dev', mandatory: true};
+        return {updateAvailable: false};
     }
     
     // handle linux installations without AppImage (electron-updater is unsupported)

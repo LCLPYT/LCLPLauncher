@@ -16,6 +16,7 @@ import { UPDATER } from '../utils/ipc';
 import ElectronLog from 'electron-log';
 import { UpdaterEventListenerOrObject, updaterManager } from '../event/updater';
 import { ProgressInfo } from 'electron-updater';
+import LoadingSpinner from './utility/LoadingSpinner';
 
 class App extends Component {
     render() {
@@ -337,34 +338,41 @@ class UpdateAvailableToast extends AbstractToastComponent<{
     }
 
     getBody(): JSX.Element {
-        const versionName = this.props.memory.toast ? this.props.memory.toast.detail as string : undefined;
-        const text = versionName ? `Version ${versionName} is available. ` : '';
+        if (!this.state.updateInProgress) {
+            const versionName = this.props.memory.toast ? this.props.memory.toast.detail as string : undefined;
+            const text = versionName ? `Version ${versionName} is available. ` : '';
+
+            return (
+                <div className="py-1 text-lighter">
+                    {text + 'Do you want to download the update?'}
+                    <div className="mt-1">
+                        <button type="button" className="btn btn-primary btn-sm me-2" ref={this.dlBtnRef}>Download</button>
+                        <button type="button" className="btn btn-dark btn-sm" data-bs-dismiss="toast" aria-label="Close">Later</button>
+                    </div>
+                </div>
+            );
+        }
+
+        if (!this.state.progress) {
+            return (
+                <div className="py-1 text-lighter d-flex align-items-center justify-content-center">
+                    <span>Starting download</span>
+                    <LoadingSpinner className="spinner-border-sm ms-2" />
+                </div>
+            );
+        }
         
-        const progress = this.state.progress ? Math.floor(this.state.progress.percent) : 100;
-        const className = !this.state.progress ? 'progress-bar progress-bar-striped progress-bar-animated' : 'progress-bar bg-primary';
+        const progress = Math.floor(this.state.progress.percent);
 
         return (
             <div className="py-1 text-lighter">
-                {
-                    !this.state.updateInProgress ? 
-                        (text + 'Do you want to download it?') :
-                        (this.state.progress ? `Update Progress: ${this.state.progress.percent.toFixed(2)}%` : 'Update starting...')
-                }
+                {`Update Progress: ${this.state.progress.percent.toFixed(2)}%`}
 
-                <div className="mt-1">
-                    {
-                        !this.state.updateInProgress ? <>
-                            <button type="button" className="btn btn-primary btn-sm me-2" ref={this.dlBtnRef}>Download</button>
-                            <button type="button" className="btn btn-dark btn-sm" data-bs-dismiss="toast" aria-label="Close">Later</button>
-                        </> : (
-                            <div className="progress">
-                                <div className={className} 
-                                    role="progressbar" style={{width: `${progress}%`}} 
-                                    aria-valuenow={progress} aria-valuemin={0} aria-valuemax={100} 
-                                    ref={this.dlProgress} />
-                            </div>
-                        )
-                    }
+                <div className="progress mt-1">
+                    <div className="progress-bar progress-bar-striped progress-bar-animated" 
+                        role="progressbar" style={{width: `${progress}%`}} 
+                        aria-valuenow={progress} aria-valuemin={0} aria-valuemax={100} 
+                        ref={this.dlProgress} />
                 </div>
             </div>
         );
