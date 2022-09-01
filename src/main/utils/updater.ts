@@ -5,7 +5,7 @@ import type AppLatestInfo from "../types/AppLatestInfo";
 import { getAppVersion, isRunningAsAppImage } from "./env";
 import { isWindowReady } from "./window";
 import * as semver from 'semver';
-import { UPDATER, UTILITIES } from "./ipc";
+import { UPDATER } from "./ipc";
 import fetch, { Headers } from "electron-fetch";
 import { isDevelopment } from "../../common/utils/env";
 import { isPlatform } from "./oshooks";
@@ -28,19 +28,7 @@ export function getUpdateError() {
     return updateError;
 }
 
-export function freeWindow(window: BrowserWindow) {
-    window.setResizable(true);
-    window.setMaximizable(true);
-    window.setFullScreenable(true);
-    window.setSize(1000, 750);
-    window.setMinimumSize(800, 600);
-    window.setTitle('LCLPLauncher');
-    window.center();
-
-    UTILITIES.setMaximizable(true);
-}
-
-export function checkForUpdates(windowSupplier: WindowSupplier) {
+export async function checkForUpdates(windowSupplier: WindowSupplier) {
     if (isDevelopment) {
         updateCheckResult = {updateAvailable: false};
         return;
@@ -49,12 +37,6 @@ export function checkForUpdates(windowSupplier: WindowSupplier) {
     function handleUpdateError(err: any) {
         log.error('Error while updating:', err);
         updateError = err;
-        const mainWindow = windowSupplier();
-        if (mainWindow) {
-            mainWindow.setSize(440, 180);
-            mainWindow.setResizable(true);
-            mainWindow.center();
-        }
         UPDATER.sendUpdateError(err);
     }
 
@@ -89,7 +71,7 @@ export function checkForUpdates(windowSupplier: WindowSupplier) {
     autoUpdater.on('download-progress', (progress: ProgressInfo) => UPDATER.sendUpdateProgress(progress));
     autoUpdater.on('update-downloaded', () => autoUpdater.quitAndInstall());
     updateChecking = true;
-    autoUpdater.checkForUpdates();
+    await autoUpdater.checkForUpdates();
 }
 
 function onNoUpdateAvailable(windowSupplier: WindowSupplier) {
@@ -130,9 +112,9 @@ function sendUpdateAvailability(windowSupplier: WindowSupplier) {
     if (mainWindow) {
         if (updateCheckResult.updateAvailable) {
             mainWindow.setTitle('LCLPLauncher - Update available');
-            mainWindow.setSize(440, 155);
-            mainWindow.center();
-        } else freeWindow(mainWindow);
+        } else {
+            mainWindow.setTitle('LCLPLauncher');
+        }
     }
 
     UPDATER.sendUpdateState(updateCheckResult);

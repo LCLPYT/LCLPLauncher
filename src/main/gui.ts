@@ -7,7 +7,6 @@ import {setMainWindow, setWindowReady} from "./utils/window";
 import {isDevelopment} from "../common/utils/env";
 import {customWords} from "./utils/dictionary";
 import {isExternalResource} from "../common/utils/urls";
-import {notifyWindowReady} from "./utils/updater";
 
 // global reference to mainWindow (necessary to prevent window from being garbage collected)
 let mainWindow: BrowserWindow | null;
@@ -63,11 +62,12 @@ async function initDependencies() {
     const {initIPC, UTILITIES} = await import('./utils/ipc');
     initIPC();
 
-    // auto update
-    // checkForUpdates(() => mainWindow);  // TODO re-enable
-
     // init settings
     Settings.init();
+
+    // auto update
+    const {checkForUpdates} = await import('./utils/updater')
+    await checkForUpdates(() => mainWindow);
 
     // do those tasks in parallel
     await Promise.all([
@@ -135,15 +135,13 @@ async function displayMainWindow(): Promise<BrowserWindow> {
     const location = getParsedArgv()?.location;
     const tag = location ? location : '';
 
-    console.timeEnd('startup')
-
     if (isDevelopment) {
         log.debug(`Loading content from: http://localhost:${process.env.ELECTRON_WEBPACK_WDS_PORT}...`)
         window.loadURL(`http://localhost:${process.env.ELECTRON_WEBPACK_WDS_PORT}/#${tag}`).catch(e => console.error(e));
     } else {
         window.loadFile(`${__dirname}/index.html`, {
             hash: tag
-        }).catch(e => console.error(e));
+        }).catch(e => log.error(e));
     }
 
     /* window events */
@@ -151,10 +149,11 @@ async function displayMainWindow(): Promise<BrowserWindow> {
     window.on('closed', () => mainWindow = null);
 
     window.once('ready-to-show', () => {
-        console.timeEnd('show')
         window.show();
         setWindowReady(true);
-        notifyWindowReady(() => mainWindow);
+
+        import('./utils/updater').then(({notifyWindowReady}) =>
+            notifyWindowReady(() => mainWindow))
     });
 
     /* webContent events */

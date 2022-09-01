@@ -1,6 +1,3 @@
-console.time('show')
-console.time('startup')
-
 import {app} from 'electron'
 import {isDevelopment} from '../common/utils/env';
 import {handleArgv} from './utils/argv';
@@ -20,8 +17,8 @@ if (isDevelopment) {
     app.setName(`${getAppName()}-dev`);
 }
 
-// TODO remove
-app.commandLine.appendSwitch('lang', 'de-DE');
+// debug i18n
+// app.commandLine.appendSwitch('lang', 'de-DE');
 
 // configure logger
 log.transports.console.level = 'info';

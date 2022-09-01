@@ -624,6 +624,8 @@ export const TOASTS = registerHandler(new class extends IPCActionHandler {
     }
 }('toasts'));
 
+export type UpdateCheckingState = [boolean, UpdateCheckResult | undefined];
+
 export const UPDATER = registerHandler(new class extends IPCActionHandler {
     protected isUpdateCheckingCB: {
         resolve: (state: boolean, result: UpdateCheckResult | undefined) => void,
@@ -673,7 +675,7 @@ export const UPDATER = registerHandler(new class extends IPCActionHandler {
         }
     }
 
-    public isUpdateChecking(): Promise<[boolean, UpdateCheckResult | undefined]> {
+    public isUpdateChecking(): Promise<UpdateCheckingState> {
         return new Promise((resolve, reject) => {
             this.isUpdateCheckingCB.push({
                 resolve: (checking, result) => resolve([checking, result]),
