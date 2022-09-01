@@ -1,10 +1,10 @@
-import path from 'path';
 import fs from 'fs';
-import {getStaticMain} from "./static";
-import {exists} from './fshelper';
-import {loadTranslations, setTranslationProvider, Translations} from "../../common/utils/i18n";
+import path from 'path';
+import { LanguageProvider, loadTranslations, setLanguageProvider } from "../../common/utils/i18n";
+import { exists } from './fshelper';
+import { getStaticMain } from "./static";
 
-export async function loadLanguageFromFile(language?: string): Promise<Translations> {
+const loadLanguageFromFile: LanguageProvider = async (language) => {
     if (!language) throw new Error('no language provided');
 
     const translationFile = getStaticMain(path.join('lang', `${language}.json`));
@@ -12,9 +12,9 @@ export async function loadLanguageFromFile(language?: string): Promise<Translati
 
     const translationJson = await fs.promises.readFile(translationFile, 'utf8');
     return JSON.parse(translationJson);
-}
+};
 
 export async function initI18n(locale: string) {
-    setTranslationProvider(loadLanguageFromFile)
+    setLanguageProvider(loadLanguageFromFile)
     await loadTranslations(locale);
 }

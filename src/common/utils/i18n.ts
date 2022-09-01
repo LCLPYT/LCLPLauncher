@@ -1,9 +1,10 @@
+import ElectronLog from 'electron-log';
 import { formatString, replacePluralizationTokens } from './formatter';
 
 export type Translations = Record<string, string>;
 export type LanguageProvider = (language?: string) => Promise<Translations>;
 
-export const loadTranslationsFromDisk: LanguageProvider = async (locale?: string) => {
+export const loadLanguagesLayered: LanguageProvider = async (locale?: string) => {
     const localeOrder = [defaultLanguage];
 
     if (locale) {
@@ -15,14 +16,19 @@ export const loadTranslationsFromDisk: LanguageProvider = async (locale?: string
         }
     }
 
+    // make distinct
+    const found: Record<string, boolean> = {};
+    const distinct = localeOrder.filter(x => found.hasOwnProperty(x) ? false : (found[x] = true));
 
-    const fetchedItems = await Promise.all(localeOrder.map(language => languageProvider(language)));
+    ElectronLog.log(distinct);
+
+    const fetchedItems = await Promise.all(distinct.map(language => languageProvider(language)));
     return fetchedItems.reduce((prev, current) => ({ ...prev, ...current }), {});
 }
 
-let defaultLanguage = 'en';
+export const defaultLanguage = 'en';
 let translations: Translations = {};
-let translationProvider: LanguageProvider = loadTranslationsFromDisk;
+let translationProvider: LanguageProvider = loadLanguagesLayered;
 let languageProvider: LanguageProvider = async () => {
     // fallback
     return {};

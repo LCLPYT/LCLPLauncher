@@ -1,8 +1,8 @@
-import {loadTranslations, setTranslationProvider, Translations} from "../../common/utils/i18n";
-import {getStaticRender} from "./static";
 import log from "electron-log";
+import { LanguageProvider, loadTranslations, setLanguageProvider } from "../../common/utils/i18n";
+import { getStaticRender } from "./static";
 
-export async function fetchLanguageFromFile(language?: string): Promise<Translations> {
+const fetchLanguageFromFile: LanguageProvider = async (language) => {
     if (!language) throw new Error('no language provided');
 
     const translationFile = getStaticRender(`lang/${language}.json`);
@@ -17,6 +17,6 @@ export async function fetchLanguageFromFile(language?: string): Promise<Translat
 }
 
 export async function initI18n() {
-    setTranslationProvider(fetchLanguageFromFile);
+    setLanguageProvider(fetchLanguageFromFile);
     await loadTranslations(window.navigator.language);
 }
