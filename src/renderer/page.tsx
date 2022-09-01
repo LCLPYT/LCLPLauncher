@@ -1,6 +1,7 @@
-import ReactDOM from "react-dom";
-import TitleBar from "./components/Titlebar";
 import React from "react";
+import ReactDOM from "react-dom";
+import FullscreenLoading from "./components/FullscreenLoading";
+import TitleBar from "./components/Titlebar";
 
 export function renderCustomTitleBar() {
     /* Create custom toolbar */
@@ -10,4 +11,8 @@ export function renderCustomTitleBar() {
 
     /* Render react components */
     ReactDOM.render(<TitleBar maximizable={true} />, toolbarDiv);
+}
+
+export function renderLoadingSpinner() {
+    ReactDOM.render(<FullscreenLoading />, document.getElementById('app'));
 }

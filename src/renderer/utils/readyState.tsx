@@ -1,9 +1,9 @@
-import Notifier from "./notifier";
-import ReactDOM from "react-dom";
 import React from "react";
-import {updaterManager} from "./updater";
-import type {UpdateCheckingState} from "./ipc";
+import ReactDOM from "react-dom";
 import type UpdateCheckResult from "../../common/types/UpdateCheckResult";
+import type { UpdateCheckingState } from "./ipc";
+import Notifier from "./notifier";
+import { updaterManager } from "./updater";
 
 export const readyNotifier = new Notifier<void>();
 let appShown = false;

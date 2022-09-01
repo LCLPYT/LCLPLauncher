@@ -6,7 +6,7 @@ import './style/app.scss'; // general application style
 import './style/material-icons/material-icons.css'; // material-icons
 import {registerKeybinds} from './utils/keybinds';
 import {initI18n} from "./utils/i18n";
-import {renderCustomTitleBar} from "./page";
+import {renderCustomTitleBar, renderLoadingSpinner} from "./page";
 import {showWhenReady} from "./utils/readyState";
 
 // accept code hot updates in development
@@ -19,6 +19,7 @@ log.transports.console.level = 'info';
 log.transports.file.level = 'debug';
 
 renderCustomTitleBar();
+renderLoadingSpinner();
 
 registerKeybinds();
 

@@ -1,4 +1,3 @@
-import ElectronLog from 'electron-log';
 import { formatString, replacePluralizationTokens } from './formatter';
 
 export type Translations = Record<string, string>;
@@ -19,8 +18,6 @@ export const loadLanguagesLayered: LanguageProvider = async (locale?: string) =>
     // make distinct
     const found: Record<string, boolean> = {};
     const distinct = localeOrder.filter(x => found.hasOwnProperty(x) ? false : (found[x] = true));
-
-    ElectronLog.log(distinct);
 
     const fetchedItems = await Promise.all(distinct.map(language => languageProvider(language)));
     return fetchedItems.reduce((prev, current) => ({ ...prev, ...current }), {});

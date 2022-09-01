@@ -1,12 +1,12 @@
-import path from "path";
-import {app, BrowserWindow, nativeImage, nativeTheme, shell} from "electron";
+import { app, BrowserWindow, nativeImage, nativeTheme, shell } from "electron";
 import log from "electron-log";
-import {executeUrlCommand, getParsedArgv, parseArgv} from "./utils/argv";
-import {Settings} from "../common/utils/settings";
-import {setMainWindow, setWindowReady} from "./utils/window";
-import {isDevelopment} from "../common/utils/env";
-import {customWords} from "./utils/dictionary";
-import {isExternalResource} from "../common/utils/urls";
+import path from "path";
+import { isDevelopment } from "../common/utils/env";
+import { Settings } from "../common/utils/settings";
+import { isExternalResource } from "../common/utils/urls";
+import { executeUrlCommand, getParsedArgv, parseArgv } from "./utils/argv";
+import { customWords } from "./utils/dictionary";
+import { setMainWindow, setWindowReady } from "./utils/window";
 
 // global reference to mainWindow (necessary to prevent window from being garbage collected)
 let mainWindow: BrowserWindow | null;
@@ -29,10 +29,11 @@ export function startup() {
     app.on('second-instance', handleSecondInstance);
 
     // open gui as ASAP to benefit UX
+    log.info('Dispatching GUI start with loading indicator when ready...');
     openGuiWhenReady();
 
     // initialize dependencies, such as database
-    initDependencies().then(() => log.info('App is now ready, displaying front-end...'));
+    initDependencies().then(() => log.info('App dependencies are resolved, now displaying front-end...'));
 
     // quit application when all windows are closed
     app.on('window-all-closed', () => {
