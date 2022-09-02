@@ -18,7 +18,7 @@ if (isDevelopment) {
 }
 
 // debug i18n
-app.commandLine.appendSwitch('lang', 'de-DE');
+// app.commandLine.appendSwitch('lang', 'de-DE');
 
 // configure logger
 log.transports.console.level = 'info';
