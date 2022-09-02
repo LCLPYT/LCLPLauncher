@@ -7,6 +7,7 @@ import '../../style/pages/library.scss';
 import AppStorePage from './library/store/AppStorePage';
 import { getBackendHost } from '../../../common/utils/settings';
 import AppPage from './library/AppPage';
+import { translate as t } from '../../../common/utils/i18n';
 
 class Library extends Component {
     render() {
@@ -15,15 +16,15 @@ class Library extends Component {
                 <div id="libraryContainer">
                     <div id="librarySidebar" className="separator-border-dark-right">
                         <div className="sidebar-padding">
-                            <SideTab route="/library/apps" icon="apps" title="Apps" />
-                            <SideTab route="/library/search" icon="search" title="Search" />
+                            <SideTab route="/library/apps" icon="apps" title={t('page.library.side.apps')} />
+                            <SideTab route="/library/search" icon="search" title={t('page.library.side.search')} />
                         </div>
                         <Route exact path="/library/store/app/:app" render={props => (
                             <div className="py-1 separator-border-dark-top">
                                 {
                                     React.createElement(SideAppTab, {
                                         link: `/library/store/app/${props.match.params.app}`,
-                                        title: 'Store',
+                                        title: t('page.library.side.store'),
                                         ...props
                                     } as SideAppTabProps)
                                 }

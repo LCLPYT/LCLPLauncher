@@ -16,6 +16,7 @@ import AppSettingsModal from './page/AppSettingsModal';
 import DependenciesAlertModal from './page/DependenciesAlertModal';
 import InstallationOptionsModal from './page/InstallationOptionsModal';
 import PlayStateButton from './page/PlayStateButton';
+import { translate as t } from '../../../../common/utils/i18n';
 
 interface Props extends RouteComponentProps<{ app: string }> { }
 
@@ -137,14 +138,14 @@ class Content extends Component<ContentProps, ContentState> {
 
         const shopPageLink = document.getElementById('shopPageLink');
         if (shopPageLink) tippy(shopPageLink, {
-            'content': 'Visit store page',
+            'content': t('page.detail.visit_store'),
             'animation': 'scale'
         });
 
         const appSettingsLink = document.getElementById('appSettingsLink');
         if (appSettingsLink) {
             tippy(appSettingsLink, {
-                'content': 'App settings',
+                'content': t('page.detail.settings'),
                 'animation': 'scale'
             });
 

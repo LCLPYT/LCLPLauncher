@@ -47,7 +47,7 @@ class PlayStateButton extends Component<ContentProps, PlayState> {
                 return (
                     <>
                         <button id="playBtn" className="px-4_5 btn btn-xl fw-bold shadow btn-danger">{t('page.detail.stop')}</button>
-                        <div id="playDesc" className="ms-2_5 flex-fill">{t('page.detail.running', t(appType === 'game' ? 'game' : 'app'))}</div>
+                        <div id="playDesc" className="ms-2_5 flex-fill">{t(appType === 'game' ? 'page.detail.game_running' : 'page.detail.app_running')}</div>
                     </>
                 );
             case 'not-installed': return (
@@ -102,7 +102,7 @@ class PlayStateButton extends Component<ContentProps, PlayState> {
                     <button id="playBtn" className="px-4_5 btn btn-xl fw-bold shadow btn-secondary d-flex align-items-center" disabled>
                         <span className="ms-2">{t('page.detail.unsupported')}</span>
                     </button>
-                    <div id="playDesc" className="ms-2_5 flex-fill">{t('page.detail.unsupported_desc', appType === 'game' ? 'game' : 'app')}</div>
+                    <div id="playDesc" className="ms-2_5 flex-fill">{t(appType === 'game' ? 'page.detail.unsupported_game' : 'page.detail.unsupported_app')}</div>
                 </>
             );
             default:

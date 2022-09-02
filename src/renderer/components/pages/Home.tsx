@@ -21,7 +21,7 @@ class Home extends Component {
                 <div className="container-lg my-3">
                     <div id="previewFrame" />
                     <div className="mt-5">
-                        <h5 className="text-light">Quick Navigation</h5>
+                        <h5 className="text-light">{t('quicknav.title')}</h5>
                         <div className="row action-list">
                             <HomeAction icon="apps" name={t('quicknav.library')} link="/library/apps" />
                             <HomeAction icon="search" name={t('quicknav.search')} link="/library/search" />
