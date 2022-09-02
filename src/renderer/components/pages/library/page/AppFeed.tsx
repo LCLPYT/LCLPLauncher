@@ -5,6 +5,7 @@ import App from '../../../../../common/types/App';
 import AppFeedItem from "../../../../../common/types/AppFeedItem";
 import AppFeedPage from "../../../../../common/types/AppFeedPage";
 import CollapsableDescription from "../../../utility/CollapsableDescription";
+import { translate as t } from "../../../../../common/utils/i18n";
 
 interface Props {
     app: App
@@ -25,14 +26,14 @@ class AppFeed extends Component<Props, State> {
     render() {
         return (
             <div id="appFeed" className="flex-fill px-4 pb-3 pt-2 text-lighter">
-                <div className="fw-bold text-muted mb-1">News</div>
+                <div className="fw-bold text-muted mb-1">{t('page.detail.feed')}</div>
                 {this.state.items.map((item, index) => {
                     if (index >= this.state.items.length - 1) this.lastItemId = item.id;
                     return <FeedItem key={item.id} item={item} />;
                 })}
                 {this.state.items.length <= 0 ? (
                     <div className="d-flex text-muted align-items-center justify-content-center pt-5">
-                        <div className="feed-text-big">No activity yet.</div>
+                        <div className="feed-text-big">{t('page.detail.feed.empty')}</div>
                     </div>
                 ) : undefined}
             </div>

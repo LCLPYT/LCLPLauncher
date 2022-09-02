@@ -4,6 +4,8 @@ import { formatBytes } from '../../common/utils/utils';
 import { UPDATER, UTILITIES } from '../utils/ipc';
 import { UpdaterEvent, updaterManager } from '../event/updater';
 import LoadingSpinner from './utility/LoadingSpinner';
+import ElectronLog from 'electron-log';
+import { translate as t } from '../../common/utils/i18n';
 
 interface Props {
     error?: any
@@ -26,10 +28,10 @@ class UpdateChecking extends Component<Props, State> {
     render() {
         if (this.state.error) return (
             <div className="p-2 h-100 custom-scrollbar overflow-scroll text-lighter">
-                <h4>Error while updating</h4>
+                <h4>{t('updater.error')}</h4>
                 <div>
-                    If the problem persists, try to reinstall LCLPLauncher. <br/>
-                    Yet, if that doesn't help, feel free to <a className="cursor-pointer" href="https://github.com/LCLPYT/LCLPLauncher/issues">contact us</a>.
+                    {t('updater.error_hint')}
+                    <a className="cursor-pointer" href="https://github.com/LCLPYT/LCLPLauncher/issues">GitHub Issues</a>
                 </div>
                 <div className="mt-2 p-2 bg-dark rounded d-flex align-items-center">
                     <code className="w-100 text-wrap">
@@ -43,9 +45,9 @@ class UpdateChecking extends Component<Props, State> {
             if (!this.state.progress) {
                 return (
                     <div className="container h-100 p-2 d-flex align-items-center flex-column justify-content-center text-lighter overflow-hidden">
-                        <h2>Downloading Update</h2>
+                        <h2>{t('updater.downloading')}</h2>
                         <div className="d-flex align-items-center justify-content-center mt-2">
-                            <span>Starting download</span>
+                            <span>{t('updater.starting')}</span>
                             <LoadingSpinner className="spinner-border-sm ms-2" />
                         </div>
                     </div>
@@ -59,7 +61,7 @@ class UpdateChecking extends Component<Props, State> {
 
             return (
                 <div className="container h-100 p-2 d-flex align-items-center flex-column justify-content-center text-lighter overflow-hidden">
-                    <h2>Downloading Update</h2>
+                    <h2>{t('updater.downloading')}</h2>
                     <div className="w-75">
                         <div className="progress">
                             <div className="progress-bar progress-bar-striped progress-bar-animated" role="progressbar" 
@@ -77,11 +79,11 @@ class UpdateChecking extends Component<Props, State> {
 
         return (
             <div className="py-2 h-100 overflow-hidden d-flex flex-column align-items-center justify-content-center">
-                <h4 className="text-lighter mb-1">Mandatory update</h4>
-                <div className="text-light px-2">A mandatory update has to be installed. Do you want to install it now?</div>
+                <h4 className="text-lighter mb-1">{t('updater.mandatory')}</h4>
+                <div className="text-light px-2">{t('updater.mandatory.ask')}</div>
                 <div className="d-flex w-50 mt-2 align-items-center justify-content-around">
-                    <button id="updateLater" className="btn btn-sm btn-danger">Exit</button>
-                    <button id="updateNow" className="btn btn-sm btn-success">Update</button>
+                    <button id="updateLater" className="btn btn-sm btn-danger">{t('exit')}</button>
+                    <button id="updateNow" className="btn btn-sm btn-success">{t('updater.update')}</button>
                 </div>
             </div>
         );
@@ -135,7 +137,7 @@ class UpdateChecking extends Component<Props, State> {
             updateNow.addEventListener('click', this.updateListener = () => {
                 UPDATER.startUpdate().then(updateStarted => {
                     if (updateStarted) this.setState({ downloading: true });
-                }).catch(err => console.error('Could not start download:', err));
+                }).catch(err => ElectronLog.error('Could not start download:', err));
             });
         }
     }

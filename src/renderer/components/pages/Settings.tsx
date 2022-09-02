@@ -1,7 +1,9 @@
 import { Unsubscribe } from 'conf/dist/source/types';
+import ElectronLog from 'electron-log';
 import React, { Component } from 'react';
 import tippy from 'tippy.js';
 import { isDevelopment } from '../../../common/utils/env';
+import { translate as t } from '../../../common/utils/i18n';
 import { defaultSettings, Setting, SettingGroup, SettingGroupLevel, Settings as settings } from '../../../common/utils/settings';
 
 import '../../style/pages/settings.scss';
@@ -40,7 +42,7 @@ class Settings extends Component<{}, State> {
             .forEach(([key, value]) => {
                 const group = value as SettingGroup;
                 if (!group.properties.levelId) {
-                    console.error('Top-level setting group ', group.properties.title, ' has no group level assigned to it.');
+                    ElectronLog.error('Top-level setting group ', group.properties.title, ' has no group level assigned to it.');
                     return;
                 }
 
@@ -49,7 +51,7 @@ class Settings extends Component<{}, State> {
 
                 const groups = groupsByLevelId.get(group.properties.levelId);
                 if (groups === undefined) {
-                    console.error('Unknown group level id:', group.properties.levelId);
+                    ElectronLog.error('Unknown group level id:', group.properties.levelId);
                     return;
                 }
                 const wrapper = {
@@ -60,7 +62,8 @@ class Settings extends Component<{}, State> {
                 if (!firstGroup) firstGroup = wrapper;
             });
 
-        this.groupsByLevel = new Map(Array.from(groupsByLevelId.entries()).map<[SettingGroupLevel, SettingGroupWrapper[]]>(([key, value]) => [levelsById.get(key) as SettingGroupLevel, value]));
+        this.groupsByLevel = new Map(Array.from(groupsByLevelId.entries())
+            .map<[SettingGroupLevel, SettingGroupWrapper[]]>(([key, value]) => [levelsById.get(key) as SettingGroupLevel, value]));
 
         this.state = {
             currentGroup: firstGroup
@@ -72,8 +75,8 @@ class Settings extends Component<{}, State> {
 
         return (
             <div className="container mt-3">
-                <div className="d-flex align-items-center justify-content-between">
-                    <h3 className="text-lighter">Settings</h3>
+                <div className="d-flex align-items-center justify-content-between mb-2">
+                    <h3 className="text-lighter">{t('settings')}</h3>
                     <span id="settingsEditBtn" className="material-icons navigation-link-color">edit</span>
                 </div>
                 <div className="row">
@@ -156,7 +159,7 @@ class Settings extends Component<{}, State> {
         if (settingsEditBtn) {
             settingsEditBtn.addEventListener('click', () => settings.store?.openInEditor());
             tippy(settingsEditBtn, {
-                content: 'Edit JSON',
+                content: t('page.settings.edit_json'),
                 animation: 'scale'
             });
         }
@@ -245,7 +248,7 @@ class TextInputComponent extends AbstractSettingComponent<SettingProps, string> 
         if (input) {
             input.addEventListener('change', () => settings.setConfigItemByName(this.props.setting.name, input.value));
             tippy(input, {
-                content: 'Unfocus to apply changes',
+                content: t('page.settings.unfocus_apply'),
                 trigger: 'click',
                 placement: 'top-end'
             });

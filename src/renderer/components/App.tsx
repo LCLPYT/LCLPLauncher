@@ -17,6 +17,7 @@ import ElectronLog from 'electron-log';
 import {UpdaterEventListenerOrObject, updaterManager} from '../event/updater';
 import {ProgressInfo} from 'electron-updater';
 import LoadingSpinner from './utility/LoadingSpinner';
+import { translate as t } from '../../common/utils/i18n';
 
 class App extends Component {
     render() {
@@ -166,9 +167,9 @@ abstract class AbstractToastComponent<State = {}> extends Component<ToastProps, 
         const alreadyShown = !!this.props.memory.alreadyShown;
         this.props.memory.alreadyShown = true;
 
-        let ageText = 'Just now';
+        let ageText = t('toast.just_now');
         this.lastTimeStep = Number(Math.ceil(age / AbstractToastComponent.timerUpdateInterval).toFixed(0));
-        if (this.lastTimeStep > 1) ageText = `${(age / 1000).toFixed(0)} seconds ago`
+        if (this.lastTimeStep > 1) ageText = t('toast.age', (age / 1000).toFixed(0));
 
         return (
             <div id={`toast${this.props.memory.toast.id}`} className={`toast${alreadyShown ? ' show fade' : ''}`} role="alert" aria-live="assertive" aria-atomic="true"
@@ -178,7 +179,7 @@ abstract class AbstractToastComponent<State = {}> extends Component<ToastProps, 
                     {this.props.memory.toast.icon ? <span className="material-icons toast-icon text-light">{this.props.memory.toast.icon}</span> : undefined}
                     <strong className="ms-1 me-auto text-light">{this.props.memory.toast.title}</strong>
                     <small className="text-muted">{ageText}</small>
-                    <button type="button" className="btn-close" data-bs-dismiss="toast" aria-label="Close"></button>
+                    <button type="button" className="btn-close" data-bs-dismiss="toast" aria-label={t('close')}></button>
                 </div>
                 <div className="toast-body py-1 text-lighter">{this.getBody()}</div>
             </div>
@@ -243,7 +244,9 @@ class DownloadToast extends AbstractToastComponent<DownloadToastState> {
                     <div>{percent ? `${percent}%` : undefined}</div>
                 </div>
                 <div className="progress toast-progress">
-                    <div className="progress-bar progress-bar-striped progress-bar-animated" role="progressbar" aria-valuenow={percent !== undefined ? percent : 0} aria-valuemin={0} aria-valuemax={100} style={{ width: `${percent !== undefined ? percent : 0}%`}} />
+                    <div className="progress-bar progress-bar-striped progress-bar-animated" role="progressbar" 
+                        aria-valuenow={percent !== undefined ? percent : 0} aria-valuemin={0} aria-valuemax={100} 
+                        style={{ width: `${percent !== undefined ? percent : 0}%`}} />
                 </div>
             </>
         );
@@ -255,6 +258,7 @@ class DownloadToast extends AbstractToastComponent<DownloadToastState> {
         super.componentDidMount();
         installationProgressManager.addEventListener('update-progress', this.progressListener = event => {
             if (!event.detail.progress) throw new Error('On update-progress: Progress is null');
+
             this.setState({
                 progress: event.detail.progress
             });
@@ -295,7 +299,9 @@ class PackageDownloadToast extends AbstractToastComponent<PackageDownloadToastSt
                     <div>{percent ? `${percent}%` : undefined}</div>
                 </div>
                 <div className="progress toast-progress">
-                    <div className="progress-bar progress-bar-striped progress-bar-animated" role="progressbar" aria-valuenow={percent !== undefined ? percent : 0} aria-valuemin={0} aria-valuemax={100} style={{ width: `${percent !== undefined ? percent : 0}%`}} />
+                    <div className="progress-bar progress-bar-striped progress-bar-animated" role="progressbar" 
+                        aria-valuenow={percent !== undefined ? percent : 0} aria-valuemin={0} aria-valuemax={100} 
+                        style={{ width: `${percent !== undefined ? percent : 0}%`}} />
                 </div>
             </>
         );
@@ -307,6 +313,7 @@ class PackageDownloadToast extends AbstractToastComponent<PackageDownloadToastSt
         super.componentDidMount();
         installationProgressManager.addEventListener('update-package-progress', this.progressListener = event => {
             if (!event.detail.packageProgress) throw new Error('On update-package-progress: Progress is null');
+
             this.setState({
                 progress: event.detail.packageProgress
             });
@@ -339,14 +346,14 @@ class UpdateAvailableToast extends AbstractToastComponent<{
     getBody(): JSX.Element {
         if (!this.state.updateInProgress) {
             const versionName = this.props.memory.toast ? this.props.memory.toast.detail as string : undefined;
-            const text = versionName ? `Version ${versionName} is available. ` : '';
+            const text = versionName ? t('toast.update.available', versionName) + ' ' : '';
 
             return (
                 <div className="py-1 text-lighter">
-                    {text + 'Do you want to download the update?'}
+                    {text + t('toast.update.ask')}
                     <div className="mt-1">
-                        <button type="button" className="btn btn-primary btn-sm me-2" ref={this.dlBtnRef}>Download</button>
-                        <button type="button" className="btn btn-dark btn-sm" data-bs-dismiss="toast" aria-label="Close">Later</button>
+                        <button type="button" className="btn btn-primary btn-sm me-2" ref={this.dlBtnRef}>{t('toast.update.download')}</button>
+                        <button type="button" className="btn btn-dark btn-sm" data-bs-dismiss="toast" aria-label="Close">{t('toast.update.later')}</button>
                     </div>
                 </div>
             );
@@ -355,7 +362,7 @@ class UpdateAvailableToast extends AbstractToastComponent<{
         if (!this.state.progress) {
             return (
                 <div className="py-1 text-lighter d-flex align-items-center justify-content-center">
-                    <span>Starting download</span>
+                    <span>{t('toast.update.starting')}</span>
                     <LoadingSpinner className="spinner-border-sm ms-2" />
                 </div>
             );
@@ -365,7 +372,7 @@ class UpdateAvailableToast extends AbstractToastComponent<{
 
         return (
             <div className="py-1 text-lighter">
-                {`Update Progress: ${this.state.progress.percent.toFixed(2)}%`}
+                {t('toast.update.progress', this.state.progress.percent.toFixed(2))}
 
                 <div className="progress mt-1">
                     <div className="progress-bar progress-bar-striped progress-bar-animated" 

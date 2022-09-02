@@ -1,6 +1,7 @@
 import React, { Component } from 'react';
 import ReactDOM from 'react-dom';
 import { Link } from 'react-router-dom';
+import { translate as t } from '../../../common/utils/i18n';
 import '../../style/pages/home.scss';
 import FeaturedItems, { fetchFeaturedItems } from './home/FeaturedItems';
 
@@ -22,9 +23,9 @@ class Home extends Component {
                     <div className="mt-5">
                         <h5 className="text-light">Quick Navigation</h5>
                         <div className="row action-list">
-                            <HomeAction icon="search" name="Search games" link="/library/search" />
-                            <HomeAction icon="apps" name="My apps" link="/library/apps" />
-                            <HomeAction icon="settings" name="Settings" link="/settings" />
+                            <HomeAction icon="apps" name={t('quicknav.library')} link="/library/apps" />
+                            <HomeAction icon="search" name={t('quicknav.search')} link="/library/search" />
+                            <HomeAction icon="settings" name={t('quicknav.settings')} link="/settings" />
                         </div>
                     </div>
                 </div>

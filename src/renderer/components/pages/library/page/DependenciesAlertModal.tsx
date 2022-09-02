@@ -2,6 +2,7 @@ import { Modal } from "bootstrap";
 import React, { Component } from "react";
 import App from "../../../../../common/types/App";
 import AppDependency from "../../../../../common/types/AppDependency";
+import { translate as t } from "../../../../../common/utils/i18n";
 import { DependenciesEvent, dependenciesManager } from "../../../../event/dependencies";
 
 interface Props {
@@ -26,16 +27,16 @@ class DependenciesAlertModal extends Component<Props, State> {
                 <div className="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable">
                     <div className="modal-content">
                         <div className="modal-header">
-                            <h5 className="modal-title text-lighter" id="dependenciesModalLabel">Required dependencies</h5>
-                            <button type="button" className="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                            <h5 className="modal-title text-lighter" id="dependenciesModalLabel">{t('install.required_deps')}</h5>
+                            <button type="button" className="btn-close" data-bs-dismiss="modal" aria-label={t('close')}></button>
                         </div>
                         <div className="modal-body by-1 text-lighter custom-scrollbar">
-                            <div><span className="fw-bold">{this.props.app.title}</span> requires additional dependencies:</div>
+                            <div>{t('install.required_deps.desc', this.props.app.title)}:</div>
                             <table className="table table-dark table-sm mt-2">
                                 <thead>
                                     <tr>
-                                        <th scope="col">Dependency</th>
-                                        <th scope="col">Version</th>
+                                        <th scope="col">{t('install.dependency')}</th>
+                                        <th scope="col">{t('install.version')}</th>
                                     </tr>
                                 </thead>
                                 <tbody>
@@ -44,11 +45,11 @@ class DependenciesAlertModal extends Component<Props, State> {
                                     }
                                 </tbody>
                             </table>
-                            <div>Do you consent to download each of the listed packages on your own behalf?</div>
+                            <div>{t('install.ask_deps_consent')}</div>
                         </div>
                         <div className="modal-footer">
-                            <button type="button" className="btn btn-secondary" data-bs-dismiss="modal">Close</button>
-                            <button type="button" id="dependencyInstallBtn" className="btn btn-primary">I consent</button>
+                            <button type="button" className="btn btn-secondary" data-bs-dismiss="modal">{t('close')}</button>
+                            <button type="button" id="dependencyInstallBtn" className="btn btn-primary">{t('install.consent')}</button>
                         </div>
                     </div>
                 </div>

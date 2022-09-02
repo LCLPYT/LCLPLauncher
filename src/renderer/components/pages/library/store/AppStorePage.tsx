@@ -10,6 +10,7 @@ import AppPreview from './AppPreview';
 import BuyButton from './BuyButton';
 import CollapsableDescription from '../../../utility/CollapsableDescription';
 import GenresDisplay from '../../../utility/GenresDisplay';
+import { translate as t } from '../../../../../common/utils/i18n';
 
 interface Props extends RouteComponentProps<{ app: string }> {}
 
@@ -91,10 +92,10 @@ class Content extends Component<ContentProps, ContentState> {
                 </div>
                 <div id="buyArea" className="highlight-area rounded p-4 mt-4 shadow d-flex justify-content-between align-items-center">
                     <div className="play-title flex-grow-1">
-                        {isAppFree ? `Play ${this.props.app.title}` : `Buy ${this.props.app.title}`}
+                        {t(isAppFree ? 'page.store.play' : 'page.store.buy', this.props.app.title)}
                     </div>
                     <BuyButton app={this.props.app} onClick={() => this.setState({ redirectTo: `/library/app/${this.props.app.key}` })} />
-                    <div className="price">{isAppFree ? 'Free' : this.props.app.cost?.toLocaleString('de-DE', {
+                    <div className="price">{isAppFree ? t('page.store.free') : this.props.app.cost?.toLocaleString('de-DE', {
                         minimumFractionDigits: 2,
                         maximumFractionDigits: 2,
                         style: 'currency',

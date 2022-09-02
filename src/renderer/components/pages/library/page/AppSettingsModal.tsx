@@ -1,7 +1,9 @@
 import { Modal } from "bootstrap";
+import ElectronLog from "electron-log";
 import React, { Component } from "react";
 import App from "../../../../../common/types/App";
 import AppState from "../../../../../common/types/AppState";
+import { translate as t } from "../../../../../common/utils/i18n";
 import { installationProgressManager, InstallerEvent } from "../../../../event/downloads";
 import { DOWNLOADER } from "../../../../utils/ipc";
 import LoadingSpinner from "../../../utility/LoadingSpinner";
@@ -26,8 +28,8 @@ class AppSettingsModal extends Component<ModalProps, ModalState> {
                 <div className="modal-dialog modal-lg modal-dialog-centered">
                     <div className="modal-content">
                         <div className="modal-header">
-                            <h5 className="modal-title text-lighter" id="appSettingsModalLabel">App Settings</h5>
-                            <button type="button" className="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                            <h5 className="modal-title text-lighter" id="appSettingsModalLabel">{t('page.detail.settings')}</h5>
+                            <button type="button" className="btn-close" data-bs-dismiss="modal" aria-label={t('close')}></button>
                         </div>
                         <div className="modal-body">
                             {this.state.state ? <ModalBody app={this.props.app} state={this.state.state} /> : <Loading />}
@@ -91,19 +93,19 @@ class ModalBody extends Component<BodyProps, BodyState> {
     render() {
         if (this.props.state === 'not-installed') return (
             <div className="text-center text-lighter">
-                <span className="fw-bold">{this.props.app.title}</span> is not yet installed.
+                {t('page.detail.settings.not_installed', this.props.app.title)}
             </div>
         );
         return (
             <>
                 {this.state.installationDir ? (
                     <div className="d-flex align-items-center text-lighter">
-                        <span className="flex-fill">Installation directory:</span>
+                        <span className="flex-fill">{t('page.detail.settings.install_dir')}:</span>
                         <code className="bg-dark rounded px-1 selectable">{this.state.installationDir}</code>
                     </div>
                 ) : undefined}
                 <div className="mt-2 d-flex justify-content-end">
-                    <button id="uninstallBtn" className="btn btn-danger">Uninstall</button>
+                    <button id="uninstallBtn" className="btn btn-danger">{t('page.detail.settings.uninstall')}</button>
                 </div>
             </>
         );
@@ -112,7 +114,7 @@ class ModalBody extends Component<BodyProps, BodyState> {
     componentDidMount() {
         DOWNLOADER.getInstallationDir(this.props.app)
             .then(dir => this.setState({ installationDir: dir }))
-            .catch(err => console.error(err));
+            .catch(err => ElectronLog.error(err));
 
         this.update();
     }
@@ -128,13 +130,13 @@ class ModalBody extends Component<BodyProps, BodyState> {
         if (uninstallBtn) {
             if (this.prevClickListener) uninstallBtn.removeEventListener('click', this.prevClickListener);
             uninstallBtn.addEventListener('click', this.prevClickListener = () => {
-                if (confirm(`Are you sure you want to uninstall '${this.props.app.title}'?`)) {
+                if (confirm(t('page.detail.settings.ask_uninstall', this.props.app.title))) {
                     DOWNLOADER.uninstall(this.props.app)
                         .then(() => {
                             const appSettingsModal = document.getElementById('appSettingsModal');
                             if (appSettingsModal) Modal.getInstance(appSettingsModal)?.hide();
                         })
-                        .catch(err => console.error('Error uninstalling app:', err));
+                        .catch(err => ElectronLog.error('Error uninstalling app:', err));
                 }
             });
         }

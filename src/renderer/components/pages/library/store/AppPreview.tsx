@@ -3,6 +3,7 @@ import React, { Component } from "react";
 import App from "../../../../../common/types/App";
 import YouTube, { Options as YoutubeOptions } from "react-youtube";
 import AppPreviewItem from "../../../../../common/types/AppPreviewItem";
+import { translate as t } from "../../../../../common/utils/i18n";
 
 
 interface Props {
@@ -29,11 +30,11 @@ class AppPreview extends Component<Props> {
                 </div>
                 <button className="carousel-control-prev preview-controls cursor-pointer" type="button" data-bs-target="#appPreviewCarousel" data-bs-slide="prev">
                     <span className="carousel-control-prev-icon preview-controls" aria-hidden="true" />
-                    <span className="visually-hidden preview-controls">Previous</span>
+                    <span className="visually-hidden preview-controls">{t('prev')}</span>
                 </button>
                 <button className="carousel-control-next preview-controls cursor-pointer" type="button" data-bs-target="#appPreviewCarousel" data-bs-slide="next">
                     <span className="carousel-control-next-icon preview-controls" aria-hidden="true" />
-                    <span className="visually-hidden preview-controls">Next</span>
+                    <span className="visually-hidden preview-controls">{t('next')}</span>
                 </button>
             </div>
         );

@@ -1,6 +1,7 @@
 import { OnDidChangeCallback } from "conf/dist/source/types";
 import ElectronStore from "electron-store";
 import chokidar from 'chokidar';
+import { translate as t } from "./i18n";
 
 // config structure
 interface ConfigStructure<Group, Item> {
@@ -19,61 +20,61 @@ interface ConfigStructure<Group, Item> {
 export const defaultSettings: DefaultConfig = Object.freeze({
     settingGroupLevels: [{
         id: 'general',
-        title: 'General',
-        description: 'General Settings'
+        title: t('setting.group.general'),
+        description: t('setting.group.general.desc')
     }],
     launcher: {
         properties: {
-            title: 'Launcher',
-            description: 'Launcher settings',
+            title: t('setting.group.launcher'),
+            description: t('setting.group.launcher.desc'),
             levelId: 'general'
         },
         toast_sound: {
             default: true,
             properties: {
-                title: 'Toast Sounds',
-                description: 'If enabled, toast sounds will be played.'
+                title: t('setting.toast_sound'),
+                description: t('setting.toast_sound.desc')
             }
         }
     },
     network: {
         properties: {
-            title: 'Network',
-            description: 'Network Settings',
+            title: t('setting.group.network'),
+            description: t('setting.group.network.desc'),
             levelId: 'general'
         },
-        backend: {
+        backend: <Setting> {
             default: 'live',
             properties: {
-                title: 'Backend Host',
-                description: 'Determines which backend host to use.',
+                title: t('setting.backend'),
+                description: t('setting.backend.desc'),
                 debugOnly: true,
                 options: ['live', 'staging', 'debug']
             }
         },
-        host_live: {
+        host_live: <Setting> {
             default: 'https://lclpnet.work',
             properties: {
-                title: 'Live host',
-                description: 'Live backend server host.',
+                title: t('setting.host_live'),
+                description: t('setting.host_live.desc'),
                 debugOnly: true,
                 inputTextType: 'url'
             }
         },
-        host_staging: {
+        host_staging: <Setting> {
             default: 'https://staging.lclpnet.work',
             properties: {
-                title: 'Staging host',
-                description: 'Staging backend server host.',
+                title: t('setting.host_staging'),
+                description: t('setting.host_staging.desc'),
                 debugOnly: true,
                 inputTextType: 'url'
             }
         },
-        host_debug: {
+        host_debug: <Setting> {
             default: 'http://localhost:8000',
             properties: {
-                title: 'Debug host',
-                description: 'Backend server host for debug mode.',
+                title: t('setting.host_debug'),
+                description: t('setting.host_debug.desc'),
                 debugOnly: true,
                 inputTextType: 'url'
             }

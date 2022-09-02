@@ -1,3 +1,18 @@
 {
-    "component.featured.title": "Neuigkeiten"
+    "app.name": "LCLPLauncher",
+
+    "next": "Weiter",
+    "prev": "Zurück",
+    "website": "Webseite",
+    "exit": "Beenden",
+    "settings": "Einstellungen",
+
+    "component.featured": "Neuigkeiten",
+
+    "quicknav.library": "Bibliothek",
+    "quicknav.search": "Suche",
+    "quicknav.settings": "Einstellungen",
+
+    "page.settings.edit_json": "JSON bearbeiten",
+    "page.settings.unfocus_apply": "Klicke außerhalb um Änderungen zu übernehmen"
 }

@@ -7,6 +7,8 @@ import '../../../style/pages/library/library.scss';
 import tippy from 'tippy.js';
 import { Link } from 'react-router-dom';
 import LoadingSpinner from '../../utility/LoadingSpinner';
+import { translate as t } from '../../../../common/utils/i18n';
+import ElectronLog from 'electron-log';
 
 interface State {
     apps?: App[]
@@ -28,7 +30,7 @@ class Apps extends Component<{}, State> {
     fetchLibraryApps() {
         LIBRARY.getLibraryApps()
             .then(apps => this.setState({ apps: apps }))
-            .catch(err => console.error('Could not fetch library apps:', err));
+            .catch(err => ElectronLog.error('Could not fetch library apps:', err));
     }
 }
 
@@ -52,18 +54,18 @@ class Content extends Component<ContentProps> {
             <div id="appsContainer" className="container hmin-100">
                 <div id="appsFlexContainer" className="pt-3 d-flex flex-column">
                     <div className="d-flex align-items-center">
-                        <h3 className="text-lighter mb-0 me-2">Your apps</h3>
+                        <h3 className="text-lighter mb-0 me-2">{t('page.library')}</h3>
                     </div>
-                    <div className="text-light section-desc">Every app you added to your library is shown here.</div>
+                    <div className="text-light section-desc">{t('page.library.sub')}</div>
                     {this.props.apps.length <= 0 ? (
                         <div className="d-flex flex-grow-1">
                             <div className="w-100 align-self-center mb-5">
-                                <div className="text-center text-muted centered-info">Looks like you haven't added any apps yet.</div>
+                                <div className="text-center text-muted centered-info">{t('page.library.empty')}</div>
                                 <div className="text-center mt-2">
                                     <Link to="/library/search" className="btn btn-secondary text-light cursor-pointer shadow-sm" role="button">
                                         <div className="d-flex align-items-center">
                                             <span className="material-icons me-2">search</span>
-                                            <span>Search apps</span>
+                                            <span>{t('quicknav.search')}</span>
                                         </div>
                                     </Link>
                                 </div>
@@ -137,7 +139,7 @@ class AppEntry extends Component<{ app: App }> {
 
                 const arrow = overlay.querySelector('.overlay-arrow');
                 if (arrow) tippy(arrow, {
-                    content: 'View app',
+                    content: t('page.library.view'),
                     animation: 'scale'
                 });
             }

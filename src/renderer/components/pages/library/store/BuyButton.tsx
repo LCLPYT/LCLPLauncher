@@ -1,5 +1,6 @@
 import React, { Component } from 'react';
 import App from "../../../../../common/types/App";
+import { translate as t } from '../../../../../common/utils/i18n';
 import { LIBRARY } from '../../../../utils/ipc';
 
 interface Props {
@@ -22,20 +23,20 @@ class BuyButton extends Component<Props, State> {
 
         let btnContent: JSX.Element | undefined = undefined;
         if (!this.state.btnState) btnContent = (
-        <span id="buyBtnText" className="animated-underline">{isAppFree ? 'Add to library' : 'Add to cart'}</span>
+        <span id="buyBtnText" className="animated-underline">{t(isAppFree ? 'page.store.add_to_library' : 'page.store.add_to_cart')}</span>
         );
         else if (this.state.btnState === 'loading') btnContent = (
             <div id="buyBtnLoading" className="d-flex align-items-center">
                 <div className="spinner-border spinner-border-sm" role="status">
-                    <span className="visually-hidden">Loading...</span>
+                    <span className="visually-hidden">{t('loading')}...</span>
                 </div>
-                <div className="ms-2">Loading...</div>
+                <div className="ms-2">{t('loading')}</div>
             </div>
         );
         else if (this.state.btnState === 'added') btnContent = (
             <div id="buyBtnChecked" className="d-flex align-items-center">
                 <span className="text-success big-emoji">✔</span>
-                <div className="ms-2 animated-underline">Show in library</div>
+                <div className="ms-2 animated-underline">{t('page.store.show_in_library')}</div>
             </div>
         );
 

@@ -4,17 +4,18 @@ import App from '../../../../common/types/App';
 import { getBackendHost } from '../../../../common/utils/settings';
 import LoadingSpinner from '../../utility/LoadingSpinner';
 
-import '../../../style/pages/library/app_page.scss';
+import { Modal } from 'bootstrap';
+import ElectronLog from 'electron-log';
 import tippy from 'tippy.js';
+import '../../../style/pages/library/app_page.scss';
+import { goToHome } from '../../../utils/router';
 import CollapsableDescription from '../../utility/CollapsableDescription';
 import GenresDisplay from '../../utility/GenresDisplay';
-import { Modal } from 'bootstrap';
-import PlayStateButton from './page/PlayStateButton';
-import AppSettingsModal from './page/AppSettingsModal';
-import InstallationOptionsModal from './page/InstallationOptionsModal';
-import DependenciesAlertModal from './page/DependenciesAlertModal';
 import AppFeed from './page/AppFeed';
-import { goToHome } from '../../../utils/router';
+import AppSettingsModal from './page/AppSettingsModal';
+import DependenciesAlertModal from './page/DependenciesAlertModal';
+import InstallationOptionsModal from './page/InstallationOptionsModal';
+import PlayStateButton from './page/PlayStateButton';
 
 interface Props extends RouteComponentProps<{ app: string }> { }
 
@@ -45,7 +46,7 @@ class AppPage extends Component<Props, State> {
                 } as State);
             })
             .catch(reason => {
-                console.error('Failed to fetch app data:', reason);
+                ElectronLog.error('Failed to fetch app data:', reason);
                 goToHome();
             });
     }

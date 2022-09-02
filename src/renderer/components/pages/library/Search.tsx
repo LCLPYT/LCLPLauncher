@@ -2,6 +2,7 @@ import React, { Component } from 'react';
 import { Link } from 'react-router-dom';
 import tippy from 'tippy.js';
 import App from '../../../../common/types/App';
+import { translate as t } from '../../../../common/utils/i18n';
 import { getBackendHost } from '../../../../common/utils/settings';
 import '../../../style/pages/search.scss';
 
@@ -41,7 +42,7 @@ class Search extends Component<IProps, IState> {
                         </button>
                     </div>
                     <div className="ac-wrapper">
-                        <input type="text" id="searchInput" className="ac-input" placeholder="Search for apps" autoFocus />
+                        <input type="text" id="searchInput" className="ac-input" placeholder={t('page.search.placeholder')} autoFocus />
                     </div>
                     <div className="ac-wrapper-suffix">
                         <button className="ac-clear h-100" id="clearBtn" hidden>
@@ -59,7 +60,7 @@ class Search extends Component<IProps, IState> {
 
                 {!this.state.showList ? undefined : (
                     <>
-                        <h1 className="text-lighter mt-4 fs-4">Popular</h1>
+                        <h1 className="text-lighter mt-4 fs-4">{t('page.search.popular')}</h1>
                         <div className="list-item-wrapper mt-1">
                             {this.state.listItems.map(app => <ListItem app={app} key={app.id} />)}
                         </div>
@@ -196,7 +197,7 @@ class AutoCompleteItem extends Component<{ item: AppAutoComplete, query: string,
 
     componentDidMount() {
         tippy('.app-link', {
-            content: 'Go to store page',
+            content: t('page.search.details'),
             animation: 'scale'
         });
     }
@@ -221,7 +222,7 @@ class ListItem extends Component<ListItemProps> {
             <Link to={`/library/store/app/${this.props.app.key}`} className="search-list-item search-item cursor-pointer p-2 d-flex align-items-center mt-1 rounded text-lighter no-underline">
                 <img src={`${getBackendHost()}/api/lclplauncher/apps/assets/banner-small/${this.props.app.key}`} alt="App preview" ref={this.imgRef} className="rounded" width="120" height="45" />
                 <div className="ms-3 flex-grow-1 fw-bold">{ this.props.app.title }</div>
-                <div className="fw-bold me-1 text-light">{isAppFree ? 'FREE' : this.props.app.cost!.toFixed(2)}</div>
+                <div className="fw-bold me-1 text-light">{isAppFree ? t('page.store.free').toLocaleUpperCase() : this.props.app.cost!.toFixed(2)}</div>
             </Link>
         );
     }

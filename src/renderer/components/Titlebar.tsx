@@ -25,6 +25,7 @@ class Titlebar extends Component<Props, State> {
                 <div id="window-title">
                     <img src={logo} alt="Logo" />
                     <span>LCLPLauncher</span>
+                    {/* Cannot use I18n here yet, because it may not be initialized */}
                 </div>
                 <div id="window-controls">
                     {

@@ -1,10 +1,12 @@
 import { Modal } from 'bootstrap';
+import ElectronLog from 'electron-log';
 import React, { Component } from 'react';
 import App from "../../../../../common/types/App";
 import AppState from "../../../../../common/types/AppState";
 import DownloadProgress, { PackageDownloadProgress } from "../../../../../common/types/DownloadProgress";
 import { CompiledInstallationInput } from '../../../../../common/types/InstallationInput';
 import { InputMap } from '../../../../../common/types/InstallationInputResult';
+import { translate as t } from '../../../../../common/utils/i18n';
 import { setDependencies } from '../../../../event/dependencies';
 import { installationProgressManager, InstallerEvent } from '../../../../event/downloads';
 import { DOWNLOADER, LIBRARY } from '../../../../utils/ipc';
@@ -38,20 +40,20 @@ class PlayStateButton extends Component<ContentProps, PlayState> {
                     <button id="playBtn" className="px-4_5 btn btn-xl fw-bold shadow btn-secondary d-flex align-items-center" disabled>
                         <LoadingSpinner className="app-btn-spinner" />
                     </button>
-                    <div id="playDesc" className="ms-2_5 flex-fill">Loading...</div>
+                    <div id="playDesc" className="ms-2_5 flex-fill">{t('loading')}...</div>
                 </>
             );
             case 'running':
                 return (
                     <>
-                        <button id="playBtn" className="px-4_5 btn btn-xl fw-bold shadow btn-danger">Stop</button>
-                        <div id="playDesc" className="ms-2_5 flex-fill">This {appType === 'game' ? 'Game' : 'App'} is currently running.</div>
+                        <button id="playBtn" className="px-4_5 btn btn-xl fw-bold shadow btn-danger">{t('page.detail.stop')}</button>
+                        <div id="playDesc" className="ms-2_5 flex-fill">{t('page.detail.running', t(appType === 'game' ? 'game' : 'app'))}</div>
                     </>
                 );
             case 'not-installed': return (
                 <>
-                    <button id="playBtn" className="px-4_5 btn btn-xl fw-bold shadow btn-primary">Install</button>
-                    <div id="playDesc" className="ms-2_5 flex-fill">Not yet installed</div>
+                    <button id="playBtn" className="px-4_5 btn btn-xl fw-bold shadow btn-primary">{t('page.detail.install')}</button>
+                    <div id="playDesc" className="ms-2_5 flex-fill">{t('page.detail.not_yet_installed')}</div>
                 </>
             );
             case 'ready-to-play': return (
@@ -60,19 +62,19 @@ class PlayStateButton extends Component<ContentProps, PlayState> {
                         {this.state.pressedAction ? (
                             <>
                                 <LoadingSpinner className="spinner-border-sm progress-spinner" />
-                                <span className="ms-2">Starting</span>
+                                <span className="ms-2">{t('page.detail.starting')}</span>
                             </>
-                        ) : (appType === 'game' ? 'Play' : 'Start')}
+                        ) : t(appType === 'game' ? 'page.detail.play' : 'page.detail.start')}
                     </button>
                     <div id="playDesc" className="ms-2_5 flex-fill">
-                        {this.state.pressedAction ? 'Starting...' : (appType === 'game' ? 'Ready to play' : 'Ready to start')}
+                        {this.state.pressedAction ? `${t('page.detail.starting')}...` : t(appType === 'game' ? 'page.detail.ready_play' : 'page.detail.ready_start')}
                     </div>
                 </>
             );
             case 'needs-update': return (
                 <>
-                    <button id="playBtn" className="px-4_5 btn btn-xl fw-bold shadow btn-info">Update</button>
-                    <div id="playDesc" className="ms-2_5 flex-fill">Needs to be updated</div>
+                    <button id="playBtn" className="px-4_5 btn btn-xl fw-bold shadow btn-info">{t('page.detail.update')}</button>
+                    <div id="playDesc" className="ms-2_5 flex-fill">{t('page.detail.needs_update')}</div>
                 </>
             );
             case 'installing': return <InstallingButton />;
@@ -81,26 +83,26 @@ class PlayStateButton extends Component<ContentProps, PlayState> {
                 <>
                     <button id="playBtn" className="px-4_5 btn btn-xl fw-bold shadow btn-info d-flex align-items-center" disabled>
                         <LoadingSpinner className="spinner-border-sm progress-spinner" />
-                        <span className="ms-2">In queue</span>
+                        <span className="ms-2">{t('page.detail.in_queue')}</span>
                     </button>
-                    <div id="playDesc" className="ms-2_5 flex-fill">Download pending...</div>
+                    <div id="playDesc" className="ms-2_5 flex-fill">{t('page.detail.download_pending')}</div>
                 </>
             );
             case 'preinstalling': return <PreInstallingButton />;
             case 'outdated-launcher': return (
                 <>
                     <button id="playBtn" className="px-4_5 btn btn-xl fw-bold shadow btn-secondary d-flex align-items-center" disabled>
-                        <span className="ms-2">Outdated</span>
+                        <span className="ms-2">{t('page.detail.outdated')}</span>
                     </button>
-                    <div id="playDesc" className="ms-2_5 flex-fill">Please update LCLPLauncher</div>
+                    <div id="playDesc" className="ms-2_5 flex-fill">{t('page.detail.please_update')}</div>
                 </>
             );
             case 'unsupported-platform': return (
                 <>
                     <button id="playBtn" className="px-4_5 btn btn-xl fw-bold shadow btn-secondary d-flex align-items-center" disabled>
-                        <span className="ms-2">Unsupported</span>
+                        <span className="ms-2">{t('page.detail.unsupported')}</span>
                     </button>
-                    <div id="playDesc" className="ms-2_5 flex-fill">This {appType === 'game' ? 'Game' : 'Software'} is not supported by your platform.</div>
+                    <div id="playDesc" className="ms-2_5 flex-fill">{t('page.detail.unsupported_desc', appType === 'game' ? 'game' : 'app')}</div>
                 </>
             );
             default:
@@ -128,7 +130,7 @@ class PlayStateButton extends Component<ContentProps, PlayState> {
 
             const path = (installationDirInput as HTMLInputElement).value.trim();
             if (path.length <= 0) {
-                alert('Please choose installation directory first!');
+                alert(t('install.location_empty'));
                 return;
             }
 
@@ -139,7 +141,7 @@ class PlayStateButton extends Component<ContentProps, PlayState> {
                 }
             }).catch(err => {
                 if (err instanceof Error && err.message === 'Operation cancelled.') return;
-                console.error(err);
+                ElectronLog.error(err);
             });
         });
 
@@ -185,12 +187,12 @@ class PlayStateButton extends Component<ContentProps, PlayState> {
                                     state: state
                                 }))
                                 .catch(err => {
-                                    console.error('Error fetching app state:', err);
+                                    ElectronLog.error('Error fetching app state:', err);
                                     this.setState({ pressedAction: false });
                                 })
                         }
                     }).catch(err => {
-                        console.error('Error starting app:', err)
+                        ElectronLog.error('Error starting app:', err)
                         this.setState({ pressedAction: false });
                     });
                     break;
@@ -201,18 +203,18 @@ class PlayStateButton extends Component<ContentProps, PlayState> {
 
                     LIBRARY.stopApp(this.props.app).then(stopped => {
                         if (stopped === null) return;
-                        if (!stopped) console.warn('Could not stop', this.props.app.title);
+                        if (!stopped) ElectronLog.warn('Could not stop', this.props.app.title);
                         DOWNLOADER.getAppStatus(this.props.app)
                             .then(state => this.setState({
                                 pressedAction: false,
                                 state: state
                             }))
                             .catch(err => {
-                                console.error('Error fetching app state:', err);
+                                ElectronLog.error('Error fetching app state:', err);
                                 this.setState({ pressedAction: false });
                             });
                     }).catch(err => {
-                        console.error('Error fetching app state:', err);
+                        ElectronLog.error('Error fetching app state:', err);
                         this.setState({ pressedAction: false });
                     });
                     break;
@@ -232,7 +234,7 @@ class PlayStateButton extends Component<ContentProps, PlayState> {
         DOWNLOADER.isLauncherInstallerVersionValid(this.props.app).then(valid => {
             if (valid === null) return; // called twice
             if (valid) callback();
-            else alert(`'${this.props.app.title}' requires a newer version of LCLPLauncher. Please update your launcher first.`);
+            else alert(t('page.detail.alert_outdated', this.props.app.title));
         });
     }
 
@@ -252,7 +254,7 @@ class PlayStateButton extends Component<ContentProps, PlayState> {
         DOWNLOADER.getInstallationDir(this.props.app).then(installationDir => {
             if (installationDir === undefined) this.updateStatus(); // installation dir got deleted since last state check
             else this.fetchInputs(installationDir);
-        }).catch(err => console.error('Could not fetch installation directory:', err));
+        }).catch(err => ElectronLog.error('Could not fetch installation directory:', err));
     }
 
     protected cachedInstallationDir?: string;
@@ -266,7 +268,7 @@ class PlayStateButton extends Component<ContentProps, PlayState> {
             this.additionalInputs = result.inputs
             this.map = result.map;
             this.askNextInput();
-        }).catch(err => console.error('Could not fetch additional inputs:', err));
+        }).catch(err => ElectronLog.error('Could not fetch additional inputs:', err));
     }
 
     askNextInput() {
@@ -286,10 +288,13 @@ class PlayStateButton extends Component<ContentProps, PlayState> {
 
     askForDependencies() {
         if (!this.cachedInstallationDir) throw new Error('Installation dir unknown.');
+
         const installationDir = this.cachedInstallationDir;
         this.cachedInstallationDir = undefined;
+
         const map = this.map;
         if (!map) throw new Error('Input map is undefined.');
+
         this.map = undefined;
 
         DOWNLOADER.getUninstalledDependencies(this.props.app).then(uninstalledDeps => {
@@ -297,22 +302,22 @@ class PlayStateButton extends Component<ContentProps, PlayState> {
             if (uninstalledDeps.length > 0) {
                 setDependencies(uninstalledDeps, true, () => this.startActualInstallation(installationDir, map));
             } else this.startActualInstallation(installationDir, map);
-        }).catch(err => console.error(err));
+        }).catch(err => ElectronLog.error(err));
     }
 
     startActualInstallation(installationDir: string, map: InputMap) {
-        console.info(`Starting installation process of '${this.props.app.title}'...`);
+        ElectronLog.info(`Starting installation process of '${this.props.app.title}'...`);
 
         DOWNLOADER.startInstallationProcess(this.props.app, installationDir, map).then(success => {
             if (success === null) return; // Button clicked while installation process is running
             if (success) {
-                console.info(`Installation of '${this.props.app.title}' has finished successfully.`);
+                ElectronLog.info(`Installation of '${this.props.app.title}' has finished successfully.`);
                 this.updateStatus();
             } else {
-                console.error(`Could not complete installation process of '${this.props.app.title}'.`);
+                ElectronLog.error(`Could not complete installation process of '${this.props.app.title}'.`);
             }
         }).catch(error => {
-            console.error('Could not finish the installation process:', error)
+            ElectronLog.error('Could not finish the installation process:', error)
             this.updateStatus();
         });
     }
@@ -333,12 +338,12 @@ class InstallingButton extends Component<{}, InstallingState> {
             <>
                 <button id="playBtn" className="px-4_5 btn btn-xl fw-bold shadow btn-primary d-flex align-items-center" disabled>
                     <LoadingSpinner className="spinner-border-sm progress-spinner" />
-                    <span className="ms-2">Installing</span>
+                    <span className="ms-2">{t('page.detail.installing')}</span>
                     {this.state.progress ? (
                         <span className="ms-1">{(this.state.progress.currentProgress * 100).toFixed(0)}%</span>
                     ) : undefined}
                 </button>
-                <div id="playDesc" className="ms-2_5 flex-fill">Currently installing...</div>
+                <div id="playDesc" className="ms-2_5 flex-fill">{t('page.detail.currently_installing')}</div>
             </>
         )
     }
@@ -372,12 +377,12 @@ class UpdatingButton extends Component<{}, InstallingState> {
             <>
                 <button id="playBtn" className="px-4_5 btn btn-xl fw-bold shadow btn-info d-flex align-items-center" disabled>
                     <LoadingSpinner className="spinner-border-sm progress-spinner" />
-                    <span className="ms-2">Updating</span>
+                    <span className="ms-2">{t('page.detail.updating')}</span>
                     {this.state.progress ? (
                         <span className="ms-1">{(this.state.progress.currentProgress * 100).toFixed(0)}%</span>
                     ) : undefined}
                 </button>
-                <div id="playDesc" className="ms-2_5 flex-fill">Currently updating...</div>
+                <div id="playDesc" className="ms-2_5 flex-fill">{t('page.detail.currently_updating')}</div>
             </>
         )
     }
@@ -415,12 +420,12 @@ class PreInstallingButton extends Component<{}, PreInstallingState> {
             <>
                 <button id="playBtn" className="px-4_5 btn btn-xl fw-bold shadow btn-secondary d-flex align-items-center" disabled>
                     <LoadingSpinner className="spinner-border-sm progress-spinner" />
-                    <span className="ms-2">Preinstalling</span>
+                    <span className="ms-2">{t('page.detail.preinstalling')}</span>
                     {this.state.progress ? (
                         <span className="ms-1">{this.state.progress.currentQueuePosition}/{this.state.progress.queueSize}</span>
                     ) : undefined}
                 </button>
-                <div id="playDesc" className="ms-2_5 flex-fill">Preinstalling...</div>
+                <div id="playDesc" className="ms-2_5 flex-fill">{t('page.detail.currently_preinstalling')}</div>
             </>
         )
     }

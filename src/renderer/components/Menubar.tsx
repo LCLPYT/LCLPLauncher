@@ -5,6 +5,7 @@ import logo from '../img/logo.svg';
 import { UTILITIES } from '../utils/ipc';
 import { isDevelopment } from '../../common/utils/env';
 import { getAppVersion } from '../utils/env';
+import { translate as t } from '../../common/utils/i18n';
 
 interface State {
     version?: string
@@ -34,7 +35,7 @@ class Menubar extends Component<{}, State> {
                     <div className="offcanvas-header separator-border-dark-bottom">
                         <div className="d-flex align-items-center">
                             <img src={logo} alt="Logo" className="me-2" width="40px" height="40px" />
-                            <h5 className="offcanvas-title" id="sideMenuLabel">LCLPLauncher</h5>
+                            <h5 className="offcanvas-title" id="sideMenuLabel">{t('app.name')}</h5>
                             <span className="badge bg-secondary px-1 ms-1 mt-1">v{this.state.version ? this.state.version : '?'}</span>
                             {isDevelopment ? (<span className="badge bg-warning px-1 ms-1 mt-1">dev</span>) : ''}
                         </div>
@@ -43,15 +44,15 @@ class Menubar extends Component<{}, State> {
                     <div className="offcanvas-body p-0">
                         <div className="list-group list-group-flush sidemenu-item cursor-pointer">
                             <a href="https://lclpnet.work" className="list-group-item list-group-item-action p-3 bg-dark navigation-link-color">
-                                Website <span className="material-icons" style={{ verticalAlign: 'bottom' }}>link</span>
+                                {t('website')} <span className="material-icons" style={{ verticalAlign: 'bottom' }}>link</span>
                             </a>
                         </div>
                         <div className="w-100 py-2" style={{ left: '0px', bottom: '0px', position: 'absolute' }}>
                             <NavLink to="/settings" className="btn-nostyle navigation-link-color cursor-pointer float-start no-underline close-menu-on-click" activeClassName="active">
-                                <span className="material-icons" style={{ verticalAlign: 'bottom' }}>settings</span> Settings
+                                <span className="material-icons" style={{ verticalAlign: 'bottom' }}>settings</span> {t('settings')}
                             </NavLink>
                             <button id="menuCloseBtn" className="btn-nostyle danger-link-color float-end" type="button">
-                                <span className="material-icons cursor-pointer" style={{ verticalAlign: 'bottom' }}>exit_to_app</span> Exit
+                                <span className="material-icons cursor-pointer" style={{ verticalAlign: 'bottom' }}>exit_to_app</span> {t('exit')}
                             </button>
                         </div>
                     </div>

@@ -1,7 +1,9 @@
 import { Modal } from "bootstrap";
+import ElectronLog from "electron-log";
 import React, { Component } from "react";
 import { CompiledInstallationInput } from "../../../../../common/types/InstallationInput";
 import { InputMap } from "../../../../../common/types/InstallationInputResult";
+import { translate as t } from "../../../../../common/utils/i18n";
 import { UTILITIES } from "../../../../utils/ipc";
 
 interface Props {
@@ -15,13 +17,14 @@ class AdditionalInputModal extends Component<Props> {
         const id = `inmod_${this.props.input.id}`;
         const labelId = `${id}_label`;
         const inputId = `${id}_in`;
+
         return (
             <div className="modal fade" id={id} tabIndex={-1} aria-labelledby={labelId} aria-hidden="true">
                 <div className="modal-dialog modal-lg modal-dialog-centered">
                     <div className="modal-content">
                         <div className="modal-header">
                             <h5 className="modal-title text-lighter" id={labelId}>{`Input ${this.props.input.title}`}</h5>
-                            <button type="button" className="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                            <button type="button" className="btn-close" data-bs-dismiss="modal" aria-label={t('close')}></button>
                         </div>
                         <div className="modal-body">
                             <p id={`${id}_desc`}></p>
@@ -31,8 +34,8 @@ class AdditionalInputModal extends Component<Props> {
                             </div>
                         </div>
                         <div className="modal-footer">
-                            <button type="button" className="btn btn-secondary" data-bs-dismiss="modal">Close</button>
-                            <button type="button" id={`${id}_submit`} className="btn btn-primary">Continue</button>
+                            <button type="button" className="btn btn-secondary" data-bs-dismiss="modal">{t('close')}</button>
+                            <button type="button" id={`${id}_submit`} className="btn btn-primary">{t('continue')}</button>
                         </div>
                     </div>
                 </div>
@@ -47,7 +50,7 @@ class AdditionalInputModal extends Component<Props> {
                 return (
                     <div className="input-group mb-1 custom-input-wrapper">
                         <input type="text" className="form-control custom-input text-lighter" id={inputId} placeholder={`${this.props.input.title}...`} aria-describedby={btnId} />
-                        <button id={btnId} className="input-group-text custom-input">Choose folder...</button>
+                        <button id={btnId} className="input-group-text custom-input">{t('install.choose_dir')}</button>
                     </div>
                 );
             default:
@@ -70,7 +73,7 @@ class AdditionalInputModal extends Component<Props> {
                     const fileSelectorButton = document.getElementById(`${inputId}_btn`);
                     fileSelectorButton?.addEventListener('click', () => {
                         UTILITIES.chooseFiles({
-                            title: `Choose ${this.props.input.title}`,
+                            title: t('install.input.choose', this.props.input.title),
                             properties: ['openDirectory', 'promptToCreate', 'dontAddToRecent']
                         }).then(result => {
                             if (!result || result.canceled || !input) return;
@@ -79,7 +82,7 @@ class AdditionalInputModal extends Component<Props> {
                             if (paths.length !== 1) throw new Error('Only one file must be chosen');
 
                             input.value = result.filePaths[0];
-                        }).catch(err => console.error('Error while choosing file:', err));
+                        }).catch(err => ElectronLog.error('Error while choosing file:', err));
                     });
                     break;
 
@@ -95,14 +98,14 @@ class AdditionalInputModal extends Component<Props> {
                     return;
                 }
                 UTILITIES.doesFileExist(value).then(exists => {
-                    if (!exists) alert('That directory does not exist.');
+                    if (!exists) alert(t('install.dir_does_not_exist'));
                     else {
                         const modal = document.getElementById(id);
                         if (modal) Modal.getInstance(modal)?.hide();
                         this.props.map[this.props.input.id] = value;
                         this.props.next();
                     }
-                }).catch(err => console.error('Failed to check if directory exists:', err));
+                }).catch(err => ElectronLog.error('Failed to check if directory exists:', err));
             });
         }
     }
