@@ -23,7 +23,7 @@ body {
 
 // specific elements (id)
 #app {
-    height: calc(100% - $toolbar-height);
+    height: calc(100% - #{$toolbar-height});
     margin-top: $toolbar-height;
     overflow: hidden;
     display: flex;

@@ -2,16 +2,18 @@
     height: 100%;
 }
 
+$libSidebarWidth: 57px;
+
 #librarySidebar {
     float: left;
-    width: 57px;
+    width: $libSidebarWidth;
     position: fixed;
     height: 100%;
 }
 
 #libraryContent {
     float: right;
-    width: calc(100% - 71px); /* 1px border */
+    width: calc(100% - #{$libSidebarWidth}); /* 1px border */
     height: 100%;
 }
 
