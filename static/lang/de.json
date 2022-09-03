@@ -1,6 +1,9 @@
 {
     "app.name": "LCLPLauncher",
 
+    "title.update_error": "%s - Fehler bei Aktualisierung",
+    "title.mandatory_update": "%s - Update benötigt",
+
     "next": "Weiter",
     "prev": "Zurück",
     "website": "Webseite",
@@ -25,6 +28,13 @@
     "toast.update.later": "Später",
     "toast.update.starting": "Download wird vorbereitet",
     "toast.update.progress": "Updatefortschritt: %s%",
+    "toast.downloading_dependencies": "Pakete werden heruntergeladen",
+    "toast.downloads_active": "Downloads aktiv",
+    "toast.installation_finished": "Installation fertiggestellt",
+    "toast.installation_failed": "Installation fehlgeschlagen",
+    "toast.installation_error": "\"%s\" konnte wegen eines unbekannten Fehlers nicht installiert werden.",
+    "toast.update_error": "Fehler bei Aktualisierung",
+    "toast.update_available": "Update verfügbar",
 
     "quicknav.title": "Schnellnavigation",
     "quicknav.library": "Bibliothek",
@@ -107,6 +117,8 @@
     "install.consent": "Einverstanden",
     "install.input.choose": "Auswahl von %s",
     "install.dir_does_not_exist": "Dieses Verzeichnis existiert nicht.",
+    "install.dir_not_empty": "Installationordner ist nicht leer",
+    "install.ask_dir_not_empty": "Das gewählte Installationsverzeichnis enthält bereits Dateien. Sämtliche konfliktierende Dateien werden bei der Installation überschrieben. Willst du fortfahren?",
 
     "setting.group.general": "Generell",
     "setting.group.general.desc": "Generelle Einstellungen",

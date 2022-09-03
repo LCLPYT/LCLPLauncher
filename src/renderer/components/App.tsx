@@ -353,7 +353,7 @@ class UpdateAvailableToast extends AbstractToastComponent<{
                     {text + t('toast.update.ask')}
                     <div className="mt-1">
                         <button type="button" className="btn btn-primary btn-sm me-2" ref={this.dlBtnRef}>{t('toast.update.download')}</button>
-                        <button type="button" className="btn btn-dark btn-sm" data-bs-dismiss="toast" aria-label="Close">{t('toast.update.later')}</button>
+                        <button type="button" className="btn btn-dark btn-sm" data-bs-dismiss="toast" aria-label={t('close')}>{t('toast.update.later')}</button>
                     </div>
                 </div>
             );

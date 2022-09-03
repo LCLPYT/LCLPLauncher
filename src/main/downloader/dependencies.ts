@@ -15,6 +15,7 @@ import { DOWNLOADER } from "../utils/ipc";
 import { extractTar } from "../core/service/tar";
 import { unzip } from "../core/service/zip";
 import { ActionFactory, ArtifactActionArgument, GeneralActionArgument, PostActionHandle, PostActionWrapper } from "./postActions";
+import { translate } from "../../common/utils/i18n";
 
 export namespace Dependencies {
     export async function getUninstalledDependencies(dependencies: DependencyDescriptor[]): Promise<AppDependency[]> {
@@ -194,7 +195,7 @@ export namespace Dependencies {
     
             const toastId = Toast.add({
                 icon: 'file_download',
-                title: 'Downloading dependencies',
+                title: translate('toast.downloading_dependencies'),
                 type: ToastType.PACKAGE_DOWNLOAD_STATUS,
                 noAutoHide: true
             });

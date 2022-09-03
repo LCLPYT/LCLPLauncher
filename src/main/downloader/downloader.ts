@@ -33,6 +33,7 @@ import { ArtifactTrackerVariables } from "./tracker/ArtifactTracker";
 import { createReader } from "./tracker/ArtifactTrackers";
 import { registerUninstallExceptionPath, uninstallApp } from "./uninstall";
 import { resolveUrl } from "./urlResolver";
+import { translate } from "../../common/utils/i18n";
 
 const queue: [App, string, InputMap, (err: any) => void][] = [];
 let currentInstaller: Installer | null = null;
@@ -100,8 +101,8 @@ export async function validateInstallationDir(dir: string) {
             const result = await dialog.showMessageBox(focusedWindow, {
                 type: 'question',
                 buttons: ['Cancel', 'Choose anyway'],
-                title: 'Installation directory is not empty',
-                message: 'The chosen installation directory already contains files. Any conflicting files will be overwritten. Are you sure that you want to continue?',
+                title: translate('install.dir_not_empty'),
+                message: translate('install.ask_dir_not_empty'),
                 noLink: true
             });
             const btnIndex = result.response;
@@ -212,7 +213,7 @@ export async function startInstallationProcess(app: App, installationDir: string
     log.info('Installing to:', installationDir);
     const toastId = Toast.add({
         icon: 'file_download',
-        title: 'Downloads active',
+        title: translate('toast.downloads_active'),
         type: ToastType.DOWNLOAD_STATUS,
         noAutoHide: true
     });
@@ -261,7 +262,11 @@ export async function startInstallationProcess(app: App, installationDir: string
     } catch(err) {
         resetInstallation();
 
-        Toast.add(Toast.createError('Installation failed', `'${app.title}' could not be installed because of an unexpected error.`));
+        Toast.add(Toast.createError(
+            translate('toast.installation_failed'), 
+            translate('toast.installation_error', app.title)
+        ));
+        
         beginNextInstallation();
         throw err;
     }
@@ -272,7 +277,7 @@ export async function startInstallationProcess(app: App, installationDir: string
     // provide finish notification
     Toast.add({
         icon: 'done',
-        title: 'Installation finished',
+        title: translate('toast.installation_finished'),
         type: ToastType.TEXT,
         detail: `'${app.title}' was successfully installed.`
     });

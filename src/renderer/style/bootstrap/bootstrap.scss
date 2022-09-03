@@ -41,8 +41,24 @@ $spacers: (
     border-top: 1px solid lighten($dark, 7%);
 }
 
-.separator-border-dark-slim-top {
-    border-top: 1px solid darken($dark, 0.75%);
+.ui-separator-top {
+    border-top: 1px solid $dark-separator;
+}
+
+.ui-separator-bottom, .ui-separator-bottom.btn-nostyle {
+    border-bottom: 1px solid $dark-separator;
+}
+
+.ui-separator-left {
+    border-left: 1px solid $dark-separator;
+}
+
+.ui-separator-right, .ui-separator-right.btn-nostyle {
+    border-right: 1px solid $dark-separator;
+}
+
+.ui-separator {
+    border: 1px solid $dark-separator;
 }
 
 .danger-link-color:hover {

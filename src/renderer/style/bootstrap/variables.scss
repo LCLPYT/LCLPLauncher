@@ -3,9 +3,11 @@ $gray-600: #5b6874;
 $gray-700: #2f353a;
 $gray-800: #24292E;
 $gray-900: #1F2428;
+$gray-950: #1b1f23;
 
 /* Themes */
 $dark: $gray-900;
+$dark-separator: $gray-950;
 
 /* Components */
 // Body
@@ -31,3 +33,5 @@ $input-focus-box-shadow: 0 0 0 0.2rem rgba($primary, 0.85);
 $form-select-focus-border-color: rgba($secondary, 0.85);
 $form-select-focus-box-shadow: 0 0 0 0.2rem rgba($primary, 0.85);
 $form-select-indicator-color: $gray-500;
+
+$toolbar-height: 29px;

@@ -21,14 +21,15 @@ class Menubar extends Component<{}, State> {
         return (
             <>
                 <header id="header" className="sticky-top">
-                    <nav className="navbar navbar-expand navbar-dark bg-dark shadow-sm p-1 dragarea separator-border-dark-slim-top">
-                        <button className="btn-nostyle navigation-link-color nodragarea" type="button" data-bs-toggle="offcanvas" data-bs-target="#sideMenu" aria-controls="sideMenu">
+                    <nav className="navbar navbar-expand navbar-dark bg-dark p-0 dragarea ui-separator-top align-items-stretch">
+                        <button className="btn-nostyle navigation-link-color nodragarea btn-drawer-menu ui-separator-bottom ui-separator-right px-3" type="button" data-bs-toggle="offcanvas" data-bs-target="#sideMenu" aria-controls="sideMenu">
                             <span className="material-icons cursor-pointer" style={{ verticalAlign: 'bottom' }}>menu</span>
                         </button>
                         <ul className="navbar-nav me-auto mb-0 nodragarea">
-                            <NavItem route="/home" title="Home" />
-                            <NavItem route="/library" title="Library" />
+                            <NavItem route="/home" title="Home" icon="home" />
+                            <NavItem route="/library" title="Library" icon="bookmarks" iconSize="21px" />
                         </ul>
+                        <div className="flex-fill ui-separator-bottom" />
                     </nav>
                 </header>
                 <div className="offcanvas offcanvas-start" tabIndex={-1} id="sideMenu" aria-labelledby="sideMenuLabel">
@@ -96,11 +97,18 @@ class Menubar extends Component<{}, State> {
     }
 }
 
-class NavItem extends Component<{ route: string, title: string }> {
+class NavItem extends Component<{ route: string, title: string, icon?: string, iconSize?: string }> {
     render() {
         return (
-            <li className="nav-item mx-1">
-                <NavLink to={this.props.route} className="nav-link cursor-pointer" activeClassName="active">{this.props.title}</NavLink>
+            <li className="nav-item ui-separator-right">
+                <NavLink to={this.props.route} className="nav-link cursor-pointer d-inline-flex align-items-center ui-separator-bottom" activeClassName="active">
+                    {this.props.icon ? (
+                        <span className="material-icons me-1" style={this.props.iconSize ? {fontSize: this.props.iconSize} : undefined}>
+                            {this.props.icon}
+                        </span>
+                    ) : undefined}
+                    {this.props.title}
+                </NavLink>
             </li>
         );
     }

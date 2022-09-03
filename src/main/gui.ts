@@ -3,6 +3,7 @@ import log from "electron-log";
 import path from "path";
 import { ToastType } from "../common/types/Toast";
 import { isDevelopment } from "../common/utils/env";
+import { translate } from "../common/utils/i18n";
 import { Settings } from "../common/utils/settings";
 import { isExternalResource } from "../common/utils/urls";
 import { Toast } from "./core/service/toast";
@@ -81,9 +82,11 @@ async function initDependencies() {
     }).catch(err => {
         log.error('Could not check for updates:', err);
 
-        if (mainWindow) mainWindow.setTitle('LCLPLauncher - Update Error');
-        Toast.add(Toast.createError('Update error'));
-        whenIpcReady.then(() => UPDATER.sendUpdateError(err));
+        Toast.add(Toast.createError(translate('toast.update_error')));
+        whenIpcReady.then(() => {
+            UPDATER.sendUpdateError(err);
+            if (mainWindow) mainWindow.setTitle(translate('title.update_error', translate('app.name')));
+        });
 
         return null;
     });
@@ -94,8 +97,10 @@ async function initDependencies() {
         if (update) {
             log.info('Mandatory update required.');
 
-            if (mainWindow) mainWindow.setTitle('LCLPLauncher - Mandatory Update');
-            await whenIpcReady.then(() => UPDATER.sendUpdateState(update));
+            await whenIpcReady.then(() => {
+                UPDATER.sendUpdateState(update);
+                if (mainWindow) mainWindow.setTitle(translate('title.mandatory_update', translate('app.name')));
+            });
         }
 
         whenIpcReady.then(() => UTILITIES.sendAppReadySignal());
@@ -103,9 +108,10 @@ async function initDependencies() {
     } else {
         if (update.updateAvailable) {
             log.info(update.versionName ? `Update available: Version ${update.versionName}` : 'Update available.');
+
             Toast.add({
                 icon: 'info',
-                title: 'Update available',
+                title: translate('toast.update_available'),
                 type: ToastType.UPDATE_AVAILABLE,
                 detail: update.versionName,
                 noAutoHide: true,

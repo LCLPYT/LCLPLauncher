@@ -14,7 +14,7 @@ class Library extends Component {
         return (
             <>
                 <div id="libraryContainer">
-                    <div id="librarySidebar" className="separator-border-dark-right">
+                    <div id="librarySidebar" className="ui-separator-right bg-dark">
                         <div className="sidebar-padding">
                             <SideTab route="/library/apps" icon="apps" title={t('page.library.side.apps')} />
                             <SideTab route="/library/search" icon="search" title={t('page.library.side.search')} />

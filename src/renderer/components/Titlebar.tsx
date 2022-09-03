@@ -22,12 +22,12 @@ class Titlebar extends Component<Props, State> {
     render() {
         return (
             <div className="dragarea" id="drag-region">
-                <div id="window-title">
+                <div id="window-title" className="text-lighter">
                     <img src={logo} alt="Logo" />
                     <span>LCLPLauncher</span>
                     {/* Cannot use I18n here yet, because it may not be initialized */}
                 </div>
-                <div id="window-controls">
+                <div id="window-controls" className="ui-separator-left">
                     {
                         this.state.maximizeButton ? (
                             <div className="button" id="max-button">

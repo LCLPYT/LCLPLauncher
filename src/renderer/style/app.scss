@@ -4,6 +4,7 @@
 
 // components
 @import "components/titlebar";
+@import "components/menubar";
 @import "components/scrollbar";
 @import "components/navigation";
 @import "components/selections";
@@ -22,8 +23,8 @@ body {
 
 // specific elements (id)
 #app {
-    height: calc(100% - 32px);
-    margin-top: 32px;
+    height: calc(100% - $toolbar-height);
+    margin-top: $toolbar-height;
     overflow: hidden;
     display: flex;
     flex-direction: column;
@@ -76,3 +77,13 @@ body {
 a.no-underline {
     text-decoration: none;
 }
+
+.ring-sm {
+    &.card {
+        border: 1px solid #38393c;
+    }
+}
+
+// .ring {
+//     box-shadow: inset 0 0 0 1px rgb(255 255 255/.1);
+// }
