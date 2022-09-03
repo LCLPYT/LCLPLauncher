@@ -22,7 +22,7 @@ class Home extends Component {
                     <div id="previewFrame" />
                     <div className="mt-5">
                         <h5 className="text-light">{t('quicknav.title')}</h5>
-                        <div className="row action-list">
+                        <div className="row row-cols-auto">
                             <HomeAction icon="bookmarks" name={t('quicknav.library')} link="/library/apps" />
                             <HomeAction icon="search" name={t('quicknav.search')} link="/library/search" />
                             <HomeAction icon="settings" name={t('quicknav.settings')} link="/settings" />
@@ -37,9 +37,9 @@ class Home extends Component {
 class HomeAction extends Component<{ icon: string, name: string, link: string }> {
     render() {
         return (
-            <div className="col">
+            <div className="col pb-2 px-2">
                 <Link to={this.props.link} className="navigation-link-color-dimmed no-underline cursor-pointer">
-                    <div className="card py-3 text-center shadow action-card ring">
+                    <div className="card py-3 px-4 text-center shadow action-card ring">
                         <span className="material-icons action-card-icon">{this.props.icon}</span>
                         <span>{this.props.name}</span>
                     </div>

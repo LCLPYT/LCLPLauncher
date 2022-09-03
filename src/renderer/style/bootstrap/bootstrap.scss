@@ -72,10 +72,6 @@ $spacers: (
     color: rgba($danger, 0.6)
 }
 
-.action-list {
-    @include row-cols(5);
-}
-
 .btn-xl {
     @include button-size(0.5rem, 1rem, 1.5rem, 0.4rem);
 }
