@@ -39,7 +39,7 @@ class HomeAction extends Component<{ icon: string, name: string, link: string }>
         return (
             <div className="col">
                 <Link to={this.props.link} className="navigation-link-color-dimmed no-underline cursor-pointer">
-                    <div className="card py-3 text-center shadow action-card ring-sm">
+                    <div className="card py-3 text-center shadow action-card ring">
                         <span className="material-icons action-card-icon">{this.props.icon}</span>
                         <span>{this.props.name}</span>
                     </div>

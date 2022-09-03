@@ -108,8 +108,8 @@ class AppEntry extends Component<{ app: App }> {
         return (
             <div className="col pb-2 px-2">
                 <Link to={`/library/app/${this.props.app.key}`}>
-                    <div id={`card${this.props.app.id}`} className="text-center d-inline-block cursor-pointer card-wrapper overflow-hidden shadow">
-                        <div className="card-banner-wrapper rounded">
+                    <div id={`card${this.props.app.id}`} className="text-center d-inline-block cursor-pointer card-wrapper overflow-hidden shadow rounded-3 ring-outer">
+                        <div className="card-banner-wrapper rounded-3">
                             <img className="card-banner" src={`${getBackendHost()}/api/lclplauncher/apps/assets/card-banner/${this.props.app.key}`} alt="App banner" />
                         </div>
                         <div className="card-overlay-bottom p-2 d-flex align-items-center">

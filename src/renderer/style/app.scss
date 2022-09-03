@@ -78,12 +78,10 @@ a.no-underline {
     text-decoration: none;
 }
 
-.ring-sm {
-    &.card {
-        border: 1px solid #38393c;
-    }
+.ring, .ring.card {
+    border: 1px solid $ring-color;
 }
 
-// .ring {
-//     box-shadow: inset 0 0 0 1px rgb(255 255 255/.1);
-// }
+.ring-outer, .ring-outer.card {
+    outline: 1px solid $ring-color;
+}

@@ -9,7 +9,7 @@ import {translate as t} from "../../../../common/utils/i18n";
 class FeaturedItems extends Component<{ items: FeaturedItem[] }> {
     render() {
         return (
-            <div className="card shadow ring-sm">
+            <div className="card shadow ring">
                 <div className="card-header no-border text-light">{t('component.featured')}</div>
                 <div className="card-body p-0">
                     <div id="featuredSlider" className="carousel slide" data-bs-ride="carousel">

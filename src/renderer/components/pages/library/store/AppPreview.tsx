@@ -44,7 +44,7 @@ class AppPreview extends Component<Props> {
         const carousel = document.getElementById('appPreviewCarousel');
         if (carousel) {
             new Carousel(carousel, {
-                slide: false,
+                ride: true,
                 pause: 'hover'
             });
             carousel.addEventListener('slide.bs.carousel', () => {

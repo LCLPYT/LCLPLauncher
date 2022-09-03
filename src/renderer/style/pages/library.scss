@@ -18,7 +18,7 @@ $libSidebarWidth: 57px;
 }
 
 span.tab-icon {
-    font-size: 32px;
+    font-size: 28px;
 }
 
 .tab-desc {
@@ -43,11 +43,4 @@ span.tab-icon {
 .tab-img-sm {
     width: 40px;
     height: 40px;
-}
-
-$sidebarPadding: 0.6rem;
-
-.sidebar-padding {
-    padding-top: $sidebarPadding;
-    padding-bottom: $sidebarPadding;
 }
