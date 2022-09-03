@@ -3,8 +3,11 @@
     position: fixed;
     height: $toolbar-height;
     width: 100%;
-    background: #1F2428;
     top: 0px;
+}
+
+body:not(.active) #titlebar {
+    background: $dark;
 }
 
 #titlebar #drag-region {

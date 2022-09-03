@@ -27,7 +27,7 @@ class Titlebar extends Component<Props, State> {
                     <span>LCLPLauncher</span>
                     {/* Cannot use I18n here yet, because it may not be initialized */}
                 </div>
-                <div id="window-controls" className="ui-separator-left">
+                <div id="window-controls">
                     {
                         this.state.maximizeButton ? (
                             <div className="button" id="max-button">
@@ -61,12 +61,15 @@ class Titlebar extends Component<Props, State> {
         );
     }
 
-    protected windowListeners: {
+    protected winManListeners: {
         [type: string]: (event: WindowEvent) => void
+    } = {};
+    protected winListeners: {
+        [type: string]: (event: any) => void
     } = {};
 
     componentDidMount() {
-        windowManager.addEventListener('maximizable-change', this.windowListeners['maximizable-change'] = event => {
+        windowManager.addEventListener('maximizable-change', this.winManListeners['maximizable-change'] = event => {
             if (event.detail.maximizable === undefined) throw new Error('Maximizable is undefined');
             this.setState({ maximizeButton: event.detail.maximizable })
         });
@@ -82,7 +85,12 @@ class Titlebar extends Component<Props, State> {
 
         // Toggle maximise/restore buttons when maximisation/unmaximisation occurs
         toggleMaxRestoreButtons();
-        window.addEventListener('resize', () => toggleMaxRestoreButtons());
+        window.addEventListener('resize', this.winListeners['resize'] = () => toggleMaxRestoreButtons());
+        window.addEventListener('focus', this.winListeners['focus'] = () => document.querySelector('body')?.classList.add('active'));
+        window.addEventListener('blur', this.winListeners['blur'] = () => document.querySelector('body')?.classList.remove('active'));
+
+        if (document.hasFocus()) document.querySelector('body')?.classList.add('active');
+        else document.querySelector('body')?.classList.remove('active');
 
         function toggleMaxRestoreButtons() {
             UTILITIES.isWindowMaximized().then(maximized => {
@@ -100,8 +108,11 @@ class Titlebar extends Component<Props, State> {
     }
 
     componentWillUnmount() {
-        Object.entries(this.windowListeners).forEach(([type, listener]) => {
+        Object.entries(this.winManListeners).forEach(([type, listener]) => {
             windowManager.removeEventListener(type, listener);
+        });
+        Object.entries(this.winListeners).forEach(([type, listener]) => {
+            window.removeEventListener(type, listener);
         });
     }
 
