@@ -31,7 +31,7 @@ class Library extends Component {
                             </div>
                         )} />
                         <Route exact path="/library/app/:app" render={props => (
-                            <div className="py-1 separator-border-dark-top">
+                            <div className="py-1 ui-separator-top">
                                 {
                                     React.createElement(SideAppTab, {
                                         link: `/library/app/${props.match.params.app}`,

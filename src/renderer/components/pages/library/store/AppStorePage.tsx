@@ -79,7 +79,7 @@ class Content extends Component<ContentProps, ContentState> {
         return (
             <div className="container p-3">
                 <h2 className="text-lighter">{this.props.app.title}</h2>
-                <div className="d-flex rounded shadow mt-2" id="appPreviewContainer">
+                <div className="d-flex rounded shadow mt-2 ring-outer" id="appPreviewContainer">
                   <div className="w-50">
                       {this.state.previewData ? <AppPreview app={this.props.app} previewData={this.state.previewData} /> : undefined}
                   </div>

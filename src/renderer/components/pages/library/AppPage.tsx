@@ -99,11 +99,11 @@ class Content extends Component<ContentProps, ContentState> {
                             <Link id="shopPageLink" to={`/library/store/app/${this.props.app.key}`} className="d-flex align-items-center navigation-link-color-dimmed no-underline cursor-pointer">
                                 <span className="material-icons">shopping_bag</span>
                             </Link>
-                            <span id="appSettingsLink" className="material-icons ms-2 navigation-link-color-dimmed cursor-pointer">settings</span>
+                            <span id="appSettingsLink" className="material-icons ms-3 navigation-link-color-dimmed cursor-pointer">settings</span>
                         </div>
                         <div className="d-flex">
                             <AppFeed ref={this.feedRef} app={this.props.app} />
-                            <div id="appDetails" className="px-3">
+                            <div id="appDetails" className="px-3 ring">
                                 <h4 className="text-lighter mb-1">{this.props.app.title}</h4>
                                 {this.props.app.description ? <CollapsableDescription id="appDesc" content={this.props.app.description} /> : undefined}
                                 <GenresDisplay values={this.props.app.genres} theme="dark" />

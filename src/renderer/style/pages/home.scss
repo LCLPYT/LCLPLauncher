@@ -21,9 +21,17 @@
     cursor: pointer;
 }
 
+.action-card-wrapper {
+    padding-right: 0.8rem;
+}
+
 span.action-card-icon {
     font-size: 75px;
     transition: .2s ease-in-out;
+}
+
+.action-card {
+    min-width: 118px;
 }
 
 .action-card:hover {
