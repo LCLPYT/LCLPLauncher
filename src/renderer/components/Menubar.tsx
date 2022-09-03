@@ -41,7 +41,7 @@ class Menubar extends Component<{}, State> {
                             <span className="badge bg-secondary px-1 ms-1 mt-1">v{this.state.version ? this.state.version : '?'}</span>
                             {isDevelopment ? (<span className="badge bg-warning px-1 ms-1 mt-1">dev</span>) : ''}
                         </div>
-                        <button type="button" className="btn-close text-reset" data-bs-dismiss="offcanvas" aria-label="Close"></button>
+                        <button type="button" className="btn-close text-reset" data-bs-dismiss="offcanvas" aria-label={t('close')}></button>
                     </div>
                     <div className="offcanvas-body p-0">
                         <div className="list-group list-group-flush sidemenu-item cursor-pointer">

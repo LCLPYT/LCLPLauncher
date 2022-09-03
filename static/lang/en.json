@@ -61,6 +61,7 @@
     "page.search.placeholder": "Search for apps",
     "page.search.popular": "Popular",
     "page.search.details": "Go to store page",
+    "page.search.empty": "No search results.",
     "page.store.free": "Free",
     "page.store.play": "Play %s",
     "page.store.buy": "Buy %s",

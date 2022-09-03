@@ -13,8 +13,6 @@ $searchPrimaryColor: $gray-400;
 $searchHeight: 44px;
 
 #autocomplete {
-    border: 1px solid $gray-600;
-    border-radius: 3px;
     background-color: $gray-700;
     transition: border-color 0.15s ease-in-out, 
         box-shadow 0.1s ease-in-out,
@@ -103,23 +101,34 @@ a.search-item.list-group-item:first-child.is-offset {
 
 #autocomplete.ac-has-items {
     &:not(:focus-within) {
-        border-bottom-left-radius: 0;
-        border-bottom-right-radius: 0;
+        border-bottom-left-radius: 0 !important;
+        border-bottom-right-radius: 0 !important;
+        border-bottom: 1px solid $gray-600;
     }
 }
 
 #acItems {
     z-index: 1;
+    border-top: none;
+    border-top-left-radius: 0 !important;
+    border-top-right-radius: 0 !important;
 }
 
 #acItems .list-group-item, .list-item-wrapper .search-list-item {
     background-color: $gray-700;
-    border: 1px solid $gray-600;
+    border-top: none;
+    border-left: none;
+    border-right: none;
+    border-bottom: 1px solid $gray-600;
     transition: background-color .1s ease-in-out,
         border-color .1s ease-in-out;
 
     &:hover {
         background-color: lighten($gray-700, 5%);
         border-color: lighten($gray-600, 5%);
+    }
+
+    &:last-child {
+        border-bottom: none;
     }
 }

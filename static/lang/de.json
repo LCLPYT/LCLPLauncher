@@ -61,6 +61,7 @@
     "page.search.placeholder": "Apps suchen",
     "page.search.popular": "Beliebt",
     "page.search.details": "Gehe zur Shopseite",
+    "page.search.empty": "Keine Suchergebnisse.",
     "page.store.free": "Kostenlos",
     "page.store.play": "%s spielen",
     "page.store.buy": "%s kaufen",

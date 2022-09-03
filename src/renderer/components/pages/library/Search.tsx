@@ -1,3 +1,4 @@
+import ElectronLog from 'electron-log';
 import React, { Component } from 'react';
 import { Link } from 'react-router-dom';
 import tippy from 'tippy.js';
@@ -28,12 +29,13 @@ class Search extends Component<IProps, IState> {
         this.fetchListItems(1);
     }
 
-    private query: string = '';
+    private query = '';
+    private done = false;
 
     render() {
         return (
             <div className="container-lg p-3">
-                <div id="autocomplete" className="d-flex align-items-center">
+                <div id="autocomplete" className="d-flex align-items-center rounded ring">
                     <div className="ac-wrapper-prefix">
                         <button className="ac-submit h-100 d-flex align-items-center" id="searchBtn">
                             <svg className="ac-search-icon cursor-pointer" viewBox="0 0 24 24" width="20" height="20" fill="currentColor">
@@ -52,16 +54,25 @@ class Search extends Component<IProps, IState> {
                         </button>
                     </div>
                 </div>
-                <ul id="acItems" className="list-group">
-                    {
-                        this.state.autoCompleteItems.map((item, idx) => <AutoCompleteItem item={item} query={this.query} index={idx} key={item.key} />)
-                    }
-                </ul>
+                {this.state.autoCompleteItems.length > 0 ? (
+                    <ul id="acItems" className="list-group ring rounded">
+                        {
+                            this.state.autoCompleteItems.map((item, idx) => <AutoCompleteItem item={item} query={this.query} index={idx} key={item.key} />)
+                        }
+                    </ul>
+                ) : (this.done ? (
+                    <div className="py-5 d-flex justify-content-center align-items-center flex-column text-light">
+                        <span className="material-icons" style={{fontSize: '52px'}}>
+                            search_off
+                        </span>
+                        {t('page.search.empty')}
+                    </div>
+                ) : undefined)}
 
                 {!this.state.showList ? undefined : (
                     <>
                         <h1 className="text-lighter mt-4 fs-4">{t('page.search.popular')}</h1>
-                        <div className="list-item-wrapper mt-1">
+                        <div className="list-item-wrapper mt-1 rounded ring">
                             {this.state.listItems.map(app => <ListItem app={app} key={app.id} />)}
                         </div>
                     </>
@@ -81,9 +92,12 @@ class Search extends Component<IProps, IState> {
             if (clearBtn) clearBtn.hidden = query.length <= 0;
             this.onInputChanged(query);
 
-            this.setState({
-                showList: query.length <= 0
-            });
+            const showList = query.length <= 0;
+            if (this.state.showList !== showList) {
+                this.setState({
+                    showList: showList
+                });
+            }
         });
         container?.addEventListener('focusin', () => {
             const acItems = document.getElementById('acItems');
@@ -96,6 +110,7 @@ class Search extends Component<IProps, IState> {
         clearBtn?.addEventListener('click', () => {
             input.value = '';
             this.onInputChanged('');
+            this.setState({ showList: true });
         });
         searchBtn?.addEventListener('click', event => {
             event.preventDefault();
@@ -105,6 +120,7 @@ class Search extends Component<IProps, IState> {
     private debounceTimer?: NodeJS.Timeout;
 
     onInputChanged(query: string) {
+        this.done = false;
         query = query.toLowerCase();
         this.query = query;
         if (this.debounceTimer) clearTimeout(this.debounceTimer);
@@ -122,7 +138,13 @@ class Search extends Component<IProps, IState> {
     doAutoComplete(query: string) {
         fetch(`${getBackendHost()}/api/lclplauncher/apps/search?q=${query}&format=short`)
             .then(response => response.json())
-            .then(result => this.displayAutoComplete(result as AppAutoComplete[]));
+            .then(result => {
+                this.done = true;
+                this.displayAutoComplete(result as AppAutoComplete[]);
+            })
+            .catch(err => {
+                ElectronLog.error('Could not complete autocomplete:', err);
+            });
     }
 
     displayAutoComplete(items: AppAutoComplete[]) {
@@ -160,7 +182,7 @@ class AutoCompleteItem extends Component<{ item: AppAutoComplete, query: string,
         const isOffset = first && document.activeElement && document.activeElement.id === 'searchInput';
         return (
             <Link to={`/library/store/app/${this.props.item.key}`} className={`list-group-item list-group-item-action search-item cursor-pointer p-2 d-flex align-items-center${isOffset ? ' is-offset' : ''}`}>
-                <img src={`${getBackendHost()}/api/lclplauncher/apps/assets/banner-small/${this.props.item.key}`} alt="App preview" className="rounded" width="120" height="45" />
+                <img src={`${getBackendHost()}/api/lclplauncher/apps/assets/banner-small/${this.props.item.key}`} alt="App preview" className="rounded ring-outer" width="120" height="45" />
                 <div className="ms-3 flex-grow-1">{ this.constructTitle() }</div>
                 <span className="material-icons text-light pe-1 app-link">arrow_forward</span>
             </Link>
@@ -219,8 +241,8 @@ class ListItem extends Component<ListItemProps> {
         const isAppFree = this.props.app.cost !== undefined && this.props.app.cost <= 0.00;
 
         return (
-            <Link to={`/library/store/app/${this.props.app.key}`} className="search-list-item search-item cursor-pointer p-2 d-flex align-items-center mt-1 rounded text-lighter no-underline">
-                <img src={`${getBackendHost()}/api/lclplauncher/apps/assets/banner-small/${this.props.app.key}`} alt="App preview" ref={this.imgRef} className="rounded" width="120" height="45" />
+            <Link to={`/library/store/app/${this.props.app.key}`} className="search-list-item search-item cursor-pointer p-2 d-flex align-items-center text-lighter no-underline">
+                <img src={`${getBackendHost()}/api/lclplauncher/apps/assets/banner-small/${this.props.app.key}`} alt="App preview" ref={this.imgRef} className="rounded ring-outer" width="120" height="45" />
                 <div className="ms-3 flex-grow-1 fw-bold">{ this.props.app.title }</div>
                 <div className="fw-bold me-1 text-light">{isAppFree ? t('page.store.free').toLocaleUpperCase() : this.props.app.cost!.toFixed(2)}</div>
             </Link>
