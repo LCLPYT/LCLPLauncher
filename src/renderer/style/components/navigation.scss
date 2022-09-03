@@ -14,7 +14,7 @@ $navigation-link-color: rgba(255, 255, 255, 0.6);
     }
 }
 
-.navigation-link-color-dimmed {
+.navigation-link-color-dimmed, .navbar-nav .nav-link.navigation-link-color-dimmed {
     color: $navigation-link-color;
 
     &:hover, &:focus-visible {

@@ -22,7 +22,7 @@ class Menubar extends Component<{}, State> {
             <>
                 <header id="header" className="sticky-top">
                     <nav className="navbar navbar-expand navbar-dark bg-dark p-0 dragarea ui-separator-top align-items-stretch">
-                        <button className="btn-nostyle navigation-link-color nodragarea btn-drawer-menu ui-separator-bottom ui-separator-right px-3 inner-focus" 
+                        <button className="btn-nostyle navigation-link-color-dimmed nodragarea btn-drawer-menu ui-separator-bottom ui-separator-right px-3 inner-focus" 
                             type="button" data-bs-toggle="offcanvas" data-bs-target="#sideMenu" aria-controls="sideMenu">
                             <span className="material-icons cursor-pointer" style={{ verticalAlign: 'bottom' }}>menu</span>
                         </button>
@@ -102,7 +102,7 @@ class NavItem extends Component<{ route: string, title: string, icon?: string, i
     render() {
         return (
             <li className="nav-item ui-separator-right">
-                <NavLink to={this.props.route} className="nav-link cursor-pointer d-inline-flex align-items-center ui-separator-bottom inner-focus" activeClassName="active">
+                <NavLink to={this.props.route} className="nav-link cursor-pointer d-inline-flex align-items-center ui-separator-bottom inner-focus navigation-link-color-dimmed" activeClassName="active">
                     {this.props.icon ? (
                         <span className="material-icons me-1" style={this.props.iconSize ? {fontSize: this.props.iconSize} : undefined}>
                             {this.props.icon}
