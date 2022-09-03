@@ -22,7 +22,8 @@ class Menubar extends Component<{}, State> {
             <>
                 <header id="header" className="sticky-top">
                     <nav className="navbar navbar-expand navbar-dark bg-dark p-0 dragarea ui-separator-top align-items-stretch">
-                        <button className="btn-nostyle navigation-link-color nodragarea btn-drawer-menu ui-separator-bottom ui-separator-right px-3" type="button" data-bs-toggle="offcanvas" data-bs-target="#sideMenu" aria-controls="sideMenu">
+                        <button className="btn-nostyle navigation-link-color nodragarea btn-drawer-menu ui-separator-bottom ui-separator-right px-3 inner-focus" 
+                            type="button" data-bs-toggle="offcanvas" data-bs-target="#sideMenu" aria-controls="sideMenu">
                             <span className="material-icons cursor-pointer" style={{ verticalAlign: 'bottom' }}>menu</span>
                         </button>
                         <ul className="navbar-nav me-auto mb-0 nodragarea">
@@ -44,15 +45,15 @@ class Menubar extends Component<{}, State> {
                     </div>
                     <div className="offcanvas-body p-0">
                         <div className="list-group list-group-flush sidemenu-item cursor-pointer">
-                            <a href="https://lclpnet.work" className="list-group-item list-group-item-action p-3 bg-dark navigation-link-color">
+                            <a href="https://lclpnet.work" className="list-group-item list-group-item-action p-3 bg-dark navigation-link-color inner-focus">
                                 {t('website')} <span className="material-icons" style={{ verticalAlign: 'bottom' }}>link</span>
                             </a>
                         </div>
                         <div className="w-100 py-2" style={{ left: '0px', bottom: '0px', position: 'absolute' }}>
-                            <NavLink to="/settings" className="btn-nostyle navigation-link-color cursor-pointer float-start no-underline close-menu-on-click" activeClassName="active">
+                            <NavLink to="/settings" className="btn-nostyle navigation-link-color cursor-pointer float-start no-underline close-menu-on-click inner-focus" activeClassName="active">
                                 <span className="material-icons" style={{ verticalAlign: 'bottom' }}>settings</span> {t('settings')}
                             </NavLink>
-                            <button id="menuCloseBtn" className="btn-nostyle danger-link-color float-end" type="button">
+                            <button id="menuCloseBtn" className="btn-nostyle danger-link-color float-end inner-focus" type="button">
                                 <span className="material-icons cursor-pointer" style={{ verticalAlign: 'bottom' }}>exit_to_app</span> {t('exit')}
                             </button>
                         </div>
@@ -101,7 +102,7 @@ class NavItem extends Component<{ route: string, title: string, icon?: string, i
     render() {
         return (
             <li className="nav-item ui-separator-right">
-                <NavLink to={this.props.route} className="nav-link cursor-pointer d-inline-flex align-items-center ui-separator-bottom" activeClassName="active">
+                <NavLink to={this.props.route} className="nav-link cursor-pointer d-inline-flex align-items-center ui-separator-bottom inner-focus" activeClassName="active">
                     {this.props.icon ? (
                         <span className="material-icons me-1" style={this.props.iconSize ? {fontSize: this.props.iconSize} : undefined}>
                             {this.props.icon}

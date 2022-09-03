@@ -66,8 +66,8 @@ interface SideTabProps {
 class SideTab extends Component<SideTabProps> {
     render() {
         return (
-            <NavLink to={this.props.route} className="navigation-link-color-dimmed no-underline cursor-pointer" activeClassName="active">
-                <div className="tab-btn py-1">
+            <NavLink to={this.props.route} className="navigation-link-color-dimmed no-underline cursor-pointer no-focus-visible" activeClassName="active">
+                <div className="tab-btn py-1 sub-inner-focus">
                     <span className="material-icons tab-icon">{this.props.icon}</span>
                     <div className="tab-desc">{this.props.title}</div>
                 </div>
@@ -88,9 +88,9 @@ interface SideAppTabProps extends RouteComponentProps<MatchParams> {
 class SideAppTab extends Component<SideAppTabProps> {
     render() {
         return (
-            <NavLink to={this.props.link} className="navigation-link-color-dimmed no-underline" activeClassName="active">
-                <div className="tab-btn py-1">
-                    <img src={`${getBackendHost()}/api/lclplauncher/apps/assets/app-icon/${this.props.match.params.app}`} className={this.props.title ? 'tab-img-sm' : 'tab-img'} alt="App icon" />
+            <NavLink to={this.props.link} className="navigation-link-color-dimmed no-underline no-focus-visible" activeClassName="active">
+                <div className="tab-btn py-1 sub-inner-focus">
+                    <img src={`${getBackendHost()}/api/lclplauncher/apps/assets/app-icon/${this.props.match.params.app}`} className="tab-img" alt="App icon" />
                     {
                         this.props.title ? (<div className="tab-desc-less">{this.props.title}</div>) : undefined
                     }

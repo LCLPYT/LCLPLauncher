@@ -17,7 +17,7 @@ $navigation-link-color: rgba(255, 255, 255, 0.6);
 .navigation-link-color-dimmed {
     color: $navigation-link-color;
 
-    &:hover {
+    &:hover, &:focus-visible {
         color: rgba(255, 255, 255, 0.85);
         transition: color 0.15s ease-in-out, background-color 0.15s ease-in-out, border-color 0.15s ease-in-out;    
     }

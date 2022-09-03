@@ -37,7 +37,7 @@ class PlayStateButton extends Component<ContentProps, PlayState> {
         switch (this.state.state) {
             case undefined: return (
                 <>
-                    <button id="playBtn" className="px-4_5 btn btn-xl fw-bold shadow btn-secondary d-flex align-items-center" disabled>
+                    <button id="playBtn" className="px-4_5 btn btn-xl fw-bold btn-secondary d-flex align-items-center" disabled>
                         <LoadingSpinner className="app-btn-spinner" />
                     </button>
                     <div id="playDesc" className="ms-2_5 flex-fill">{t('loading')}...</div>
@@ -46,19 +46,19 @@ class PlayStateButton extends Component<ContentProps, PlayState> {
             case 'running':
                 return (
                     <>
-                        <button id="playBtn" className="px-4_5 btn btn-xl fw-bold shadow btn-danger">{t('page.detail.stop')}</button>
+                        <button id="playBtn" className="px-4_5 btn btn-xl fw-bold btn-danger">{t('page.detail.stop')}</button>
                         <div id="playDesc" className="ms-2_5 flex-fill">{t(appType === 'game' ? 'page.detail.game_running' : 'page.detail.app_running')}</div>
                     </>
                 );
             case 'not-installed': return (
                 <>
-                    <button id="playBtn" className="px-4_5 btn btn-xl fw-bold shadow btn-primary">{t('page.detail.install')}</button>
+                    <button id="playBtn" className="px-4_5 btn btn-xl fw-bold btn-primary">{t('page.detail.install')}</button>
                     <div id="playDesc" className="ms-2_5 flex-fill">{t('page.detail.not_yet_installed')}</div>
                 </>
             );
             case 'ready-to-play': return (
                 <>
-                    <button id="playBtn" className="px-4_5 btn btn-xl fw-bold shadow btn-success" disabled={this.state.pressedAction}>
+                    <button id="playBtn" className="px-4_5 btn btn-xl fw-bold btn-success" disabled={this.state.pressedAction}>
                         {this.state.pressedAction ? (
                             <>
                                 <LoadingSpinner className="spinner-border-sm progress-spinner" />
@@ -73,7 +73,7 @@ class PlayStateButton extends Component<ContentProps, PlayState> {
             );
             case 'needs-update': return (
                 <>
-                    <button id="playBtn" className="px-4_5 btn btn-xl fw-bold shadow btn-info">{t('page.detail.update')}</button>
+                    <button id="playBtn" className="px-4_5 btn btn-xl fw-bold btn-info">{t('page.detail.update')}</button>
                     <div id="playDesc" className="ms-2_5 flex-fill">{t('page.detail.needs_update')}</div>
                 </>
             );
@@ -81,7 +81,7 @@ class PlayStateButton extends Component<ContentProps, PlayState> {
             case 'updating': return <UpdatingButton />;
             case 'in-queue': return (
                 <>
-                    <button id="playBtn" className="px-4_5 btn btn-xl fw-bold shadow btn-info d-flex align-items-center" disabled>
+                    <button id="playBtn" className="px-4_5 btn btn-xl fw-bold btn-info d-flex align-items-center" disabled>
                         <LoadingSpinner className="spinner-border-sm progress-spinner" />
                         <span className="ms-2">{t('page.detail.in_queue')}</span>
                     </button>
@@ -91,7 +91,7 @@ class PlayStateButton extends Component<ContentProps, PlayState> {
             case 'preinstalling': return <PreInstallingButton />;
             case 'outdated-launcher': return (
                 <>
-                    <button id="playBtn" className="px-4_5 btn btn-xl fw-bold shadow btn-secondary d-flex align-items-center" disabled>
+                    <button id="playBtn" className="px-4_5 btn btn-xl fw-bold btn-secondary d-flex align-items-center" disabled>
                         <span className="ms-2">{t('page.detail.outdated')}</span>
                     </button>
                     <div id="playDesc" className="ms-2_5 flex-fill">{t('page.detail.please_update')}</div>
@@ -99,7 +99,7 @@ class PlayStateButton extends Component<ContentProps, PlayState> {
             );
             case 'unsupported-platform': return (
                 <>
-                    <button id="playBtn" className="px-4_5 btn btn-xl fw-bold shadow btn-secondary d-flex align-items-center" disabled>
+                    <button id="playBtn" className="px-4_5 btn btn-xl fw-bold btn-secondary d-flex align-items-center" disabled>
                         <span className="ms-2">{t('page.detail.unsupported')}</span>
                     </button>
                     <div id="playDesc" className="ms-2_5 flex-fill">{t(appType === 'game' ? 'page.detail.unsupported_game' : 'page.detail.unsupported_app')}</div>
@@ -336,7 +336,7 @@ class InstallingButton extends Component<{}, InstallingState> {
     render() {
         return (
             <>
-                <button id="playBtn" className="px-4_5 btn btn-xl fw-bold shadow btn-primary d-flex align-items-center" disabled>
+                <button id="playBtn" className="px-4_5 btn btn-xl fw-bold btn-primary d-flex align-items-center" disabled>
                     <LoadingSpinner className="spinner-border-sm progress-spinner" />
                     <span className="ms-2">{t('page.detail.installing')}</span>
                     {this.state.progress ? (
@@ -375,7 +375,7 @@ class UpdatingButton extends Component<{}, InstallingState> {
     render() {
         return (
             <>
-                <button id="playBtn" className="px-4_5 btn btn-xl fw-bold shadow btn-info d-flex align-items-center" disabled>
+                <button id="playBtn" className="px-4_5 btn btn-xl fw-bold btn-info d-flex align-items-center" disabled>
                     <LoadingSpinner className="spinner-border-sm progress-spinner" />
                     <span className="ms-2">{t('page.detail.updating')}</span>
                     {this.state.progress ? (
@@ -418,7 +418,7 @@ class PreInstallingButton extends Component<{}, PreInstallingState> {
     render() {
         return (
             <>
-                <button id="playBtn" className="px-4_5 btn btn-xl fw-bold shadow btn-secondary d-flex align-items-center" disabled>
+                <button id="playBtn" className="px-4_5 btn btn-xl fw-bold btn-secondary d-flex align-items-center" disabled>
                     <LoadingSpinner className="spinner-border-sm progress-spinner" />
                     <span className="ms-2">{t('page.detail.preinstalling')}</span>
                     {this.state.progress ? (

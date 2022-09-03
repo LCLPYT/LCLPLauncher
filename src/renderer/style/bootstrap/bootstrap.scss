@@ -1,5 +1,7 @@
 @import "variables";
 
+$lighter: $gray-400;
+
 $theme-colors: (
   "primary":    $primary,
   "secondary":  $secondary,
@@ -10,7 +12,7 @@ $theme-colors: (
   "light":      $light,
   "dark":       $dark,
   // custom
-  "lighter": $gray-400
+  "lighter": $lighter
 );
 
 $spacer: 1rem !default;
