@@ -4,10 +4,11 @@
     height: $toolbar-height;
     width: 100%;
     top: 0px;
+    background: $dark;
 }
 
 body:not(.active) #titlebar {
-    background: $dark;
+    background: $gray-950;
 }
 
 #titlebar #drag-region {
