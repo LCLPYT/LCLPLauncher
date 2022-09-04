@@ -132,6 +132,7 @@ class Settings extends Component<{}, State> {
             setting: setting
         };
 
+        if (setting.setting.properties.range) return <RangeInputComponent {...commonProps} />
         if (setting.setting.properties.inputTextType) return <TextInputComponent {...commonProps} />
         if (setting.setting.properties.options) return <OptionSelectComponent {...commonProps} />;
 
@@ -182,20 +183,20 @@ abstract class AbstractSettingComponent<T extends SettingProps, ValueType> exten
     render() {
         if (!this.props.setting.setting.properties) return <div />;
 
-        const [input, addDesc] = this.getInputElement();
+        const [input, addTitle, addDesc] = this.getInputElement();
         const desc = makePresent(this.props.setting.setting.properties.description);
         const shouldAddDesc = addDesc && !!desc;
 
         return (
-            <div className="mb-3">
-                <label className="text-lighter">{makePresent(this.props.setting.setting.properties.title)}</label>
+            <div className="mb-4">
+                {addTitle ? <label className="text-lighter">{makePresent(this.props.setting.setting.properties.title)}</label> : undefined}
                 {input}
                 {shouldAddDesc ? <div className="form-text text-light">{desc}</div> : undefined}
             </div>
         );
     }
 
-    abstract getInputElement(): [JSX.Element, boolean];
+    abstract getInputElement(): [JSX.Element, boolean, boolean];
 
     abstract onSettingDidChange(newValue?: ValueType, oldValue?: ValueType): void;
 
@@ -213,7 +214,7 @@ abstract class AbstractSettingComponent<T extends SettingProps, ValueType> exten
 }
 
 class CheckBoxComponent extends AbstractSettingComponent<SettingProps, boolean> {
-    getInputElement(): [JSX.Element, boolean] {
+    getInputElement(): [JSX.Element, boolean, boolean] {
         const value: boolean | undefined = settings.getConfigItemByName(this.props.setting.name);
         const desc = makePresent(this.props.setting.setting.properties?.description);
 
@@ -224,7 +225,7 @@ class CheckBoxComponent extends AbstractSettingComponent<SettingProps, boolean> 
                     {desc ? desc : 'Enable'}
                 </label>
             </div>
-        ), false];
+        ), true, false];
     }
 
     componentDidMount() {
@@ -239,13 +240,42 @@ class CheckBoxComponent extends AbstractSettingComponent<SettingProps, boolean> 
     }
 }
 
+class RangeInputComponent extends AbstractSettingComponent<SettingProps, number> {
+    getInputElement(): [JSX.Element, boolean, boolean] {
+        const rawValue: number | undefined = settings.getConfigItemByName(this.props.setting.name);
+        const value = Math.max(0, Math.min(100, rawValue === undefined ? 100 : rawValue));
+        const title = makePresent(this.props.setting.setting.properties?.title);
+
+        return [(
+            <div>
+                <label htmlFor={this.inputId} className="form-label text-lighter">{title ? title : 'Range'}</label>
+                <input type="range" className="form-range" id={this.inputId} defaultValue={value} />
+            </div>
+        ), false, true];
+    }
+
+    componentDidMount() {
+        super.componentDidMount();
+        const range = document.getElementById(this.inputId) as HTMLInputElement | null;
+        range?.addEventListener('change', () => {
+            console.log('change');
+            settings.setConfigItemByName(this.props.setting.name, range.value);
+        });
+    }
+
+    onSettingDidChange(newValue?: number): void {
+        const range = document.getElementById(this.inputId) as HTMLInputElement | null;
+        if (range) range.value = newValue !== undefined ? newValue.toFixed(0) : '100';
+    }
+}
+
 class TextInputComponent extends AbstractSettingComponent<SettingProps, string> {
-    getInputElement(): [JSX.Element, boolean] {
+    getInputElement(): [JSX.Element, boolean, boolean] {
         const type = this.props.setting.setting.properties?.inputTextType ? this.props.setting.setting.properties.inputTextType : 'text';
         const value: string | undefined = settings.getConfigItemByName(this.props.setting.name);
         return [(
             <input type={type} className="form-control" id={this.inputId} defaultValue={value} />
-        ), true];
+        ), true, true];
     }
 
     componentDidMount() {
@@ -268,8 +298,8 @@ class TextInputComponent extends AbstractSettingComponent<SettingProps, string> 
 }
 
 class OptionSelectComponent extends AbstractSettingComponent<SettingProps, string> {
-    getInputElement(): [JSX.Element, boolean] {
-        if (!this.props.setting.setting.properties || !this.props.setting.setting.properties.options) return [<div />, true];
+    getInputElement(): [JSX.Element, boolean, boolean] {
+        if (!this.props.setting.setting.properties || !this.props.setting.setting.properties.options) return [<div />, true, true];
 
         const options = makePresent(this.props.setting.setting.properties.options);
 
@@ -284,7 +314,7 @@ class OptionSelectComponent extends AbstractSettingComponent<SettingProps, strin
                     )
                 }
             </select>
-        ), true];
+        ), true, true];
     }
 
     componentDidMount() {

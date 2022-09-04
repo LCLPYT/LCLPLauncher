@@ -9,7 +9,7 @@ import Library from './pages/Library';
 import Settings from './pages/Settings';
 
 import DownloadProgress, {PackageDownloadProgress} from '../../common/types/DownloadProgress';
-import {shouldPlayToastSound} from '../../common/utils/settings';
+import {getToastSoundVolume, shouldPlayToastSound} from '../../common/utils/settings';
 import toastSound from '../sound/toast.ogg';
 import {installationProgressManager, InstallerEvent} from '../event/downloads';
 import {UPDATER} from '../utils/ipc';
@@ -85,7 +85,7 @@ class ToastStack extends Component<{}, ToastState> {
 
             if (!toast.noSound && shouldPlayToastSound()) {
                 const audio = new Audio(toastSound);
-                audio.volume = 0.35;
+                audio.volume = getToastSoundVolume();
                 audio.play();
             }
         });

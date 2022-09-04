@@ -140,6 +140,8 @@
     "setting.host_staging.desc": "Der Staging-Backend-Host.",
     "setting.host_debug": "Debug-Host",
     "setting.host_debug.desc": "Der Staging-Backend-host zum Debuggen.",
+    "setting.toast_volume": "Lautstärke des Benachrichtigungstons",
+    "setting.toast_volume.desc": "Die Lautstärke von Benachrichtigungstönen, falls diese eingeschaltet sind.",
 
     "lang.system": "Systemsprache",
     "lang.en": "Englisch",

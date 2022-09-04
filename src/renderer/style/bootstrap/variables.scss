@@ -1,4 +1,6 @@
 /* Colors */
+$gray-400: #ced4da;
+$gray-500: #adb5bd;
 $gray-600: #5b6874;
 $gray-700: #2f353a;
 $gray-800: #24292E;
@@ -8,6 +10,7 @@ $gray-950: #1b1f23;
 /* Themes */
 $dark: $gray-900;
 $dark-separator: $gray-950;
+$lighter: $gray-400;
 
 /* Components */
 // Body
@@ -23,6 +26,9 @@ $offcanvas-border-color: lighten($offcanvas-bg-color, 5%);
 // List group
 $list-group-border-color: lighten($dark, 10%);
 
+// Input
+$form-range-track-bg: $gray-700;
+$form-range-thumb-bg: $gray-500;
 $input-bg: $gray-700;
 
 @import "~bootswatch/dist/darkly/variables";

@@ -14,7 +14,8 @@ interface ConfigStructure<Group, Item> {
     },
     launcher: Group & {
         language: Item,
-        toast_sound: Item
+        toast_sound: Item,
+        toast_volume: Item
     }
 }
 
@@ -55,6 +56,14 @@ export const defaultSettings: DefaultConfig = Object.freeze({
             properties: {
                 title: () => t('setting.toast_sound'),
                 description: () => t('setting.toast_sound.desc')
+            }
+        },
+        toast_volume: {
+            default: 0.35,
+            properties: {
+                title: () => t('setting.toast_volume'),
+                description: () => t('setting.toast_volume.desc'),
+                range: true
             }
         }
     },
@@ -126,6 +135,11 @@ export function getConfiguredLanguage(): string {
     return getConfigItem(conf => conf.launcher.language) || 'system';
 }
 
+export function getToastSoundVolume(): number {
+    const volume: number = getConfigItem(conf => conf.launcher.toast_volume);
+    return Math.max(0.0, Math.min(1.0, volume / 100));
+}
+
 // Getter helper
 function getConfigItem<ItemType>(accessor: (config: LoadedConfig) => any): ItemType {
     const store = Settings.store ? Settings.store : Settings.initWatchedStore();
@@ -163,6 +177,8 @@ export type SettingProperties = NamedSetting & {
     debugOnly?: boolean,
     /** If set, setting type will be 'select' with the given options */
     options?: MaybePresent<SelectOptions>,
+    /** True, if the input should be a range input */
+    range?: boolean,
     /** If set, setting type will be 'input' with the given type */
     inputTextType?: 'text' | 'url'
 }

@@ -140,6 +140,8 @@
     "setting.host_staging.desc": "Staging backend server host.",
     "setting.host_debug": "Debug host",
     "setting.host_debug.desc": "Backend server host for debug mode.",
+    "setting.toast_volume": "Notification sound volume",
+    "setting.toast_volume.desc": "The volume of notification sounds, if turned on.",
 
     "lang.system": "System language",
     "lang.en": "English",
