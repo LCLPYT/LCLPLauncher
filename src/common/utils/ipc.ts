@@ -66,7 +66,8 @@ export const ACTIONS = {
         changeLocationHash: 'change-location-hash',
         console_log: 'log',
         appReady: 'app-ready',
-        requestAppReady: 'request-app-ready'
+        requestAppReady: 'request-app-ready',
+        reloadLanguage: 'reload-language'
     },
     toasts: {
         addToast: 'add-toast',

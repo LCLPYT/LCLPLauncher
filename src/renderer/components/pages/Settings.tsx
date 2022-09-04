@@ -2,6 +2,7 @@ import { Unsubscribe } from 'conf/dist/source/types';
 import ElectronLog from 'electron-log';
 import React, { Component } from 'react';
 import tippy from 'tippy.js';
+import { makePresent } from '../../../common/types/util/MaybePresent';
 import { isDevelopment } from '../../../common/utils/env';
 import { translate as t } from '../../../common/utils/i18n';
 import { defaultSettings, Setting, SettingGroup, SettingGroupLevel, Settings as settings } from '../../../common/utils/settings';
@@ -42,7 +43,7 @@ class Settings extends Component<{}, State> {
             .forEach(([key, value]) => {
                 const group = value as SettingGroup;
                 if (!group.properties.levelId) {
-                    ElectronLog.error('Top-level setting group ', group.properties.title, ' has no group level assigned to it.');
+                    ElectronLog.error('Top-level setting group ', makePresent(group.properties.title), ' has no group level assigned to it.');
                     return;
                 }
 
@@ -182,13 +183,14 @@ abstract class AbstractSettingComponent<T extends SettingProps, ValueType> exten
         if (!this.props.setting.setting.properties) return <div />;
 
         const [input, addDesc] = this.getInputElement();
-        const shouldAddDesc = addDesc && !!this.props.setting.setting.properties.description;
+        const desc = makePresent(this.props.setting.setting.properties.description);
+        const shouldAddDesc = addDesc && !!desc;
 
         return (
             <div className="mb-3">
-                <label className="text-lighter">{this.props.setting.setting.properties.title}</label>
+                <label className="text-lighter">{makePresent(this.props.setting.setting.properties.title)}</label>
                 {input}
-                {shouldAddDesc ? <div className="form-text text-light">{this.props.setting.setting.properties.description}</div> : undefined}
+                {shouldAddDesc ? <div className="form-text text-light">{desc}</div> : undefined}
             </div>
         );
     }
@@ -200,7 +202,7 @@ abstract class AbstractSettingComponent<T extends SettingProps, ValueType> exten
     protected unsubscribe?: Unsubscribe;
 
     componentDidMount() {
-        this.unsubscribe = settings.onSettingChanged<ValueType>(this.props.setting.name, (newValue, oldValue) => {
+        this.unsubscribe = settings.onSettingChangedExternally<ValueType>(this.props.setting.name, (newValue, oldValue) => {
             this.onSettingDidChange(newValue, oldValue)
         });
     }
@@ -213,10 +215,14 @@ abstract class AbstractSettingComponent<T extends SettingProps, ValueType> exten
 class CheckBoxComponent extends AbstractSettingComponent<SettingProps, boolean> {
     getInputElement(): [JSX.Element, boolean] {
         const value: boolean | undefined = settings.getConfigItemByName(this.props.setting.name);
+        const desc = makePresent(this.props.setting.setting.properties?.description);
+
         return [(
             <div className="form-check form-switch">
                 <input className="form-check-input" type="checkbox" id={this.inputId} defaultChecked={value} />
-                <label className="form-check-label text-light" htmlFor={this.inputId}>{this.props.setting.setting.properties?.description ? this.props.setting.setting.properties.description : 'Enable'}</label>
+                <label className="form-check-label text-light" htmlFor={this.inputId}>
+                    {desc ? desc : 'Enable'}
+                </label>
             </div>
         ), false];
     }
@@ -265,10 +271,18 @@ class OptionSelectComponent extends AbstractSettingComponent<SettingProps, strin
     getInputElement(): [JSX.Element, boolean] {
         if (!this.props.setting.setting.properties || !this.props.setting.setting.properties.options) return [<div />, true];
 
+        const options = makePresent(this.props.setting.setting.properties.options);
+
         const value: string | undefined = settings.getConfigItemByName(this.props.setting.name);
         return [(
             <select className="form-select" aria-label={`Select ${this.props.setting.setting.properties?.title}`} id={this.inputId} defaultValue={value}>
-                {this.props.setting.setting.properties.options.map((option, index) => <option key={index} value={option}>{option}</option>)}
+                {
+                    Array.isArray(options) ? (
+                        options.map((option, index) => <option key={index} value={option}>{option}</option>)
+                    ) : (
+                        Object.entries(options).map(([option, label], index) => <option key={index} value={option}>{label}</option>)
+                    )
+                }
             </select>
         ), true];
     }
@@ -295,8 +309,8 @@ class SettingGroupLevelComponent extends Component<LevelProps> {
     render() {
         return (
             <div className="list-group">
-                <span title={this.props.level.description} className="list-group-item p-0 border-0">
-                    <a href="" className="list-group-item disabled">{this.props.level.title}</a>
+                <span title={makePresent(this.props.level.description)} className="list-group-item p-0 border-0">
+                    <a href="" className="list-group-item disabled">{makePresent(this.props.level.title)}</a>
                     {
                         this.props.groups.map(group => <SettingGroupComponent key={group.name} group={group} isCurrent={!!this.props.currentGroup && this.props.currentGroup === group} />)
                     }
@@ -314,10 +328,10 @@ interface GroupProps {
 class SettingGroupComponent extends Component<GroupProps> {
     render() {
         return (
-            <span title={this.props.group.group.properties.description} className="list-group-item p-0 border-0">
+            <span title={makePresent(this.props.group.group.properties.description)} className="list-group-item p-0 border-0">
                 <button type="button" className={`setting-group-btn list-group-item border-top-0 list-group-item-action${this.props.isCurrent ? ' active' : ''}`}
                     disabled={this.props.isCurrent} data-group={this.props.group.name}>
-                    {this.props.group.group.properties.title}
+                    {makePresent(this.props.group.group.properties.title)}
                 </button>
             </span>
         );

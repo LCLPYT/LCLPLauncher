@@ -49,6 +49,9 @@
     "updater.downloading": "Update wird heruntergeladen",
     "updater.starting": "Download wird vorbereitet",
 
+    "menubar.home": "Start",
+    "menubar.library": "Bibliothek",
+
     "page.settings.edit_json": "JSON bearbeiten",
     "page.settings.unfocus_apply": "Klicke außerhalb um Änderungen zu übernehmen",
     "page.library": "Deine Apps",
@@ -136,5 +139,9 @@
     "setting.host_staging": "Staging-Host",
     "setting.host_staging.desc": "Der Staging-Backend-Host.",
     "setting.host_debug": "Debug-Host",
-    "setting.host_debug.desc": "Der Staging-Backend-host zum Debuggen."
+    "setting.host_debug.desc": "Der Staging-Backend-host zum Debuggen.",
+
+    "lang.system": "Systemsprache",
+    "lang.en": "Englisch",
+    "lang.de": "Deutsch"
 }

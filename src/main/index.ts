@@ -17,9 +17,6 @@ if (isDevelopment) {
     app.setName(`${getAppName()}-dev`);
 }
 
-// debug i18n
-// app.commandLine.appendSwitch('lang', 'de-DE');
-
 // configure logger
 log.transports.console.level = 'info';
 log.transports.file.level = 'verbose';

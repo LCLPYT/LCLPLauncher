@@ -10,12 +10,13 @@ import type Toast from "../../common/types/Toast";
 import type UpdateCheckResult from "../../common/types/UpdateCheckResult";
 import { isDevelopment } from "../../common/utils/env";
 import { ACTIONS, GenericIPCActionHandler, GenericIPCHandler } from "../../common/utils/ipc";
-import { isRunningAsAppImage } from "./env";
-import { exists, getOrCreateDefaultInstallationDir } from "../core/io/fshelper";
-import { isPlatform } from "./oshooks";
-import { getMainWindow } from "../core/window";
 import Notifier from "../../common/utils/notifier";
+import { exists, getOrCreateDefaultInstallationDir } from "../core/io/fshelper";
+import { initI18n } from "../core/service/i18n";
 import { getCachedUpdateCheckResult } from "../core/updater/updateResultCache";
+import { getMainWindow } from "../core/window";
+import { isRunningAsAppImage } from "./env";
+import { isPlatform } from "./oshooks";
 
 class IpcActionEvent {
     public readonly event: IpcMainEvent;
@@ -362,6 +363,10 @@ export const UTILITIES = registerHandler(new class extends IPCActionHandler {
 
             case ACTIONS.utilities.requestAppReady:
                 event.reply(this.appReady);
+                break;
+            
+            case ACTIONS.utilities.reloadLanguage:
+                initI18n();
                 break;
 
             default:

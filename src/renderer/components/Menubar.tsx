@@ -27,8 +27,8 @@ class Menubar extends Component<{}, State> {
                             <span className="material-icons cursor-pointer" style={{ verticalAlign: 'bottom' }}>menu</span>
                         </button>
                         <ul className="navbar-nav me-auto mb-0 nodragarea">
-                            <NavItem route="/home" title="Home" icon="home" />
-                            <NavItem route="/library" title="Library" icon="bookmarks" iconSize="21px" />
+                            <NavItem route="/home" title={t('menubar.home')} icon="home" />
+                            <NavItem route="/library" title={t('menubar.library')} icon="bookmarks" iconSize="21px" />
                         </ul>
                         <div className="flex-fill ui-separator-bottom" />
                     </nav>

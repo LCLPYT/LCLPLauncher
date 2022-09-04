@@ -631,6 +631,10 @@ export const UTILITIES = registerHandler(new class extends IPCActionHandler {
         });
     }
 
+    public reloadLanguage() {
+        this.sendAction(ACTIONS.utilities.reloadLanguage);
+    }
+
 }('utilities'));
 
 registerHandler(new class extends IPCActionHandler {

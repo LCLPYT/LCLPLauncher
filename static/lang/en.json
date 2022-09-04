@@ -49,6 +49,9 @@
     "updater.downloading": "Downloading Update",
     "updater.starting": "Starting download",
 
+    "menubar.home": "Home",
+    "menubar.library": "Library",
+
     "page.settings.edit_json": "Edit JSON",
     "page.settings.unfocus_apply": "Unfocus to apply changes",
     "page.library": "Your apps",
@@ -136,5 +139,9 @@
     "setting.host_staging": "Staging host",
     "setting.host_staging.desc": "Staging backend server host.",
     "setting.host_debug": "Debug host",
-    "setting.host_debug.desc": "Backend server host for debug mode."
+    "setting.host_debug.desc": "Backend server host for debug mode.",
+
+    "lang.system": "System language",
+    "lang.en": "English",
+    "lang.de": "German"
 }

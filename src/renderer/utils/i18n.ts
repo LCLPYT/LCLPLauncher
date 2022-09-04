@@ -1,5 +1,7 @@
-import log from "electron-log";
-import { LanguageProvider, loadTranslations, setLanguageProvider } from "../../common/utils/i18n";
+import { default as log } from "electron-log";
+import { LanguageProvider, loadTranslations, registeredLanguages, setLanguageProvider } from "../../common/utils/i18n";
+import { getConfiguredLanguage, Settings } from "../../common/utils/settings";
+import { UTILITIES } from "./ipc";
 import { getStaticRender } from "./static";
 
 const fetchLanguageFromFile: LanguageProvider = async (language) => {
@@ -9,7 +11,9 @@ const fetchLanguageFromFile: LanguageProvider = async (language) => {
     const translations = await fetch(translationFile)
         .then(resp => resp.json())
         .catch(err => {
-            log.error(`Could not load translations for '${language}'`, err);
+            if (registeredLanguages[language]) {
+                log.error(`Could not load translations for '${language}'`, err);
+            }
             return null;
         });
 
@@ -18,5 +22,20 @@ const fetchLanguageFromFile: LanguageProvider = async (language) => {
 
 export async function initI18n() {
     setLanguageProvider(fetchLanguageFromFile);
-    await loadTranslations(window.navigator.language);
+
+    let locale = window.navigator.language;
+
+    const configured = getConfiguredLanguage();
+    if (configured && configured !== 'system') {
+        locale = configured;
+    }
+
+    await loadTranslations(locale);
 }
+
+Settings.registerOnChangedListener((setting, newValue, oldValue) => {
+    if (setting !== 'launcher.language' || newValue === oldValue) return;
+
+    UTILITIES.reloadLanguage();
+    initI18n().then(() => window.location.reload());
+});
