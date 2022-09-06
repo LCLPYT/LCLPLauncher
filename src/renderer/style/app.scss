@@ -3,6 +3,7 @@
 @import "bootstrap/bootstrap"; // include bootstrap css
 
 // components
+@import "mixins.scss";
 @import "components/titlebar";
 @import "components/menubar";
 @import "components/scrollbar";
@@ -84,6 +85,10 @@ a.no-underline {
 
 .ring-outer, .ring-outer.card {
     outline: 1px solid $ring-color;
+}
+
+.contour {
+    @include contour-top;
 }
 
 :focus-visible {

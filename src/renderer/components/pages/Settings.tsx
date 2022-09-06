@@ -78,7 +78,7 @@ class Settings extends Component<{}, State> {
             <div className="container mt-3">
                 <div className="d-flex align-items-center justify-content-between mb-2">
                     <h3 className="text-lighter">{t('settings')}</h3>
-                    <span id="settingsEditBtn" className="material-icons navigation-link-color">edit</span>
+                    <span id="settingsEditBtn" className="material-icons navigation-link-color cursor-pointer">edit</span>
                 </div>
                 <div className="row">
                     <div className="col-3">
@@ -220,8 +220,8 @@ class CheckBoxComponent extends AbstractSettingComponent<SettingProps, boolean> 
 
         return [(
             <div className="form-check form-switch">
-                <input className="form-check-input" type="checkbox" id={this.inputId} defaultChecked={value} />
-                <label className="form-check-label text-light" htmlFor={this.inputId}>
+                <input className="form-check-input cursor-pointer" type="checkbox" id={this.inputId} defaultChecked={value} />
+                <label className="form-check-label text-light form-text mt-0" htmlFor={this.inputId}>
                     {desc ? desc : 'Enable'}
                 </label>
             </div>
@@ -245,13 +245,15 @@ class RangeInputComponent extends AbstractSettingComponent<SettingProps, number>
         const rawValue: number | undefined = settings.getConfigItemByName(this.props.setting.name);
         const value = Math.max(0, Math.min(100, rawValue === undefined ? 100 : rawValue));
         const title = makePresent(this.props.setting.setting.properties?.title);
+        const desc = makePresent(this.props.setting.setting.properties?.description);
 
         return [(
-            <div>
-                <label htmlFor={this.inputId} className="form-label text-lighter">{title ? title : 'Range'}</label>
+            <div className="settings-range-wrapper">
+                <label htmlFor={this.inputId} className="text-lighter">{title ? title : 'Range'}</label>
                 <input type="range" className="form-range" id={this.inputId} defaultValue={value} />
+                {desc ? <div className="form-text text-light">{desc}</div> : undefined}
             </div>
-        ), false, true];
+        ), false, false];
     }
 
     componentDidMount() {
@@ -305,7 +307,7 @@ class OptionSelectComponent extends AbstractSettingComponent<SettingProps, strin
 
         const value: string | undefined = settings.getConfigItemByName(this.props.setting.name);
         return [(
-            <select className="form-select" aria-label={`Select ${this.props.setting.setting.properties?.title}`} id={this.inputId} defaultValue={value}>
+            <select className="form-select cursor-pointer" aria-label={`Select ${this.props.setting.setting.properties?.title}`} id={this.inputId} defaultValue={value}>
                 {
                     Array.isArray(options) ? (
                         options.map((option, index) => <option key={index} value={option}>{option}</option>)

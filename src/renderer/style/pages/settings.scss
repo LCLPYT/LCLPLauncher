@@ -1,3 +1,15 @@
+@import "../mixins.scss";
+
 #settingsGroupLevels.sticky-top {
     top: 1rem;
+}
+
+.form-control, .form-select {
+    @include contour-top;
+}
+
+.settings-range-wrapper {
+    div.form-text {
+        margin-top: -0.25rem;
+    }
 }

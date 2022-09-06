@@ -1,4 +1,5 @@
 @import "variables";
+@import "../mixins";
 
 $theme-colors: (
   "primary":    $primary,
@@ -70,6 +71,10 @@ $spacers: (
     color: rgba($danger, 0.6)
 }
 
+.btn {
+    @include contour-top;
+}
+
 .btn-xl {
-    @include button-size(0.5rem, 1rem, 1.5rem, 0.4rem);
+    @include button-size(0.5rem, 1rem, 1.5rem, 0.5rem);
 }

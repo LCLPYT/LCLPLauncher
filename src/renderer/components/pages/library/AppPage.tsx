@@ -99,7 +99,7 @@ class Content extends Component<ContentProps, ContentState> {
                             <Link id="shopPageLink" to={`/library/store/app/${this.props.app.key}`} className="d-flex align-items-center navigation-link-color-dimmed no-underline cursor-pointer">
                                 <span className="material-icons">shopping_bag</span>
                             </Link>
-                            <span id="appSettingsLink" className="material-icons ms-3 navigation-link-color-dimmed cursor-pointer">settings</span>
+                            <span id="appSettingsLink" tabIndex={0} className="material-icons ms-3 navigation-link-color-dimmed cursor-pointer">settings</span>
                         </div>
                         <div className="d-flex">
                             <AppFeed ref={this.feedRef} app={this.props.app} />

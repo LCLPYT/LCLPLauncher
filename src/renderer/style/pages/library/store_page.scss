@@ -3,19 +3,22 @@
     src: url("../../fonts/Poppins-Bold.ttf") format("truetype");
 }
 
-$descSize: 16px;
+$descSize: 14px;
 $descLines: $descSize * 1.5 * 4;
 
-.collapseDesc.collapse:not(.show) {
-    display: block;
+.collapseDesc {
     font-size: $descSize;
-    max-height: $descLines;
-    overflow: hidden;
-}
 
-.collapseDesc.collapsing {
-    min-height: $descLines;
-    transition-timing-function: linear;
+    &.collapse:not(.show) {
+        display: block;
+        max-height: $descLines;
+        overflow: hidden;
+    }
+
+    &.collapsing {
+        min-height: $descLines;
+        transition-timing-function: linear;
+    }
 }
 
 .collapseDesc {

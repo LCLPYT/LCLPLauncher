@@ -1,4 +1,5 @@
 @import '../bootstrap/variables';
+@import '../functions';
 
 #featured-description {
     -webkit-transition: opacity 0.3s ease-in-out;
@@ -26,7 +27,7 @@
 }
 
 span.action-card-icon {
-    font-size: 75px;
+    font-size: 70px;
     transition: .2s ease-in-out;
 }
 
@@ -35,7 +36,7 @@ span.action-card-icon {
 }
 
 .action-card:hover {
-    background-color: lighten($card-bg, 3%);
+    background-color: tint($card-bg, 3%);
     transition: background-color .2s;
 
     .action-card-icon {

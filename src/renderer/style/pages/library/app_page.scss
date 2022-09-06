@@ -1,4 +1,5 @@
 @import "../../bootstrap/variables.scss";
+@import "../../mixins.scss";
 
 #appWrapper {
     position: relative;
@@ -96,6 +97,8 @@
 }
 
 .custom-input-wrapper {
+    @include contour-top;
+
     background-color: $gray-700;
     border-radius: 0.25rem;
     transition: border-color 0.15s ease-in-out,
