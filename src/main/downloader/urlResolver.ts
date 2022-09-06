@@ -64,21 +64,12 @@ class CurseForgeUrlResolver implements UrlResolver {
     }
 
     async getUrl(): Promise<string> {
-        log.debug(`Looking for curse forge artifact of projectId=${this.args.projectId} with fileId=${this.args.fileId}...`);
-        const downloaderServiceUrl = `https://addons-ecs.forgesvc.net/api/v2/addon/${this.args.projectId}/file/${this.args.fileId}/download-url`;
-        const downloadUrl = await fetch(downloaderServiceUrl).then(response => response.text());
+        if (!this.args.projectSlug) throw new Error('Legacy CurseForge artifact detected, projectSlug is missing.');
 
-        log.debug(`Fetched download url "${downloadUrl}"`);
+        log.debug(`Looking for curse forge artifact of project '${this.args.projectSlug}' with fileId=${this.args.fileId}...`);
+        const downloadUrl = `https://www.curseforge.com/minecraft/mc-mods/${this.args.projectSlug}/download/${this.args.fileId}/file`;
 
-        const url = new URL(downloadUrl);
-
-        const trustedHosts = ['edge.forgecdn.net'];
-        if (!trustedHosts.includes(url.host))
-            throw new Error(`LCLPLauncher does not trust host "${url.host}"`);
-            
-        if (url.protocol !== 'https:' && url.protocol !== 'http:') 
-            throw new Error(`Invalid download url protocol: ${url.protocol}`);
-
+        log.debug(`Using CurseForge download url "${downloadUrl}"`);
         return downloadUrl;
     }
 }

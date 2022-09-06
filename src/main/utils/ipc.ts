@@ -1,4 +1,5 @@
 import { app, dialog, ipcMain } from "electron";
+import ElectronLog from "electron-log";
 import { autoUpdater, ProgressInfo } from "electron-updater";
 import { IpcMainEvent } from "electron/main";
 import type App from "../../common/types/App";
@@ -101,7 +102,7 @@ registerHandler(new class extends IPCActionHandler {
                     addToLibrary(<App>args[0])
                         .then(() => event.reply(true))
                         .catch(err => {
-                            console.error('Error adding library app:', err);
+                            ElectronLog.error('Error adding library app:', err);
                             event.reply(false);
                         }));
                 break;
@@ -112,7 +113,7 @@ registerHandler(new class extends IPCActionHandler {
                     isInLibrary(<App>args[0])
                         .then(inLibrary => event.reply(inLibrary))
                         .catch(err => {
-                            console.error('Error checking for library app:', err);
+                            ElectronLog.error('Error checking for library app:', err);
                             event.reply(false);
                         }));
                 break;
@@ -122,7 +123,7 @@ registerHandler(new class extends IPCActionHandler {
                     getLibraryApps()
                         .then(apps => event.reply(apps))
                         .catch(err => {
-                            console.error('Error getting library apps:', err);
+                            ElectronLog.error('Error getting library apps:', err);
                             event.reply(null);
                         }));
 
@@ -134,7 +135,7 @@ registerHandler(new class extends IPCActionHandler {
                     startApp(args[0])
                         .then(() => event.reply(null))
                         .catch(err => {
-                            console.error('Error starting app:', err);
+                            ElectronLog.error('Error starting app:', err);
                             event.reply(err);
                         }));
                 break;
@@ -145,7 +146,7 @@ registerHandler(new class extends IPCActionHandler {
                     try {
                         event.reply(stopApp(args[0]))
                     } catch (err) {
-                        console.error('Error stopping app:', err);
+                        ElectronLog.error('Error stopping app:', err);
                         event.reply(err);
                     }
                 });
@@ -166,7 +167,7 @@ export const DOWNLOADER = registerHandler(new class extends IPCActionHandler {
                     startInstallationProcess(args[0], args[1], args[2])
                         .then(() => event.reply(true))
                         .catch(err => {
-                            console.error('Error in installation process:', err);
+                            ElectronLog.error('Error in installation process:', err);
                             event.reply(false, err);
                         }));
 
@@ -179,7 +180,7 @@ export const DOWNLOADER = registerHandler(new class extends IPCActionHandler {
                     getAppState(<App>args[0])
                         .then(state => event.reply(state))
                         .catch(err => {
-                            console.error('Error checking app state:', err);
+                            ElectronLog.error('Error checking app state:', err);
                             event.reply(null, err);
                         }));
 
@@ -262,7 +263,7 @@ export const DOWNLOADER = registerHandler(new class extends IPCActionHandler {
                         inputs: inputs,
                         map: map
                     });
-                }).catch(err => console.error('Could not read input map:', err));
+                }).catch(err => ElectronLog.error('Could not read input map:', err));
 
                 break;
 
@@ -488,7 +489,7 @@ export const UPDATER = registerHandler(new class extends IPCActionHandler {
                     const resp = args[0];
                     if (resp) this.sendUpdateStateCB.resolve();
                     else this.sendUpdateStateCB.reject();
-                } else console.warn('No callback defined for', ACTIONS.updater.sendUpdateState);
+                } else ElectronLog.warn('No callback defined for', ACTIONS.updater.sendUpdateState);
                 break;
 
             case ACTIONS.updater.getCachedUpdateState:

@@ -100,7 +100,7 @@ export async function validateInstallationDir(dir: string) {
         if (focusedWindow) {
             const result = await dialog.showMessageBox(focusedWindow, {
                 type: 'question',
-                buttons: ['Cancel', 'Choose anyway'],
+                buttons: [translate('cancel'), translate('install.dialog.choose_anyway')],
                 title: translate('install.dir_not_empty'),
                 message: translate('install.ask_dir_not_empty'),
                 noLink: true
@@ -279,7 +279,7 @@ export async function startInstallationProcess(app: App, installationDir: string
         icon: 'done',
         title: translate('toast.installation_finished'),
         type: ToastType.TEXT,
-        detail: `'${app.title}' was successfully installed.`
+        detail: translate('toast.installation_finished.desc', app.title)
     });
 
     // start next queue item, if there is one
