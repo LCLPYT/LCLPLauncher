@@ -109,13 +109,15 @@ async function initDependencies() {
         if (updateCheckResult.updateAvailable) {
             log.info(updateCheckResult.versionName ? `Update available: Version ${updateCheckResult.versionName}` : 'Update available.');
 
-            Toast.add({
-                icon: 'info',
-                title: translate('toast.update_available'),
-                type: ToastType.UPDATE_AVAILABLE,
-                detail: updateCheckResult.versionName,
-                noAutoHide: true,
-                noSound: true
+            whenIpcReady.then(() => {
+                Toast.add({
+                    icon: 'info',
+                    title: translate('toast.update_available'),
+                    type: ToastType.UPDATE_AVAILABLE,
+                    detail: updateCheckResult.versionName,
+                    noAutoHide: true,
+                    noSound: true
+                });
             });
         } else {
             log.info('No update available; already up-to-date.');
