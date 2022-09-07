@@ -17,7 +17,7 @@ interface State {
     progress?: ProgressInfo
 }
 
-class UpdateChecking extends Component<Props, State> {
+class MandatoryUpdate extends Component<Props, State> {
     constructor(props: Props) {
         super(props);
         this.state = {
@@ -150,4 +150,4 @@ class UpdateChecking extends Component<Props, State> {
     }
 }
 
-export default UpdateChecking;
+export default MandatoryUpdate;

@@ -30,7 +30,12 @@ export async function checkForUpdates(): Promise<UpdateCheckResult> {
 
     // handle with electron updater
     const [updateAvailable, latestVersion] = await checkElectronUpdaterUpdate();
-    if (!updateAvailable) return {updateAvailable: false};
+    if (!updateAvailable) {
+        ElectronLog.debug('No update available.');
+        return {updateAvailable: false};
+    }
+
+    ElectronLog.debug('Update to version', latestVersion, 'is available. Checking whether the update is mandatory...');
     
     return fetchUpdateIsMandatory(latestVersion);
 }

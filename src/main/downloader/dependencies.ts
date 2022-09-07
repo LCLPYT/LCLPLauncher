@@ -1,4 +1,3 @@
-import fetch from "electron-fetch";
 import log from 'electron-log';
 import * as fs from 'fs';
 import Downloader from "nodejs-file-downloader";
@@ -7,15 +6,16 @@ import * as Path from 'path';
 import AppDependency from "../../common/types/AppDependency";
 import { InputMap } from "../../common/types/InstallationInputResult";
 import { ToastType } from "../../common/types/Toast";
-import { getBackendHost } from "../../common/utils/settings";
-import { Toast } from "../core/service/toast";
-import { DependencyDescriptor, DependencyFragment, DependencyInfo, SpecificInfo } from "../types/Dependency";
-import { exists, getDependencyDir, getDependencyTemporaryDir } from "../core/io/fshelper";
-import { DOWNLOADER } from "../utils/ipc";
-import { extractTar } from "../core/service/tar";
-import { unzip } from "../core/service/zip";
-import { ActionFactory, ArtifactActionArgument, GeneralActionArgument, PostActionHandle, PostActionWrapper } from "./postActions";
 import { translate } from "../../common/utils/i18n";
+import { getBackendHost } from "../../common/utils/settings";
+import { exists, getDependencyDir, getDependencyTemporaryDir } from "../core/io/fshelper";
+import Net from "../core/service/net";
+import { extractTar } from "../core/service/tar";
+import { Toast } from "../core/service/toast";
+import { unzip } from "../core/service/zip";
+import { DependencyDescriptor, DependencyFragment, DependencyInfo, SpecificInfo } from "../types/Dependency";
+import { DOWNLOADER } from "../utils/ipc";
+import { ActionFactory, ArtifactActionArgument, GeneralActionArgument, PostActionHandle, PostActionWrapper } from "./postActions";
 
 export namespace Dependencies {
     export async function getUninstalledDependencies(dependencies: DependencyDescriptor[]): Promise<AppDependency[]> {
@@ -162,7 +162,7 @@ export namespace Dependencies {
             const cached = this.dependencyCache.get(key);
             if (cached) return cached;
     
-            const info = await fetch(`${getBackendHost()}/api/lclplauncher/package-info/${key}`)
+            const info = await Net.fetch(`${getBackendHost()}/api/lclplauncher/package-info/${key}`)
                 .then(response => response.json())
                 .then(json => <DependencyInfo> json)
                 .catch(() => undefined);

@@ -25,7 +25,8 @@ export namespace Toast {
             id: getNextToastId(),
             icon: 'error',
             title: title,
-            type: ToastType.TEXT
+            type: ToastType.TEXT,
+            autoHideDelay: 16_000
         };
 
         if (detail) toast.detail = detail;

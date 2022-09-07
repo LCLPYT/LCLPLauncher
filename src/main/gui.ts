@@ -76,29 +76,29 @@ async function initDependencies() {
 
     // auto update
     const {checkForUpdates} = await import('./core/updater/updateChecker');
-    const update = await checkForUpdates().then(res => {
+    const updateCheckResult = await checkForUpdates().then(res => {
         setCachedCheckResult(res);
         return res;
     }).catch(err => {
         log.error('Could not check for updates:', err);
 
-        Toast.add(Toast.createError(translate('toast.update_error')));
         whenIpcReady.then(() => {
             UPDATER.sendUpdateError(err);
+            Toast.add(Toast.createError(translate('toast.update_error')));
             if (mainWindow) mainWindow.setTitle(translate('title.update_error', translate('app.name')));
         });
 
         return null;
     });
 
-    if (!update || (update.updateAvailable && !!update.mandatory)) {
+    if (!updateCheckResult || (updateCheckResult.updateAvailable && !!updateCheckResult.mandatory)) {
         // a mandatory update is required or an error occurred whilst checking.
         // stop all other tasks and handle update in render thread
-        if (update) {
+        if (updateCheckResult) {
             log.info('Mandatory update required.');
 
             await whenIpcReady.then(() => {
-                UPDATER.sendUpdateState(update);
+                UPDATER.sendUpdateState(updateCheckResult);
                 if (mainWindow) mainWindow.setTitle(translate('title.mandatory_update', translate('app.name')));
             });
         }
@@ -106,14 +106,14 @@ async function initDependencies() {
         whenIpcReady.then(() => UTILITIES.sendAppReadySignal());
         return;
     } else {
-        if (update.updateAvailable) {
-            log.info(update.versionName ? `Update available: Version ${update.versionName}` : 'Update available.');
+        if (updateCheckResult.updateAvailable) {
+            log.info(updateCheckResult.versionName ? `Update available: Version ${updateCheckResult.versionName}` : 'Update available.');
 
             Toast.add({
                 icon: 'info',
                 title: translate('toast.update_available'),
                 type: ToastType.UPDATE_AVAILABLE,
-                detail: update.versionName,
+                detail: updateCheckResult.versionName,
                 noAutoHide: true,
                 noSound: true
             });

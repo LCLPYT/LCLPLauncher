@@ -2,6 +2,7 @@ import parser from 'yargs-parser';
 
 import {getAppVersion} from "./env";
 import {isDevelopment} from "../../common/utils/env";
+import ElectronLog from 'electron-log';
 
 const commands: Record<string, Command> = {
     'check-for-app-update': {
@@ -175,6 +176,7 @@ async function checkMandatoryUpdate(): Promise<boolean> {
     const {isUpdateMandatory} = await import(/* webpackChunkName: "lib" */ '../core/updater/mandatoryUpdater');
 
     if (await isUpdateMandatory()) {
+        ElectronLog.error('LCLPLauncher requires a mandatory update. Please update first!');
         console.error('LCLPLauncher requires a mandatory update. Please update first!');
         return true;
     }

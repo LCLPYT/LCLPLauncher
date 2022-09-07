@@ -1,7 +1,7 @@
-import fetch from "electron-fetch";
-import parseHtml from "node-html-parser";
-import { CurseForgeUrlResolverArgs, OptifineUrlResolverArgs, UrlResolverArgs } from "../types/Installation";
 import log from 'electron-log';
+import parseHtml from "node-html-parser";
+import Net from "../core/service/net";
+import { CurseForgeUrlResolverArgs, OptifineUrlResolverArgs, UrlResolverArgs } from "../types/Installation";
 
 export async function resolveUrl(urlArgument: string | UrlResolverArgs): Promise<string> {
     if (typeof urlArgument === 'string') return urlArgument;
@@ -46,7 +46,7 @@ class OptifineUrlResolver implements UrlResolver {
 
     async getUrl() {
         log.debug(`Looking for '${this.args.id}'...`);
-        const result = await fetch(`https://optiFine.net/adloadx?f=${this.args.id}`).then(response => response.text());
+        const result = await Net.fetch(`https://optiFine.net/adloadx?f=${this.args.id}`).then(response => response.text());
         const document = parseHtml(result);
         const downloadBtn = document.querySelector('a[onclick="onDownload()"]');
         if (!downloadBtn) throw new Error('Could not find the optifine download button');
@@ -64,12 +64,14 @@ class CurseForgeUrlResolver implements UrlResolver {
     }
 
     async getUrl(): Promise<string> {
-        if (!this.args.projectSlug) throw new Error('Legacy CurseForge artifact detected, projectSlug is missing.');
+        throw new Error('CurseForge is unsupported at the moment.');
+        // if (!this.args.projectSlug) throw new Error('Legacy CurseForge artifact detected, projectSlug is missing.');
 
-        log.debug(`Looking for curse forge artifact of project '${this.args.projectSlug}' with fileId=${this.args.fileId}...`);
-        const downloadUrl = `https://www.curseforge.com/minecraft/mc-mods/${this.args.projectSlug}/download/${this.args.fileId}/file`;
+        // const descriptor = [this.args.projectSlug, this.args.projectId].join('-');
+        // const filename = `${descriptor}-${this.args.fileId}.jar`;
+        // const url = ['https://www.cursemaven.com/curse/maven', descriptor, this.args.fileId, filename].join('/');
 
-        log.debug(`Using CurseForge download url "${downloadUrl}"`);
-        return downloadUrl;
+        // log.debug(`Trying to download '${url}'...`);
+        // return url;
     }
 }

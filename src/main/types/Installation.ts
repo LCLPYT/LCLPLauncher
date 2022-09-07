@@ -76,6 +76,8 @@ export type OptifineUrlResolverArgs = AbstractUrlResolverArgs & {
  * Use other services, like Modrinth whenever possible.
  */
 export type CurseForgeUrlResolverArgs = AbstractUrlResolverArgs & {
+    /** Project id of the artifact */
+    projectId: number,
     /** Slug of the artifact's project */
     projectSlug: string
     /** File id of the artifact */

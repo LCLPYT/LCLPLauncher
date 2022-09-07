@@ -13,7 +13,7 @@ function showApp() {
 
     const updateState = getUpdateState();
     if (!!updateState?.updateAvailable && !!updateState.mandatory) {
-        import('../components/UpdateChecking').then((UpdateChecking) => {
+        import('../components/MandatoryUpdate').then((UpdateChecking) => {
             ReactDOM.render(<UpdateChecking.default/>, document.getElementById('app'));
         });
     } else {

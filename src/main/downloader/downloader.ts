@@ -1,5 +1,4 @@
 import { BrowserWindow, dialog } from "electron";
-import fetch, { Headers } from "electron-fetch";
 import log from 'electron-log';
 import * as fs from 'fs';
 import { jsoncSafe } from "jsonc/lib/jsonc.safe";
@@ -12,7 +11,11 @@ import AppState from "../../common/types/AppState";
 import { CompiledInstallationInput } from "../../common/types/InstallationInput";
 import { InputMap } from "../../common/types/InstallationInputResult";
 import { ToastType } from "../../common/types/Toast";
+import { translate } from "../../common/utils/i18n";
 import { getBackendHost } from "../../common/utils/settings";
+import { exists, getAppArtifactsDir, getAppStartupFile, getDependencyDir, mkdirp, resolveSegmentedPath, rmdirRecursive } from "../core/io/fshelper";
+import { isAppRunning } from "../core/runningApps";
+import Net from "../core/service/net";
 import { Toast } from "../core/service/toast";
 import { InstalledApplication } from "../database/models/InstalledApplication";
 import AppInfo from "../types/AppInfo";
@@ -20,9 +23,7 @@ import { DependencyFragment } from "../types/Dependency";
 import Installation, { Artifact, SegmentedPath } from "../types/Installation";
 import { fetchApp } from "../utils/backend";
 import { getAppVersion } from "../utils/env";
-import { exists, getAppArtifactsDir, getAppStartupFile, getDependencyDir, mkdirp, resolveSegmentedPath, rmdirRecursive } from "../core/io/fshelper";
 import { DOWNLOADER } from "../utils/ipc";
-import { isAppRunning } from "../core/runningApps";
 import { replaceArraySubstitutes, Substitution, SubstitutionFunctions, SubstitutionVariables } from "../utils/substitute";
 import { isDomainTrusted } from "../utils/tls";
 import { Dependencies } from "./dependencies";
@@ -33,7 +34,6 @@ import { ArtifactTrackerVariables } from "./tracker/ArtifactTracker";
 import { createReader } from "./tracker/ArtifactTrackers";
 import { registerUninstallExceptionPath, uninstallApp } from "./uninstall";
 import { resolveUrl } from "./urlResolver";
-import { translate } from "../../common/utils/i18n";
 
 const queue: [App, string, InputMap, (err: any) => void][] = [];
 let currentInstaller: Installer | null = null;
@@ -125,13 +125,8 @@ export async function doesAppNeedUpdate(appKey: string): Promise<boolean> {
 }
 
 async function fetchAppInfo(app: App): Promise<AppInfo> {
-    const headers = new Headers();
-    headers.append('pragma', 'no-cache');
-    headers.append('cache-control', 'no-cache');
-
-    const [err, appInfo]: [any, AppInfo?] = await fetch(`${getBackendHost()}/api/lclplauncher/app-info/${app.key}`, {
-        headers: headers
-    }).then(response => response.text())
+    const [err, appInfo]: [any, AppInfo?] = await Net.fetchUncached(`${getBackendHost()}/api/lclplauncher/app-info/${app.key}`)
+        .then(response => response.text())
         .then(text => jsoncSafe.parse(text));
 
     if (err) throw err;
@@ -153,13 +148,8 @@ async function fetchInstallation(app: App): Promise<Installation> {
     if (!(os.platform() in appInfo.platforms)) throw new Error(`[Unsupported Platform]: Current platform '${os.platform()}' is not supported by the app '${app.key}'.`);
     const platformInfo = appInfo.platforms[os.platform()];
 
-    const headers = new Headers();
-    headers.append('pragma', 'no-cache');
-    headers.append('cache-control', 'no-cache');
-
-    const [err, installation]: [any, Installation?] = await fetch(`${getBackendHost()}/api/lclplauncher/app-installer/${app.key}/${platformInfo.installer}`, {
-        headers: headers
-    }).then(response => response.text())
+    const [err, installation]: [any, Installation?] = await Net.fetchUncached(`${getBackendHost()}/api/lclplauncher/app-installer/${app.key}/${platformInfo.installer}`)
+        .then(response => response.text())
         .then(text => jsoncSafe.parse(text));
 
     if (err) throw err;
