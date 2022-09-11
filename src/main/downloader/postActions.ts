@@ -17,7 +17,7 @@ import {
 import {parseProfilesFromJson} from "../types/MCLauncherProfiles";
 import {checksumFile} from "../core/service/checksum";
 import {getAppImagePath} from "../utils/env";
-import {backupFile, exists, rename, resolveSegmentedPath} from "../core/io/fshelper";
+import {backupFile, exists, isDirectory, rename, resolveSegmentedPath} from "../core/io/fshelper";
 import {isPlatform} from "../utils/oshooks";
 import {getBase64DataURL} from "../core/service/resource";
 import {
@@ -278,6 +278,9 @@ export namespace ActionFactory {
                 const substPath = replaceArraySubstitutes(relPath, subst);
                 const file = resolveSegmentedPath(rootDir, substPath);
                 if (!await exists(file)) throw new Error(`Can't track non-existent file '${file}'`);
+                if (await isDirectory(file)) {
+                    log.warn('Deprecated: Tracking an existing directory.');
+                }
 
                 log.verbose(`Tracking existing file '${file}'...`);
 

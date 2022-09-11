@@ -430,7 +430,12 @@ export class Installer {
             if (!reader) return; // if there was an error, do nothing
 
             log.verbose(`Deleting old unused artifact '${artifactId}'...`);
-            await reader.deleteEntries(reader, true);
+            try {
+                await reader.deleteEntries(reader, true);
+            } catch (err) {
+                log.error(`Could not delete all entries from artifact tracker '${artifactId}'.`);
+            }
+            await reader.deleteFile();
             log.verbose(`Old Unused artifact '${artifactId}' deleted successfully.`);
         }));
     }
@@ -658,7 +663,10 @@ export class Installer {
         if (!artifact.md5) {
             log.warn('Artifact does not provide a MD5 checksum; cannot check if the artifact is already up-to-date. Artifact will be updated.');
         } else {
-            needsUpdate = !await reader.isArtifactUpToDate(artifact);
+            needsUpdate = !await reader.isArtifactUpToDate(artifact, {
+                installDir: this.installationDirectory,
+                substition: this.getSubstitution()
+            });
         }
 
         if (needsUpdate) await reader.deleteEntries().catch(() => undefined);

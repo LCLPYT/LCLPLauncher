@@ -5,6 +5,7 @@ import { ERR_EOS } from "../../utils/constants";
 import { withBufferWriteMethods } from "../../core/io/buffer";
 import { SimpleFile } from "../../core/io/SimpleFile";
 import log from 'electron-log';
+import { Substitution } from "../../utils/substitute";
 
 // if a tracker file has a version older than this string, it will be deleted and an update of the artifact will be required
 const TRACKER_VERSION = 5;
@@ -29,6 +30,11 @@ export type TrackerHeader = {
 interface ArtifactTracker {
     readonly appId: number;
     readonly artifactId: string;
+}
+
+export interface UpdateCheckerArgs {
+    installDir: string,
+    substition: Substitution
 }
 
 export class TrackerWriter extends SimpleFile.AbstractWriter<ArtifactTrackerVariables> implements ArtifactTracker {
@@ -103,7 +109,7 @@ export abstract class TrackerReader extends SimpleFile.AbstractReader<ArtifactTr
 
     protected abstract cloneThisReader(): TrackerReader;
 
-    public abstract isArtifactUpToDate(artifact: Artifact): Promise<boolean>;
+    public abstract isArtifactUpToDate(artifact: Artifact, args: UpdateCheckerArgs): Promise<boolean>;
 
     /**
      * 

@@ -1,6 +1,8 @@
-import { TrackerWriter, ArtifactType, TrackerReader } from "./ArtifactTracker";
-import { exists } from "../../core/io/fshelper";
 import { withBufferReadMethods, withBufferWriteMethods } from "../../core/io/buffer";
+import { exists, resolveSegmentedPath } from "../../core/io/fshelper";
+import { Artifact } from "../../types/Installation";
+import { ArtifactType, TrackerReader, TrackerWriter, UpdateCheckerArgs } from "./ArtifactTracker";
+import { replaceArraySubstitutes } from '../../utils/substitute';
 
 export namespace ExistingFileTracker {
     export class Writer extends TrackerWriter {
@@ -26,9 +28,17 @@ export namespace ExistingFileTracker {
             return withBufferReadMethods(Reader);
         }
 
-        public async isArtifactUpToDate(): Promise<boolean> {
+        public async isArtifactUpToDate(artifact: Artifact, args: UpdateCheckerArgs): Promise<boolean> {
             const oldPath = this.readString();
-            return await exists(oldPath);
+            if (!await exists(oldPath)) return false;
+
+            // check if resultPath should be considered
+            if (!artifact.extra?.resultPath) return true;
+
+            const substPath = replaceArraySubstitutes(artifact.extra.resultPath, args.substition);
+            const resultPath = resolveSegmentedPath(args.installDir, substPath);
+            
+            return await exists(resultPath);
         }
 
         protected cloneThisReader(): TrackerReader {

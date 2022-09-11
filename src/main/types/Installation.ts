@@ -39,6 +39,10 @@ export type Artifact = {
     options?: ArtifactOptions,
     /** Action to execute after the download is finished */
     post?: PostAction;
+    /** Extra, non-standartized data */
+    extra?: Record<string, any> & {
+        resultPath?: SegmentedPath
+    }
 }
 
 export type ArtifactOptions = {

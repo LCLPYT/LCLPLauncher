@@ -1,8 +1,10 @@
-import {app} from 'electron'
-import {isDevelopment} from '../common/utils/env';
-import {handleArgv} from './utils/argv';
+import { app } from 'electron';
 import log from 'electron-log';
-import {getAppName} from './utils/env';
+import path from 'path';
+import fs from 'fs';
+import { isDevelopment } from '../common/utils/env';
+import { handleArgv } from './utils/argv';
+import { getAppName } from './utils/env';
 
 // accept code hot updates in development
 if (module.hot) {
@@ -15,6 +17,11 @@ process.env['NODE_' + 'ENV'] = process.env.NODE_ENV;
 // set app name manually, if in development environment
 if (isDevelopment) {
     app.setName(`${getAppName()}-dev`);
+
+    const devDataPath = path.resolve(path.dirname(app.getPath('userData')), app.getName());
+    if (!fs.existsSync(devDataPath)) fs.mkdirSync(devDataPath);
+
+    app.setPath('userData', devDataPath);
 }
 
 // configure logger

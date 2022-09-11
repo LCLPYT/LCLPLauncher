@@ -181,7 +181,7 @@ async function displayMainWindow(): Promise<BrowserWindow> {
         height: 750,
         minWidth: 800,
         minHeight: 600,
-        title: 'LCLPLauncher - Loading',
+        title: 'LCLPLauncher',
         icon: icon,
     });
 

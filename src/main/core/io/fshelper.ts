@@ -1,11 +1,11 @@
+import { app as electronApp } from 'electron';
 import * as fs from 'fs';
-import * as path from 'path';
 import * as os from 'os';
+import * as path from 'path';
 import rimraf from 'rimraf';
 import type App from '../../../common/types/App';
-import type { SegmentedPath } from '../../types/Installation';
 import type { DependencyDescriptor } from '../../types/Dependency';
-import { app as electronApp } from 'electron';
+import type { SegmentedPath } from '../../types/Installation';
 
 export function rmdirRecursive(directory: string) {
     return new Promise<void>((resolve, reject) => rimraf(directory, {}, error => {
@@ -135,5 +135,5 @@ export function getDependencyTemporaryDir() {
 }
 
 export async function getOrCreateDefaultInstallationDir(app: App) {
-    return path.join(os.homedir(), 'LCLPLauncher', 'apps', app.key);
+    return path.join(os.homedir(), electronApp.getName(), 'apps', app.key);
 }
