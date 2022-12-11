@@ -26,7 +26,7 @@
     "babel-loader": "^8.2.2",
     "bootstrap": "5.2.0",
     "bootswatch": "^5.1.1",
-    "electron": "^15.5.5",
+    "electron": "^18.3.7",
     "electron-builder": "^23.0.3",
     "electron-webpack": "^2.8.2",
     "electron-webpack-ts": "^4.0.1",
