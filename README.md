@@ -8,7 +8,18 @@ A manager for applications provided by LCLPNetwork.
 Download precompiled executables for your operating system from the official [download page](https://lclpnet.work/lclplauncher).
 
 ## For developers
-LCLPLauncher was build using **Node.js 16** if you want to do anything development related, make sure you use Node 16 or higher.
+In order to develop LCLPLauncher, use **Node 16**.
+If you have [nvm](https://github.com/nvm-sh/nvm) installed, you can use.
+
+```
+nvm use
+```
+
+You may have to install Node 16 via nvm before:
+
+```bash
+nvm install <version>  # retrieve the current version from the .nvmrc file
+```
 
 ### Building the app yourself
 First, install all dependencies with:
@@ -20,9 +31,19 @@ Then, you may simply build the app for your OS by using [Yarn](https://yarnpkg.c
 yarn dist
 ```
 ### Develop the application
-You are free to modify the code as you would like. Please **do not provide LCLPLauncher to other users**! Instead, fork the project and create a pull-request for the original repository instead!
+You are free to modify the code as you would like. 
 
-You may start a development server with code hot swapping using:
+You can start a development server with code hot-swapping using:
+
 ```bash
 yarn dev
 ```
+
+Feel free to contribute to the project. If you want to distribute your forked version, please consider the notes below.
+
+### Distributing your own version
+If you don't want to contribute to the original repository, you may distribute binaries of your fork under **a different project name**.
+In this case, please don't choose a name similar to "LCLPLauncher".
+Use your own name to distinguish it from the original.
+
+Please, **do not distribute LCLPLauncher** under the name "LCLPLauncher".
