@@ -22,14 +22,18 @@ nvm install <version>  # retrieve the current version from the .nvmrc file
 ```
 
 ### Building the app yourself
+You'll need to have [Yarn](https://yarnpkg.com/) >= 3.1.0 installed.
+
 First, install all dependencies with:
 ```bash
 yarn
 ```
-Then, you may simply build the app for your OS by using [Yarn](https://yarnpkg.com/):
+
+Then, you may simply build the app for your OS:
 ```bash
 yarn dist
 ```
+
 ### Develop the application
 You are free to modify the code as you would like. 
 
