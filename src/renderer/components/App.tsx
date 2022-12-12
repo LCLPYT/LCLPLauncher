@@ -18,6 +18,7 @@ import {UpdaterEventListenerOrObject, updaterManager} from '../event/updater';
 import {ProgressInfo} from 'electron-updater';
 import LoadingSpinner from './utility/LoadingSpinner';
 import { translate as t } from '../../common/utils/i18n';
+import { shouldUseGuiFrame } from '../../main/utils/oshooks';
 
 class App extends Component {
     render() {
@@ -37,6 +38,12 @@ class App extends Component {
                 <ToastStack />
             </HashRouter >
         );
+    }
+
+    componentDidMount(): void {
+        if (!shouldUseGuiFrame()) {
+            document.getElementById('app')?.classList?.add('no-frame');
+        }
     }
 }
 

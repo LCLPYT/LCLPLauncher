@@ -2,6 +2,9 @@ import * as os from 'os';
 import * as fs from 'fs';
 import execa from 'execa';
 
+export const OS_WINDOWS = 'win32';
+export const OS_LINUX = 'linux';
+
 export abstract class AbstractOSHandler {
     public createSymlink(target: string, path: string, type?: string) {
         return fs.promises.symlink(target, path, type);
@@ -43,10 +46,10 @@ export class LinuxOSHandler extends AbstractOSHandler {}
 export let osHandler: AbstractOSHandler;
 
 switch (os.platform()) {
-    case 'win32':
+    case OS_WINDOWS:
         osHandler = new WindowsOSHandler();
         break;
-    case 'linux':
+    case OS_LINUX:
         osHandler = new LinuxOSHandler();
         break;
     default:
@@ -82,4 +85,8 @@ export async function doOnPlatformAsync(action: () => Promise<void>, ...platform
 
 export function isPlatform(platform: string) {
     return os.platform() === platform;
+}
+
+export function shouldUseGuiFrame() {
+    return !isPlatform(OS_WINDOWS);
 }

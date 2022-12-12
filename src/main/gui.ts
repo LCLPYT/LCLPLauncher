@@ -11,6 +11,7 @@ import { setCachedCheckResult } from "./core/updater/updateResultCache";
 import { setMainWindow, setWindowReady } from "./core/window";
 import { executeUrlCommand, getParsedArgv, parseArgv } from "./utils/argv";
 import { customWords } from "./utils/dictionary";
+import { shouldUseGuiFrame } from "./utils/oshooks";
 
 // global reference to mainWindow (necessary to prevent window from being garbage collected)
 let mainWindow: BrowserWindow | null;
@@ -169,13 +170,15 @@ async function displayMainWindow(): Promise<BrowserWindow> {
         icon = nativeImage.createFromDataURL(<string> <unknown> logoData.default);
     }
 
+    const useFrame = shouldUseGuiFrame();
+
     const window = new BrowserWindow({
         webPreferences: {
             nodeIntegration: true,  // TODO disable this and context Isolation
             contextIsolation: false
         },
         show: false,
-        frame: false,
+        frame: useFrame,
         backgroundColor: '#24292E',
         width: 1000,
         height: 750,

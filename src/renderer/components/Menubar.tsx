@@ -6,6 +6,7 @@ import { UTILITIES } from '../utils/ipc';
 import { isDevelopment } from '../../common/utils/env';
 import { getAppVersion } from '../utils/env';
 import { translate as t } from '../../common/utils/i18n';
+import { shouldUseGuiFrame } from '../../main/utils/oshooks';
 
 interface State {
     version?: string
@@ -21,7 +22,7 @@ class Menubar extends Component<{}, State> {
         return (
             <>
                 <header id="header" className="sticky-top">
-                    <nav className="navbar navbar-expand navbar-dark bg-dark p-0 dragarea ui-separator-top align-items-stretch">
+                    <nav id="mainNavBar" className="navbar navbar-expand navbar-dark bg-dark p-0 dragarea align-items-stretch">
                         <button className="btn-nostyle navigation-link-color-dimmed nodragarea btn-drawer-menu ui-separator-bottom ui-separator-right px-3 inner-focus" 
                             type="button" data-bs-toggle="offcanvas" data-bs-target="#sideMenu" aria-controls="sideMenu">
                             <span className="material-icons cursor-pointer" style={{ verticalAlign: 'bottom' }}>menu</span>
@@ -65,6 +66,11 @@ class Menubar extends Component<{}, State> {
 
     componentDidMount() {
         getAppVersion().then(version => this.setState({ version: version }));
+
+        const mainNavBar = document.getElementById('mainNavBar');
+        if (mainNavBar && !shouldUseGuiFrame()) {
+            mainNavBar.classList.add('ui-separator-top');
+        }
 
         const sideMenu = document.getElementById('sideMenu');
         sideMenu?.addEventListener('show.bs.offcanvas', () => {

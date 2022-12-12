@@ -24,8 +24,15 @@ body {
 
 // specific elements (id)
 #app {
-    height: calc(100% - #{$toolbar-height});
-    margin-top: $toolbar-height;
+    &.no-frame {
+        height: calc(100% - #{$toolbar-height});
+        margin-top: $toolbar-height;
+    }
+
+    &:not(.no-frame) {
+        height: 100%;
+    }
+
     overflow: hidden;
     display: flex;
     flex-direction: column;

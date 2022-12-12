@@ -9,6 +9,7 @@ import {initI18n} from "./utils/i18n";
 import {renderCustomTitleBar, renderLoadingSpinner} from "./page";
 import {showWhenReady} from "./utils/readyState";
 import { setUpdateState } from './event/updater';
+import { shouldUseGuiFrame } from '../main/utils/oshooks';
 
 // accept code hot updates in development
 if (module.hot) {
@@ -19,7 +20,9 @@ if (module.hot) {
 log.transports.console.level = 'info';
 log.transports.file.level = 'debug';
 
-renderCustomTitleBar();
+if (!shouldUseGuiFrame()) {
+    renderCustomTitleBar();
+}
 renderLoadingSpinner();
 
 registerKeybinds();
