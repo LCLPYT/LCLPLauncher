@@ -24,6 +24,22 @@ nvm install <version>  # retrieve the current version from the .nvmrc file
 ### Building the app yourself
 You'll need to have [Yarn](https://yarnpkg.com/) >= 3.1.0 installed.
 
+In order to build binaries, the package `binutils` needs to be installed on Linux systems. For Debian-based systems, you can use:
+
+```
+sudo apt install binutils
+```
+
+On Windows, it should work out-of-the-box.
+
+#### Installing Yarn
+If you have Node.js 16 installed, you can use `corepack` to install Yarn:
+```
+corepack enable
+corepack prepare yarn@stable --activate
+```
+
+#### Build with Yarn
 First, install all dependencies with:
 ```bash
 yarn
